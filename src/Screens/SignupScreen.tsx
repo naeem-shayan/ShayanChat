@@ -3,11 +3,30 @@ import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Keyboa
 import auth from '@react-native-firebase/auth';
 import Colors from '../Contants/Colors';
 
+
 const SignupScreen = (props) => {
+  const [name, setName]=useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [credientalError, setCredientalError] = useState('');
+
+  const validateName =(name:string)=>{
+    if(!name){
+      setNameError("Enter Your Name");
+      return false;
+    }
+    if(name.length<5){
+      setNameError("Name should be at least 5 characters");
+      return false;
+    }
+    else {
+      setNameError('');
+      return true;
+    }
+  }
 
   const validateEmail = (email: string) => {
     if (!email) {
@@ -41,32 +60,41 @@ const SignupScreen = (props) => {
   }
 
   const signup = () => {
+    const isValidName = validateName(name);
     const isValidEmail = validateEmail(email);
     const isValidPassword = validatePassword(password);
-    if (!isValidEmail || !isValidPassword) {
+    if (!isValidEmail || !isValidPassword || !isValidName) {
       return;
     }
     auth()
       .createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        console.log('User account created & signed in!');
-        props.navigation.navigate("Login")
+      .then((userCredential) => {
+        console.log('User account created & signed in!', userCredential);
+        const user = userCredential.user;
+        if (user) {
+          user.updateProfile({
+            displayName: name,
+          });
+        }
+        props.navigation.navigate("ChatScreen")
       })
       .catch(error => {
+        
         if (error.code === 'auth/email-already-in-use') {
-          console.log('That email address is already in use!');
+          setCredientalError("Email already in use")
         }
-
-        if (error.code === 'auth/invalid-email') {
-          console.log('That email address is invalid!');
+        else if (error.code === 'auth/invalid-email') {
+          setCredientalError("Invalid credentials");
         }
-
-        console.error(error);
+       else{
+        setCredientalError(error.code)
+       }
       });
   }
 
   return (
-    <KeyboardAvoidingView
+  <SafeAreaView style={styles.flex}>
+      <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.flex}
     >
@@ -79,10 +107,24 @@ const SignupScreen = (props) => {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
+            placeholder='Enter your Name'
+            placeholderTextColor={Colors.placeholderColor}
+            selectionColor={Colors.selectionColor}
+            value={name}
+            onChangeText={text => setName(text)}
+          />
+          {
+            nameError && <Text style={styles.errors}>{nameError}</Text>
+          }
+        </View>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
             placeholder='Enter your Email'
             placeholderTextColor={Colors.placeholderColor}
             selectionColor={Colors.selectionColor}
             value={email}
+            keyboardType='email-address'
             onChangeText={text => setEmail(text)}
           />
           {
@@ -103,11 +145,15 @@ const SignupScreen = (props) => {
             passwordError && <Text style={styles.errors}>{passwordError}</Text>
           }
         </View>
+        {
+            credientalError && <Text style={styles.errors}>{credientalError}</Text>
+          }
         <TouchableOpacity style={styles.signupButton} onPress={signup}>
           <Text style={styles.signupText}>Sign Up</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   )
 }
 

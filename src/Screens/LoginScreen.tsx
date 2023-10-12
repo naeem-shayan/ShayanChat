@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Image, SafeAreaView } from "react-native";
 import auth from '@react-native-firebase/auth';
 import Colors from '../Contants/Colors';
 
@@ -10,6 +10,7 @@ const LoginScreen = (props) => {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [credientalError, setCredientalError] = useState('');
 
   const validateEmail = (email: string) => {
     if (!email) {
@@ -55,62 +56,64 @@ const LoginScreen = (props) => {
         navigation.navigate("ChatScreen")
       })
       .catch(error => {
-        if (error.code === 'auth/email-already-in-use') {
-          console.log('That email address is already in use!');
-        }
-
         if (error.code === 'auth/invalid-email') {
-          console.log('That email address is invalid!');
+          setCredientalError("Invalid Credentials")
         }
-
-        console.error(error);
+        else {
+          setCredientalError("invalid login details")
+        }
       });
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.flex}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Image
-          source={require("../../assests/images/logo.jpg")}
-          style={styles.image}
-        />
-        <Text style={styles.title}>Login Here</Text>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder='Enter your Email'
-            placeholderTextColor={Colors.placeholderColor}
-            selectionColor={Colors.selectionColor}
-            value={email}
-            onChangeText={text => setEmail(text)}
+    <SafeAreaView style={styles.flex}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.flex}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Image
+            source={require("../../assests/images/logo.jpg")}
+            style={styles.image}
           />
+          <Text style={styles.title}>Login Here</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder='Enter your Email'
+              placeholderTextColor={Colors.placeholderColor}
+              selectionColor={Colors.selectionColor}
+              value={email}
+              onChangeText={text => setEmail(text)}
+            />
+            {
+              emailError && <Text style={styles.errors}>{emailError}</Text>
+            }
+          </View>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder='Enter your Password'
+              placeholderTextColor={Colors.placeholderColor}
+              selectionColor={Colors.selectionColor}
+              value={password}
+              secureTextEntry
+              onChangeText={text => setPassword(text)}
+            />
+            {
+              passwordError && <Text style={styles.errors}>{passwordError}</Text>
+            }
+          </View>
           {
-            emailError && <Text style={styles.errors}>{emailError}</Text>
+            credientalError && <Text style={styles.errors}>{credientalError}</Text>
           }
-        </View>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder='Enter your Password'
-            placeholderTextColor={Colors.placeholderColor}
-            selectionColor={Colors.selectionColor}
-            value={password}
-            secureTextEntry
-            onChangeText={text => setPassword(text)}
-          />
-          {
-            passwordError && <Text style={styles.errors}>{passwordError}</Text>
-          }
-        </View>
-        <TouchableOpacity style={styles.signupButton} onPress={login}>
-          <Text style={styles.signupText}>Login</Text>
-        </TouchableOpacity>
-        <Text style={{ color: "black", margin:20 }} onPress={()=>navigation.navigate("Signup")}>Create new account</Text>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <TouchableOpacity style={styles.signupButton} onPress={login}>
+            <Text style={styles.signupText}>Login</Text>
+          </TouchableOpacity>
+          <Text style={styles.newAccountText} onPress={() => navigation.navigate("Signup")}>Create new account</Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }
 
@@ -170,6 +173,10 @@ const styles = StyleSheet.create({
   errors: {
     color: Colors.errorColor,
     fontSize: 15,
+  },
+  newAccountText: {
+    margin: 20,
+    color: Colors.textColor
   }
 })
 
