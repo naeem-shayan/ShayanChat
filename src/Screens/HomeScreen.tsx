@@ -3,18 +3,31 @@ import React, {useEffect, useState} from 'react';
 import {FlatList, StyleSheet, View} from 'react-native';
 import {Divider, List} from 'react-native-paper';
 
-import {chatkitty} from './../ChatKitty';
+import {chatkitty, channelDisplayName} from './../ChatKitty';
 import Loading from '../Components/loading';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ChatThread from '../Components/chatThread';
+import Colors from '../Contants/Colors';
 
 export default function HomeScreen({navigation}: any) {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [user, setUser] = useState<any>(null);
   const isFocused = useIsFocused();
 
-  useEffect(() => {
-    let isCancelled = false;
+  const getData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('user');
+      const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
+      setUser(userData);
+    } catch (e) {
+      // error reading value
+    }
+  };
 
+  useEffect(() => {
+    getData();
+    let isCancelled = false;
     chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
       if (!isCancelled) {
         setChannels(result.paginator.items);
@@ -38,16 +51,14 @@ export default function HomeScreen({navigation}: any) {
     <View style={styles.container}>
       <FlatList
         data={channels}
+        showsVerticalScrollIndicator={false}
         keyExtractor={(item: any) => item.id.toString()}
         ItemSeparatorComponent={() => <Divider />}
         renderItem={({item}: any) => (
-          <List.Item
-            title={item.name}
-            description={item.type}
-            titleNumberOfLines={1}
-            titleStyle={styles.listTitle}
-            descriptionStyle={styles.listDescription}
-            descriptionNumberOfLines={1}
+          <ChatThread
+            item={item}
+            user={user}
+            name={channelDisplayName(item, user?.id)}
             onPress={() => navigation.navigate('Chat', {channel: item})}
           />
         )}
@@ -58,8 +69,9 @@ export default function HomeScreen({navigation}: any) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.white,
     flex: 1,
+    paddingHorizontal: 15,
   },
   listTitle: {
     fontSize: 22,

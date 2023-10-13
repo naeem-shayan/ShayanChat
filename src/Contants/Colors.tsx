@@ -6,7 +6,8 @@ const Colors = {
   placeholderColor: 'gray',
   selectionColor: 'gray',
   textColor: '#000',
-  white: '#FFFFFF'
+  white: '#FFFFFF',
+  userStatusColor: 'gray'
 };
 
 export default Colors;

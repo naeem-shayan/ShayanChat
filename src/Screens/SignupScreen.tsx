@@ -18,6 +18,8 @@ import Colors from '../Contants/Colors';
 import {AuthContext} from '../Context/authProvider';
 import {chatkitty} from '../ChatKitty';
 import {Toast} from 'react-native-toast-message/lib/src/Toast';
+import firestore from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignupScreen = (props: any) => {
   const [name, setName] = useState('');
@@ -49,25 +51,37 @@ const SignupScreen = (props: any) => {
       .createUserWithEmailAndPassword(email.trim(), password.trim())
       .then(async userCredential => {
         // Signed-in Firebase user
+        await auth().currentUser?.updateProfile({
+          displayName: name,
+        });
         const currentUser = userCredential.user;
-        if (currentUser) {
-          currentUser.updateProfile({
-            displayName: name,
-          });
-        }
-        const startSessionResult = await chatkitty.startSession({
+        const startSessionResult: any = await chatkitty.startSession({
           username: currentUser.uid,
           authParams: {
             idToken: await currentUser.getIdToken(),
+            displayName: name,
           },
         });
         if (startSessionResult.failed) {
-          //console.log('Could not sign up');
           setLoading(false);
         } else {
-          setCredientalError('');
-          setLoading(false);
-          props.navigation.navigate('HomeScreen');
+          const user = {
+            id: startSessionResult?.session?.user?.id,
+            callStatus: startSessionResult?.session?.user?.callStatus,
+            displayName: startSessionResult?.session?.user?.displayName,
+            displayPictureUrl:
+              startSessionResult?.session?.user?.displayPictureUrl,
+            name: startSessionResult?.session?.user?.name,
+            presence: startSessionResult?.session?.user?.presence,
+            properties: startSessionResult?.session?.user?.properties,
+          };
+          firestore()
+            .collection('Users')
+            .doc(`${startSessionResult?.session?.user?.id}`)
+            .set(user)
+            .then(async () => {
+              await AsyncStorage.setItem('user', JSON.stringify(user));
+            })
         }
       })
       .catch(error => {
@@ -95,7 +109,7 @@ const SignupScreen = (props: any) => {
           contentContainerStyle={{paddingBottom: 50}}
           showsVerticalScrollIndicator={false}>
           <Image
-            source={require('../../assests/images/logo.jpg')}
+            source={require('../../assests/images/logo.png')}
             style={styles.image}
           />
           <Text style={styles.title}>Signup Here</Text>
@@ -176,7 +190,10 @@ const styles = StyleSheet.create({
   image: {
     backgroundColor: 'transparent',
     resizeMode: 'cover',
+    height: 175,
+    width: 100,
     alignSelf: 'center',
+    marginTop:60
   },
   title: {
     fontSize: 24,
@@ -205,7 +222,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 16,
     borderColor: Colors.firstColor,
-    backgroundColor: Colors.secondColor,
+    backgroundColor: Colors.firstColor,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: '5%',

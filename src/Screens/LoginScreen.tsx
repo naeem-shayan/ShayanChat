@@ -19,6 +19,8 @@ import {AuthContext} from '../Context/authProvider';
 import Loading from '../Components/loading';
 import {Toast} from 'react-native-toast-message/lib/src/Toast';
 import {chatkitty} from '../ChatKitty';
+import firestore from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
@@ -46,7 +48,7 @@ const LoginScreen = (props: any) => {
       .signInWithEmailAndPassword(email.trim(), password.trim())
       .then(async userCredential => {
         const currentUser = userCredential.user;
-        const result = await chatkitty.startSession({
+        const result: any = await chatkitty.startSession({
           username: currentUser.uid,
           authParams: {
             idToken: await currentUser.getIdToken(),
@@ -56,9 +58,21 @@ const LoginScreen = (props: any) => {
           //console.log('could not login');
           setLoading(false);
         } else {
-          setCredientalError('');
-          setLoading(false);
-          props.navigation.navigate('HomeScreen');
+          const user = {
+            id: result?.session?.user?.id,
+            callStatus: result?.session?.user?.callStatus,
+            displayPictureUrl: result?.session?.user?.displayPictureUrl,
+            name: result?.session?.user?.name,
+            presence: result?.session?.user?.presence,
+            properties: result?.session?.user?.properties,
+          };
+          firestore()
+            .collection('Users')
+            .doc(`${result?.session?.user?.id}`)
+            .update(user)
+            .then(async () => {
+              await AsyncStorage.setItem('user', JSON.stringify(user));
+            });
         }
       })
       .catch(error => {
@@ -84,7 +98,7 @@ const LoginScreen = (props: any) => {
           contentContainerStyle={{paddingBottom: 60}}
           showsVerticalScrollIndicator={false}>
           <Image
-            source={require('../../assests/images/logo.jpg')}
+            source={require('../../assests/images/logo.png')}
             style={styles.image}
           />
           <Text style={styles.title}>Login Here</Text>
@@ -134,7 +148,7 @@ const LoginScreen = (props: any) => {
           </TouchableOpacity>
           <Text
             style={styles.newAccountText}
-            onPress={() => navigation.navigate('Signup')}>
+            onPress={() => !loading && navigation.navigate('Signup')}>
             Create new account
           </Text>
         </ScrollView>
@@ -155,7 +169,10 @@ const styles = StyleSheet.create({
   image: {
     backgroundColor: 'transparent',
     resizeMode: 'cover',
+    height: 175,
+    width: 100,
     alignSelf: 'center',
+    marginTop: 60,
   },
   title: {
     fontSize: 24,
@@ -185,7 +202,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     // borderWidth: 1,
     borderColor: Colors.firstColor,
-    backgroundColor: Colors.secondColor,
+    backgroundColor: Colors.firstColor,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: '5%',

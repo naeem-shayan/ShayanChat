@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -7,63 +7,75 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {IconButton, Title} from 'react-native-paper';
+import {Divider, IconButton, List, Title} from 'react-native-paper';
 import {chatkitty} from '../ChatKitty';
 import Colors from '../Contants/Colors';
+import {FlatList} from 'react-native';
+import firestore from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import User from '../Components/user';
 
 export default function CreateChannelScreen({navigation}: any) {
   const [channelName, setChannelName] = useState('');
   const [channelError, setChannelError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<any>();
+  const [user, setUser] = useState<any>(null);
 
-  function handleButtonPress() {
-    if (channelName.length > 0) {
-      chatkitty
-        .createChannel({
-          type: 'PUBLIC',
-          name: channelName,
-        })
-        .then(() => navigation.navigate('HomeScreen'));
-    }
+  function handleButtonPress(item: any) {
+    chatkitty
+      .createChannel({
+        type: 'DIRECT',
+        members: [{id: item.id}],
+      })
+      .then((result: any) => {
+        navigation.navigate('Chat', {channel: result?.channel});
+      });
   }
+
+  useEffect(() => {
+    getData();
+  }, []);
+
+  const getData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('user');
+      const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
+      setUser(userData);
+    } catch (e) {
+      // error reading value
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      if (user) {
+        let fetctedUsers: any = [];
+        firestore()
+          .collection('Users')
+          .where('id', '!=', user?.id)
+          .get()
+          .then(querySnapshot => {
+            querySnapshot.forEach(documentSnapshot => {
+              fetctedUsers.push(documentSnapshot.data());
+            });
+            setUsers(fetctedUsers);
+          });
+      }
+    })();
+  }, [user]);
 
   return (
     <View style={styles.rootContainer}>
-      <View style={styles.closeButtonContainer}>
-        <IconButton
-          icon="close-circle"
-          size={36}
-          iconColor={Colors.firstColor}
-          onPress={() => navigation.goBack()}
-        />
-      </View>
-      <View style={styles.innerContainer}>
-        <Title style={styles.title}>Create a new channel</Title>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={{
-              ...styles.input,
-              borderColor: channelError ? 'red' : Colors.firstColor,
-            }}
-            placeholder="Channel Name"
-            placeholderTextColor={Colors.placeholderColor}
-            selectionColor={Colors.selectionColor}
-            value={channelName}
-            onChangeText={text => setChannelName(text)}
-          />
-          {channelError && <Text style={styles.errors}>{channelError}</Text>}
-        </View>
-        <TouchableOpacity
-          disabled={loading}
-          style={styles.signupButton}
-          onPress={() => handleButtonPress()}>
-          {loading ? (
-            <ActivityIndicator size={'small'} color={Colors.white} />
-          ) : (
-            <Text style={styles.signupText}>Create</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <FlatList
+        data={users}
+        showsVerticalScrollIndicator={false}
+        keyExtractor={(item: any) => item.id}
+        ItemSeparatorComponent={() => <Divider />}
+        renderItem={({item}: any) => (
+          <User item={item} onPress={() => handleButtonPress(item)} />
+        )}
+      />
     </View>
   );
 }
@@ -71,6 +83,8 @@ export default function CreateChannelScreen({navigation}: any) {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
+    backgroundColor: Colors.white,
+    paddingHorizontal: 15,
   },
   closeButtonContainer: {
     position: 'absolute',
@@ -131,5 +145,15 @@ const styles = StyleSheet.create({
     margin: 20,
     color: Colors.textColor,
     alignSelf: 'center',
+  },
+  container: {
+    backgroundColor: '#f5f5f5',
+    flex: 1,
+  },
+  listTitle: {
+    fontSize: 22,
+  },
+  listDescription: {
+    fontSize: 16,
   },
 });
