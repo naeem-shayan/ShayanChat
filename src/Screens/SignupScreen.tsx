@@ -12,14 +12,14 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
-import auth from '@react-native-firebase/auth';
-import {validateName, validateEmail, validatePassword} from '../Contants/Utils';
+import {
+  validateName,
+  validateEmail,
+  validatePassword,
+  signup,
+} from '../Contants/Utils';
 import Colors from '../Contants/Colors';
 import {AuthContext} from '../Context/authProvider';
-import {chatkitty} from '../ChatKitty';
-import {Toast} from 'react-native-toast-message/lib/src/Toast';
-import firestore from '@react-native-firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignupScreen = (props: any) => {
   const [name, setName] = useState('');
@@ -32,7 +32,7 @@ const SignupScreen = (props: any) => {
   const [loading, setLoading] = useState(false);
   const {register}: any = useContext(AuthContext);
 
-  const signup = () => {
+  const handleSignup = () => {
     const nameErrorMessage = validateName(name);
     const emailErrorMessage = validateEmail(email);
     const passwordErrorMessage = validatePassword(password);
@@ -45,58 +45,7 @@ const SignupScreen = (props: any) => {
     setNameError('');
     setEmailError('');
     setPasswordError('');
-    //register(name, email.trim(), password.trim());
-    setLoading(true);
-    auth()
-      .createUserWithEmailAndPassword(email.trim(), password.trim())
-      .then(async userCredential => {
-        // Signed-in Firebase user
-        await auth().currentUser?.updateProfile({
-          displayName: name,
-        });
-        const currentUser = userCredential.user;
-        const startSessionResult: any = await chatkitty.startSession({
-          username: currentUser.uid,
-          authParams: {
-            idToken: await currentUser.getIdToken(),
-            displayName: name,
-          },
-        });
-        if (startSessionResult.failed) {
-          setLoading(false);
-        } else {
-          const user = {
-            id: startSessionResult?.session?.user?.id,
-            callStatus: startSessionResult?.session?.user?.callStatus,
-            displayName: startSessionResult?.session?.user?.displayName,
-            displayPictureUrl:
-              startSessionResult?.session?.user?.displayPictureUrl,
-            name: startSessionResult?.session?.user?.name,
-            presence: startSessionResult?.session?.user?.presence,
-            properties: startSessionResult?.session?.user?.properties,
-          };
-          firestore()
-            .collection('Users')
-            .doc(`${startSessionResult?.session?.user?.id}`)
-            .set(user)
-            .then(async () => {
-              await AsyncStorage.setItem('user', JSON.stringify(user));
-            })
-        }
-      })
-      .catch(error => {
-        setLoading(false);
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2:
-            error.code === 'auth/email-already-in-use'
-              ? 'Email already in use'
-              : error.code === 'auth/invalid-email'
-              ? 'Invalid credentials'
-              : `${error.code}`,
-        });
-      });
+    signup(name.trim(), email.trim(), password.trim(), setLoading);
   };
 
   return (
@@ -165,7 +114,7 @@ const SignupScreen = (props: any) => {
           <TouchableOpacity
             disabled={loading}
             style={styles.signupButton}
-            onPress={signup}>
+            onPress={handleSignup}>
             {loading ? (
               <ActivityIndicator size={'small'} color={Colors.white} />
             ) : (
@@ -193,7 +142,7 @@ const styles = StyleSheet.create({
     height: 175,
     width: 100,
     alignSelf: 'center',
-    marginTop:60
+    marginTop: 60,
   },
   title: {
     fontSize: 24,

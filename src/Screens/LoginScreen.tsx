@@ -12,15 +12,9 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
-import auth from '@react-native-firebase/auth';
 import Colors from '../Contants/Colors';
-import {validateEmail, validatePassword} from '../Contants/Utils';
+import {signin, validateEmail, validatePassword} from '../Contants/Utils';
 import {AuthContext} from '../Context/authProvider';
-import Loading from '../Components/loading';
-import {Toast} from 'react-native-toast-message/lib/src/Toast';
-import {chatkitty} from '../ChatKitty';
-import firestore from '@react-native-firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
@@ -32,7 +26,7 @@ const LoginScreen = (props: any) => {
   const [credientalError, setCredientalError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const loginProcess = () => {
+  const handleLogin = () => {
     const emailErrorMessage = validateEmail(email);
     const passwordErrorMessage = validatePassword(password);
     if (emailErrorMessage || passwordErrorMessage) {
@@ -40,52 +34,9 @@ const LoginScreen = (props: any) => {
       setPasswordError(passwordErrorMessage);
       return;
     }
-    setLoading(true);
     setEmailError('');
     setPasswordError('');
-    //login(email.trim(), password.trim())
-    auth()
-      .signInWithEmailAndPassword(email.trim(), password.trim())
-      .then(async userCredential => {
-        const currentUser = userCredential.user;
-        const result: any = await chatkitty.startSession({
-          username: currentUser.uid,
-          authParams: {
-            idToken: await currentUser.getIdToken(),
-          },
-        });
-        if (result.failed) {
-          //console.log('could not login');
-          setLoading(false);
-        } else {
-          const user = {
-            id: result?.session?.user?.id,
-            callStatus: result?.session?.user?.callStatus,
-            displayPictureUrl: result?.session?.user?.displayPictureUrl,
-            name: result?.session?.user?.name,
-            presence: result?.session?.user?.presence,
-            properties: result?.session?.user?.properties,
-          };
-          firestore()
-            .collection('Users')
-            .doc(`${result?.session?.user?.id}`)
-            .update(user)
-            .then(async () => {
-              await AsyncStorage.setItem('user', JSON.stringify(user));
-            });
-        }
-      })
-      .catch(error => {
-        setLoading(false);
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2:
-            error.code === 'auth/invalid-email'
-              ? 'Invalid Credentials'
-              : `${error.code}`,
-        });
-      });
+    signin(email.trim(), password.trim(), setLoading);
   };
 
   return (
@@ -139,7 +90,7 @@ const LoginScreen = (props: any) => {
           <TouchableOpacity
             disabled={loading}
             style={styles.signupButton}
-            onPress={loginProcess}>
+            onPress={handleLogin}>
             {loading ? (
               <ActivityIndicator size={'small'} color={Colors.white} />
             ) : (
