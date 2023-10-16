@@ -14,7 +14,7 @@ export const validateEmail = (email: string) => {
     return 'Enter Your Email';
   }
   const validEmailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-  if (!validEmailPattern.test(email)) {
+  if (!validEmailPattern.test(email.trim())) {
     return 'Invalid email';
   } else {
     return '';

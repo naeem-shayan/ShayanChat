@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,18 @@ import {
   Platform,
   Image,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import {validateName, validateEmail, validatePassword} from '../Contants/Utils';
 import Colors from '../Contants/Colors';
+import {AuthContext} from '../Context/authProvider';
+import {chatkitty} from '../ChatKitty';
+import {Toast} from 'react-native-toast-message/lib/src/Toast';
+import firestore from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SignupScreen = props => {
+const SignupScreen = (props: any) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +29,8 @@ const SignupScreen = props => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [credientalError, setCredientalError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const {register}: any = useContext(AuthContext);
 
   const signup = () => {
     const nameErrorMessage = validateName(name);
@@ -34,25 +42,60 @@ const SignupScreen = props => {
       setPasswordError(passwordErrorMessage);
       return;
     }
+    setNameError('');
+    setEmailError('');
+    setPasswordError('');
+    //register(name, email.trim(), password.trim());
+    setLoading(true);
     auth()
-      .createUserWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        const user = userCredential.user;
-        if (user) {
-          user.updateProfile({
+      .createUserWithEmailAndPassword(email.trim(), password.trim())
+      .then(async userCredential => {
+        // Signed-in Firebase user
+        await auth().currentUser?.updateProfile({
+          displayName: name,
+        });
+        const currentUser = userCredential.user;
+        const startSessionResult: any = await chatkitty.startSession({
+          username: currentUser.uid,
+          authParams: {
+            idToken: await currentUser.getIdToken(),
             displayName: name,
-          });
+          },
+        });
+        if (startSessionResult.failed) {
+          setLoading(false);
+        } else {
+          const user = {
+            id: startSessionResult?.session?.user?.id,
+            callStatus: startSessionResult?.session?.user?.callStatus,
+            displayName: startSessionResult?.session?.user?.displayName,
+            displayPictureUrl:
+              startSessionResult?.session?.user?.displayPictureUrl,
+            name: startSessionResult?.session?.user?.name,
+            presence: startSessionResult?.session?.user?.presence,
+            properties: startSessionResult?.session?.user?.properties,
+          };
+          firestore()
+            .collection('Users')
+            .doc(`${startSessionResult?.session?.user?.id}`)
+            .set(user)
+            .then(async () => {
+              await AsyncStorage.setItem('user', JSON.stringify(user));
+            })
         }
-        props.navigation.navigate('ChatScreen');
       })
       .catch(error => {
-        if (error.code === 'auth/email-already-in-use') {
-          setCredientalError('Email already in use');
-        } else if (error.code === 'auth/invalid-email') {
-          setCredientalError('Invalid credentials');
-        } else {
-          setCredientalError(error.code);
-        }
+        setLoading(false);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2:
+            error.code === 'auth/email-already-in-use'
+              ? 'Email already in use'
+              : error.code === 'auth/invalid-email'
+              ? 'Invalid credentials'
+              : `${error.code}`,
+        });
       });
   };
 
@@ -61,15 +104,21 @@ const SignupScreen = props => {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={{paddingBottom: 50}}
+          showsVerticalScrollIndicator={false}>
           <Image
-            source={require('../../assests/images/logo.jpg')}
+            source={require('../../assests/images/logo.png')}
             style={styles.image}
           />
           <Text style={styles.title}>Signup Here</Text>
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={{
+                ...styles.input,
+                borderColor: nameError ? 'red' : Colors.firstColor,
+              }}
               placeholder="Enter your Name"
               placeholderTextColor={Colors.placeholderColor}
               selectionColor={Colors.selectionColor}
@@ -80,7 +129,10 @@ const SignupScreen = props => {
           </View>
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={{
+                ...styles.input,
+                borderColor: emailError ? 'red' : Colors.firstColor,
+              }}
               placeholder="Enter your Email"
               placeholderTextColor={Colors.placeholderColor}
               selectionColor={Colors.selectionColor}
@@ -92,7 +144,10 @@ const SignupScreen = props => {
           </View>
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={{
+                ...styles.input,
+                borderColor: passwordError ? 'red' : Colors.firstColor,
+              }}
               placeholder="Enter your Password"
               placeholderTextColor={Colors.placeholderColor}
               selectionColor={Colors.selectionColor}
@@ -107,8 +162,15 @@ const SignupScreen = props => {
           {credientalError && (
             <Text style={styles.errors}>{credientalError}</Text>
           )}
-          <TouchableOpacity style={styles.signupButton} onPress={signup}>
-            <Text style={styles.signupText}>Sign Up</Text>
+          <TouchableOpacity
+            disabled={loading}
+            style={styles.signupButton}
+            onPress={signup}>
+            {loading ? (
+              <ActivityIndicator size={'small'} color={Colors.white} />
+            ) : (
+              <Text style={styles.signupText}>Sign Up</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -122,34 +184,36 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 24,
     backgroundColor: 'white',
   },
   image: {
     backgroundColor: 'transparent',
     resizeMode: 'cover',
-    marginBottom: '10%',
+    height: 175,
+    width: 100,
+    alignSelf: 'center',
+    marginTop:60
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
     textAlign: 'center',
     color: Colors.textColor,
+    marginTop: 60,
     marginBottom: '10%',
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 32,
+    marginBottom: 10,
     alignItems: 'center',
   },
   input: {
     width: '90%',
-    height: 60,
+    height: 50,
     borderColor: Colors.firstColor,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderRadius: 16,
     color: Colors.textColor,
   },
@@ -157,12 +221,12 @@ const styles = StyleSheet.create({
     width: '90%',
     height: 48,
     borderRadius: 16,
-    borderWidth: 1,
     borderColor: Colors.firstColor,
-    backgroundColor: Colors.secondColor,
+    backgroundColor: Colors.firstColor,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: '5%',
+    alignSelf: 'center',
   },
   signupText: {
     color: 'white',
@@ -171,7 +235,9 @@ const styles = StyleSheet.create({
   },
   errors: {
     color: Colors.errorColor,
-    fontSize: 15,
+    fontSize: 12,
+    marginLeft: 30,
+    alignSelf: 'flex-start',
   },
 });
 

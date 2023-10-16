@@ -1,64 +1,93 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Image, SafeAreaView } from "react-native";
-import auth from '@react-native-firebase/auth';
-import Colors from '../Contants/Colors';
+import React, {useContext, useEffect, useState} from 'react';
+import {Avatar, Bubble, GiftedChat} from 'react-native-gifted-chat';
 
-const ChatScreen = (props) => {
-  const handleLogout = () => {
-    auth().signOut()
-      .then(() => {
-        props.navigation.navigate("Login");
+import {chatkitty, channelDisplayName} from '../ChatKitty';
+import Loading from '../Components/loading';
+import {AuthContext} from '../Context/authProvider';
+
+export default function ChatScreen({route}: any) {
+  const {user}: any = useContext(AuthContext);
+  const {channel} = route.params;
+
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const startChatSessionResult = chatkitty.startChatSession({
+      channel: channel,
+      onMessageReceived: message => {
+        //@ts-ignore
+        setMessages((currentMessages: any) =>
+          GiftedChat.append(currentMessages, [mapMessage(message)]),
+        );
+      },
+    });
+
+    chatkitty
+      .listMessages({
+        channel: channel,
       })
-      .catch((error) => {
-        console.error(error);
+      .then((result: any) => {
+        setMessages(result.paginator.items.map(mapMessage));
+
+        setLoading(false);
       });
+
+    return startChatSessionResult.session.end;
+  }, [user, channel]);
+
+  async function handleSend(pendingMessages: any) {
+    await chatkitty.sendMessage({
+      channel: channel,
+      body: pendingMessages[0].text,
+    });
+  }
+
+  function renderBubble(props: any) {
+    return (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          left: {
+            backgroundColor: '#d3d3d3',
+          },
+        }}
+      />
+    );
+  }
+
+  const renderAvatar = (props: any) => {
+    return <Avatar {...props} onPressAvatar={avatarUser => {}} />;
   };
+
+  if (loading) {
+    return <Loading />;
+  }
+
   return (
-    <SafeAreaView style={styles.flex}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.flex}
-      >
-        <ScrollView contentContainerStyle={styles.container}>
-          <Image
-            source={require("../../assests/images/logo.jpg")}
-            style={styles.image}
-          />
-          <Text style={styles.title}>Chat Screen</Text>
-          <Text style={{ margin: 20 }} onPress={handleLogout}>Logout</Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  )
+    <GiftedChat
+      messages={messages}
+      onSend={handleSend}
+      user={mapUser(user)}
+      renderBubble={renderBubble}
+      renderAvatar={renderAvatar}
+    />
+  );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1
-  },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-    backgroundColor: "white"
-  },
-  image: {
-    backgroundColor: "transparent",
-    resizeMode: "cover",
-    marginBottom: "10%"
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    textAlign: "center",
-    color: Colors.textColor,
-    marginBottom: "10%",
-  },
-  errors: {
-    color: Colors.errorColor,
-    fontSize: 15,
-  }
-})
+function mapMessage(message: any) {
+  return {
+    _id: message.id,
+    text: message.body,
+    createdAt: new Date(message.createdTime),
+    user: mapUser(message.user),
+  };
+}
 
-export default ChatScreen
+function mapUser(user: any) {
+  return {
+    _id: user.id,
+    name: user.displayName,
+    avatar: user.displayPictureUrl,
+  };
+}

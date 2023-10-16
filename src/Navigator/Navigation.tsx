@@ -1,20 +1,38 @@
-import React from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import LoginScreen from '../Screens/LoginScreen';
-import SignupScreen from '../Screens/SignupScreen';
-import ChatScreen from '../Screens/ChatScreen';
+import {AuthContext, AuthProvider} from '../Context/authProvider';
+import {chatkitty} from '../ChatKitty';
+import AuthStack from './authStack';
+import Loading from '../Components/loading';
+import HomeStack from './homeStack';
+
 
 const Stack = createStackNavigator();
 
 const Navigation = () => {
+  const {user, setUser}:any = useContext(AuthContext);
+  const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
+
+  useEffect(() => {
+    return chatkitty.onCurrentUserChanged(currentUser => {
+      setUser(currentUser);
+
+      if (initializing) {
+        setInitializing(false);
+      }
+
+      setLoading(false);
+    });
+  }, [initializing, setUser]);
+
+  if (loading) {
+    return <Loading />;
+  }
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Signup" component={SignupScreen} />
-        <Stack.Screen name="ChatScreen" component={ChatScreen} />
-      </Stack.Navigator>
+      {user ?<HomeStack/> : <AuthStack />}
     </NavigationContainer>
   );
 };
