@@ -7,7 +7,7 @@ import {
   GiftedChat,
 } from 'react-native-gifted-chat';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {chatkitty, channelDisplayName} from '../ChatKitty';
+import {chatkitty, channelDisplayName, checkUserStatus} from '../ChatKitty';
 import Loading from '../Components/loading';
 import {AuthContext} from '../Context/authProvider';
 import Colors from '../Contants/Colors';
@@ -15,10 +15,10 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import moment from 'moment';
+import CustomHeader from '../Components/header';
 
-export default function ChatScreen({route}: any) {
-  const {user}: any = useContext(AuthContext);
-  const {channel} = route.params;
+export default function ChatScreen({route, navigation}: any) {
+  const {channel, user} = route.params;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,7 +26,7 @@ export default function ChatScreen({route}: any) {
     const startChatSessionResult = chatkitty.startChatSession({
       channel: channel,
       onMessageReceived: message => {
-                //@ts-ignore
+        //@ts-ignore
         setMessages((currentMessages: any) =>
           GiftedChat.append(currentMessages, [mapMessage(message)]),
         );
@@ -39,7 +39,6 @@ export default function ChatScreen({route}: any) {
       })
       .then((result: any) => {
         setMessages(result.paginator.items.map(mapMessage));
-
         setLoading(false);
       });
 
@@ -56,19 +55,35 @@ export default function ChatScreen({route}: any) {
   async function handleSendImage(params: any) {
     const result: any = await launchImageLibrary({mediaType: 'photo'});
     if (!result?.didCancel) {
-      const res = await chatkitty.sendMessage({
-        channel: channel,
-        file: {
-          name: result?.assets[0]?.fileName,
-          size: result?.assets[0]?.fileSize,
-          contentType: result?.assets[0]?.type,
-          url: result?.assets[0]?.uri,
-        },
-        progressListener: {
-          onStarted: () => {},
-          onProgress: progress => {},
-          onCompleted: result => {},
-        },
+      let name = JSON.stringify(new Date().getTime());
+      const reference = storage().ref(`images/${name}`);
+      const task = reference.putFile(result?.assets[0]?.uri);
+      task.on('state_changed', taskSnapshot => {
+        console.log(
+          `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
+        );
+      });
+      task.then(async () => {
+        console.log('Image uploaded to the bucket!');
+        await storage()
+          .ref(`images/${name}`)
+          .getDownloadURL()
+          .then(async url => {
+            await chatkitty.sendMessage({
+              channel: channel,
+              file: {
+                name: result?.assets[0]?.fileName,
+                size: result?.assets[0]?.fileSize,
+                contentType: result?.assets[0]?.type,
+                url: url,
+              },
+              progressListener: {
+                onStarted: () => {},
+                onProgress: progress => {},
+                onCompleted: result => {},
+              },
+            });
+          });
       });
     }
   }
@@ -106,10 +121,7 @@ export default function ChatScreen({route}: any) {
     if (currentMessage?.type == 'FILE') {
       return (
         <View style={styles.imageMessage}>
-          <Image
-            source={{uri: currentMessage?.file}}
-            style={styles.image}
-          />
+          <Image source={{uri: currentMessage?.file}} style={styles.image} />
           <Text>{moment(currentMessage?.createdAt).format('LT')}</Text>
         </View>
       );
@@ -125,14 +137,23 @@ export default function ChatScreen({route}: any) {
   }
 
   return (
-    <GiftedChat
-      messages={messages}
-      onSend={handleSend}
-      user={mapUser(user)}
-      renderBubble={renderBubble}
-      renderAvatar={renderAvatar}
-      renderActions={renderActions}
-    />
+    <>
+      <CustomHeader
+        title={channelDisplayName(channel, user?.id)}
+        showBack
+        status={checkUserStatus(channel, user?.id)}
+        userStatus
+        onBackPress={() => navigation.goBack()}
+      />
+      <GiftedChat
+        messages={messages}
+        onSend={handleSend}
+        user={mapUser(user)}
+        renderBubble={renderBubble}
+        renderAvatar={renderAvatar}
+        renderActions={renderActions}
+      />
+    </>
   );
 }
 
@@ -158,11 +179,11 @@ function mapUser(user: any) {
 const styles = StyleSheet.create({
   imageMessage: {
     paddingVertical: 5,
-    overflow:'hidden',
+    overflow: 'hidden',
   },
   image: {
-    height:100,
+    height: 100,
     width: 150,
-    borderRadius: 10
-  }
+    borderRadius: 10,
+  },
 });

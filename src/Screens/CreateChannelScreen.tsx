@@ -29,7 +29,7 @@ export default function CreateChannelScreen({navigation}: any) {
         members: [{id: item.id}],
       })
       .then((result: any) => {
-        navigation.navigate('Chat', {channel: result?.channel});
+        navigation.navigate('Chat', {channel: result?.channel, user});
       });
   }
 

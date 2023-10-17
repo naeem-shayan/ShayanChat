@@ -8,10 +8,13 @@ import Loading from '../Components/loading';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ChatThread from '../Components/chatThread';
 import Colors from '../Contants/Colors';
+import auth from '@react-native-firebase/auth';
+import CustomHeader from '../Components/header';
 
 export default function HomeScreen({navigation}: any) {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingOut, setLoadingOut] = useState(false);
   const [user, setUser] = useState<any>(null);
   const isFocused = useIsFocused();
   const [connecting, setConnecting] = useState(true);
@@ -27,15 +30,29 @@ export default function HomeScreen({navigation}: any) {
     }
   };
 
+  const onLogout = async () => {
+    try {
+      setLoadingOut(true);
+      //await chatkitty.endSession();
+      await AsyncStorage.clear();
+      await auth().signOut();
+      setLoadingOut(false);
+      navigation.replace('Login');
+    } catch (error) {
+      setLoadingOut(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       setConnecting(true);
       const user = await getData();
+      await chatkitty.endSession();
       const result: any = await chatkitty.startSession({
         username: user?.uid,
         authParams: {
           idToken: user?.idToken,
-          displayName: user?.displayName
+          displayName: user?.displayName,
         },
       });
       if (result.failed) {
@@ -58,10 +75,10 @@ export default function HomeScreen({navigation}: any) {
           .set(updatedUser)
           .then(async () => {
             await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-            setUser(updatedUser)
+            setUser(updatedUser);
             setConnecting(false);
           })
-          .catch((error) => {
+          .catch(error => {
             setConnecting(false);
           });
       }
@@ -92,22 +109,31 @@ export default function HomeScreen({navigation}: any) {
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={channels}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={(item: any) => item.id.toString()}
-        ItemSeparatorComponent={() => <Divider />}
-        renderItem={({item}: any) => (
-          <ChatThread
-            item={item}
-            user={user}
-            name={channelDisplayName(item, user?.id)}
-            onPress={() => navigation.navigate('Chat', {channel: item, user})}
-          />
-        )}
+    <>
+      <CustomHeader
+        title={'Conversations'}
+        displayActions
+        loading={loadingOut}
+        onAddPress={() => navigation.navigate('CreateChannel')}
+        onLogoutPress={onLogout}
       />
-    </View>
+      <View style={styles.container}>
+        <FlatList
+          data={channels}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={(item: any) => item.id.toString()}
+          ItemSeparatorComponent={() => <Divider />}
+          renderItem={({item}: any) => (
+            <ChatThread
+              item={item}
+              user={user}
+              name={channelDisplayName(item, user?.id)}
+              onPress={() => navigation.navigate('Chat', {channel: item, user})}
+            />
+          )}
+        />
+      </View>
+    </>
   );
 }
 

@@ -18,8 +18,8 @@ import { chatkitty } from '../ChatKitty';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
-  const [email, setEmail] = useState('Dev1@gmail.com');
-  const [password, setPassword] = useState('12345678');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [credientalError, setCredientalError] = useState('');

@@ -8,7 +8,7 @@ import ChatScreen from '../Screens/ChatScreen';
 import {chatkitty, channelDisplayName, checkUserStatus} from '../ChatKitty';
 import {ActivityIndicator, View, Text} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
+
 import LoginScreen from '../Screens/LoginScreen';
 import SignupScreen from '../Screens/SignupScreen';
 
@@ -32,18 +32,7 @@ export default function HomeStack({initialRoot} : any) {
     getData();
   }, []);
 
-  const onLogout = async (navigation: any) => {
-    try {
-      setLoading(true);
-      //  await chatkitty.endSession();
-       await AsyncStorage.clear();
-       await auth().signOut();
-       setLoading(false);
-       navigation.replace('Login');
-    } catch (error) {
-      setLoading(false);
-    }
-  };
+  
   return (
     <Stack.Navigator
       initialRouteName={initialRoot}
@@ -69,33 +58,7 @@ export default function HomeStack({initialRoot} : any) {
       <Stack.Screen
         name="HomeScreen"
         component={HomeScreen}
-        options={({navigation}) => ({
-          headerTitle: 'Conversations',
-          headerRight: () => (
-            <View style={{flexDirection: 'row'}}>
-              <IconButton
-                icon="plus"
-                size={28}
-                iconColor="#ffffff"
-                onPress={() => navigation.navigate('CreateChannel')}
-              />
-              {loading ? (
-                <ActivityIndicator
-                  style={{paddingHorizontal: 10}}
-                  size={'small'}
-                  color={Colors.white}
-                />
-              ) : (
-                <IconButton
-                  icon="logout"
-                  size={28}
-                  iconColor="#ffffff"
-                  onPress={() => onLogout(navigation)}
-                />
-              )}
-            </View>
-          ),
-        })}
+        options={{headerShown : false}}
       />
       <Stack.Screen
         options={({navigation}) => ({
@@ -107,19 +70,7 @@ export default function HomeStack({initialRoot} : any) {
       <Stack.Screen
         name="Chat"
         component={ChatScreen}
-        options={({route}: any) => ({
-          // title: channelDisplayName(route.params.channel, user?.id)
-          headerTitle: props => (
-            <View style={{flexDirection: 'column'}}>
-              <Text>{channelDisplayName(route.params.channel, user?.id)}</Text>
-              {checkUserStatus(route.params.channel, user?.id) ? (
-                <Text>Online</Text>
-              ) : (
-                <Text>Offline</Text>
-              )}
-            </View>
-          ),
-        })}
+        options={{headerShown : false}}
       />
     </Stack.Navigator>
   );
