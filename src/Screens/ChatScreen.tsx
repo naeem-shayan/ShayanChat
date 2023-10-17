@@ -1,14 +1,10 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {Avatar, Bubble, GiftedChat} from 'react-native-gifted-chat';
-
 import {chatkitty, channelDisplayName} from '../ChatKitty';
 import Loading from '../Components/loading';
-import {AuthContext} from '../Context/authProvider';
 
 export default function ChatScreen({route}: any) {
-  const {user}: any = useContext(AuthContext);
-  const {channel} = route.params;
-
+  const {channel, user} = route.params;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,17 +73,17 @@ export default function ChatScreen({route}: any) {
 
 function mapMessage(message: any) {
   return {
-    _id: message.id,
-    text: message.body,
-    createdAt: new Date(message.createdTime),
-    user: mapUser(message.user),
+    _id: message?.id,
+    text: message?.body,
+    createdAt: new Date(message?.createdTime),
+    user: mapUser(message?.user),
   };
 }
 
 function mapUser(user: any) {
   return {
-    _id: user.id,
-    name: user.displayName,
-    avatar: user.displayPictureUrl,
+    _id: user?.id,
+    name: user?.displayName,
+    avatar: user?.displayPictureUrl,
   };
 }
