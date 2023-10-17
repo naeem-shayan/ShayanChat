@@ -149,9 +149,9 @@ function mapMessage(message: any) {
 
 function mapUser(user: any) {
   return {
-    _id: user.id,
-    name: user.displayName,
-    avatar: user.displayPictureUrl,
+    _id: user?.id,
+    name: user?.displayName,
+    avatar: user?.displayPictureUrl,
   };
 }
 

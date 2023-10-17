@@ -54,6 +54,7 @@ const styles = StyleSheet.create({
   },
   userStatus: {
     color: Colors.userStatusColor,
+    fontSize:10
   },
 });
 
