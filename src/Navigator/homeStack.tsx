@@ -5,8 +5,8 @@ import Colors from '../Contants/Colors';
 import {IconButton} from 'react-native-paper';
 import CreateChannelScreen from '../Screens/CreateChannelScreen';
 import ChatScreen from '../Screens/ChatScreen';
-import {chatkitty, channelDisplayName} from '../ChatKitty';
-import {ActivityIndicator, View} from 'react-native';
+import {chatkitty, channelDisplayName, checkUserStatus} from '../ChatKitty';
+import {ActivityIndicator, View, Text} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
 
@@ -14,7 +14,7 @@ const Stack = createStackNavigator();
 
 export default function HomeStack() {
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<any>(null);
 
   const getData = async () => {
     try {
@@ -27,8 +27,8 @@ export default function HomeStack() {
   };
 
   useEffect(() => {
-    getData()
-  },[])
+    getData();
+  }, []);
 
   const onLogout = async (navigation: any) => {
     try {
@@ -96,7 +96,17 @@ export default function HomeStack() {
         name="Chat"
         component={ChatScreen}
         options={({route}: any) => ({
-          title: channelDisplayName(route.params.channel, user?.displayName) /* Add this */,
+          // title: channelDisplayName(route.params.channel, user?.id)
+          headerTitle: props => (
+            <View style={{flexDirection: 'column'}}>
+              <Text>{channelDisplayName(route.params.channel, user?.id)}</Text>
+              {checkUserStatus(route.params.channel, user?.id) ? (
+                <Text>Online</Text>
+              ) : (
+                <Text>Offline</Text>
+              )}
+            </View>
+          ),
         })}
       />
     </Stack.Navigator>
