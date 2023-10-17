@@ -42,37 +42,21 @@ export const signin = (
   email: string,
   password: string,
   setLoading: (loading: boolean) => void,
+  navigation: any,
 ) => {
   setLoading(true);
   auth()
     .signInWithEmailAndPassword(email.trim(), password.trim())
     .then(async userCredential => {
       const currentUser = userCredential.user;
-      const result: any = await chatkitty.startSession({
-        username: currentUser.uid,
-        authParams: {
-          idToken: await currentUser.getIdToken(),
-        },
-      });
-      if (result.failed) {
-        setLoading(false);
-      } else {
-        const user = {
-          id: result?.session?.user?.id,
-          callStatus: result?.session?.user?.callStatus,
-          displayPictureUrl: result?.session?.user?.displayPictureUrl,
-          name: result?.session?.user?.name,
-          presence: result?.session?.user?.presence,
-          properties: result?.session?.user?.properties,
-        };
-        firestore()
-          .collection('Users')
-          .doc(`${result?.session?.user?.id}`)
-          .update(user)
-          .then(async () => {
-            await AsyncStorage.setItem('user', JSON.stringify(user));
-          });
+      const idToken = await currentUser.getIdToken()
+      const user = {
+        uid: currentUser.uid,
+        idToken: idToken,
       }
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      setLoading(false)
+      navigation.replace('HomeScreen')
     })
     .catch(error => {
       setLoading(false);
@@ -101,6 +85,7 @@ export const signup = (
   email: string,
   password: string,
   setLoading: (loading: boolean) => void,
+  navigation: any
 ) => {
   setLoading(true);
   auth()
@@ -110,34 +95,15 @@ export const signup = (
         displayName: name,
       });
       const currentUser = userCredential.user;
-      const startSessionResult: any = await chatkitty.startSession({
-        username: currentUser.uid,
-        authParams: {
-          idToken: await currentUser.getIdToken(),
-          displayName: name,
-        },
-      });
-      if (startSessionResult.failed) {
-        setLoading(false);
-      } else {
-        const user = {
-          id: startSessionResult?.session?.user?.id,
-          callStatus: startSessionResult?.session?.user?.callStatus,
-          displayName: startSessionResult?.session?.user?.displayName,
-          displayPictureUrl:
-            startSessionResult?.session?.user?.displayPictureUrl,
-          name: startSessionResult?.session?.user?.name,
-          presence: startSessionResult?.session?.user?.presence,
-          properties: startSessionResult?.session?.user?.properties,
-        };
-        firestore()
-          .collection('Users')
-          .doc(`${startSessionResult?.session?.user?.id}`)
-          .set(user)
-          .then(async () => {
-            await AsyncStorage.setItem('user', JSON.stringify(user));
-          });
+      const idToken = await currentUser.getIdToken()
+      const user = {
+        uid: currentUser.uid,
+        idToken: idToken,
+        displayName: name
       }
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      setLoading(false)
+      navigation.replace('HomeScreen')
     })
     .catch(error => {
       setLoading(false);

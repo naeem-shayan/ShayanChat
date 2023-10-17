@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -14,17 +14,21 @@ import {
 } from 'react-native';
 import Colors from '../Contants/Colors';
 import {signin, validateEmail, validatePassword} from '../Contants/Utils';
-import {AuthContext} from '../Context/authProvider';
+import { chatkitty } from '../ChatKitty';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
-  const {login}: any = useContext(AuthContext);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('Dev1@gmail.com');
+  const [password, setPassword] = useState('12345678');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [credientalError, setCredientalError] = useState('');
   const [loading, setLoading] = useState(false);
+
+
+  useEffect(() => {
+    chatkitty.endSession();
+  },[])
 
   const handleLogin = () => {
     const emailErrorMessage = validateEmail(email);
@@ -36,7 +40,7 @@ const LoginScreen = (props: any) => {
     }
     setEmailError('');
     setPasswordError('');
-    signin(email.trim(), password.trim(), setLoading);
+    signin(email.trim(), password.trim(), setLoading, navigation);
   };
 
   return (

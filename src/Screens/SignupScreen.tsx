@@ -22,6 +22,7 @@ import Colors from '../Contants/Colors';
 import {AuthContext} from '../Context/authProvider';
 
 const SignupScreen = (props: any) => {
+  const {navigation} = props
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,7 +46,7 @@ const SignupScreen = (props: any) => {
     setNameError('');
     setEmailError('');
     setPasswordError('');
-    signup(name.trim(), email.trim(), password.trim(), setLoading);
+    signup(name.trim(), email.trim(), password.trim(), setLoading, navigation);
   };
 
   return (

@@ -2,7 +2,7 @@ import {useIsFocused} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import {FlatList, StyleSheet, View} from 'react-native';
 import {Divider, List} from 'react-native-paper';
-
+import firestore from '@react-native-firebase/firestore';
 import {chatkitty, channelDisplayName} from './../ChatKitty';
 import Loading from '../Components/loading';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,36 +14,80 @@ export default function HomeScreen({navigation}: any) {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const isFocused = useIsFocused();
+  const [connecting, setConnecting] = useState(true);
 
   const getData = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('user');
       const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
       setUser(userData);
+      return userData;
     } catch (e) {
       // error reading value
     }
   };
 
   useEffect(() => {
-    getData();
-    let isCancelled = false;
-    chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
-      if (!isCancelled) {
-        setChannels(result.paginator.items);
+    (async () => {
+      setConnecting(true);
+      const user = await getData();
+      const result: any = await chatkitty.startSession({
+        username: user?.uid,
+        authParams: {
+          idToken: user?.idToken,
+          displayName: user?.displayName
+        },
+      });
+      if (result.failed) {
+        setConnecting(false);
+      } else {
+        const updatedUser = {
+          ...user,
+          id: result?.session?.user?.id,
+          callStatus: result?.session?.user?.callStatus,
+          displayName: result?.session?.user?.displayName,
+          displayPictureUrl: result?.session?.user?.displayPictureUrl,
+          name: result?.session?.user?.name,
+          presence: result?.session?.user?.presence,
+          properties: result?.session?.user?.properties,
+        };
 
-        if (loading) {
-          setLoading(false);
-        }
+        firestore()
+          .collection('Users')
+          .doc(`${result?.session?.user?.id}`)
+          .set(updatedUser)
+          .then(async () => {
+            await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser)
+            setConnecting(false);
+          })
+          .catch((error) => {
+            setConnecting(false);
+          });
       }
-    });
+    })();
+  }, []);
 
-    return () => {
-      isCancelled = true;
-    };
-  }, [isFocused, loading]);
+  useEffect(() => {
+    if (!connecting) {
+      let isCancelled = false;
+      chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
+        if (!isCancelled) {
+          setChannels(result.paginator.items);
 
-  if (loading) {
+          if (loading) {
+            setLoading(false);
+          }
+        }
+      });
+
+      return () => {
+        isCancelled = true;
+      };
+    }
+  }, [isFocused, loading, connecting]);
+
+  if (loading || connecting) {
     return <Loading />;
   }
 
@@ -59,7 +103,7 @@ export default function HomeScreen({navigation}: any) {
             item={item}
             user={user}
             name={channelDisplayName(item, user?.id)}
-            onPress={() => navigation.navigate('Chat', {channel: item})}
+            onPress={() => navigation.navigate('Chat', {channel: item, user})}
           />
         )}
       />

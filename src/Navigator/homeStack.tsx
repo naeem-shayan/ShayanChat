@@ -9,13 +9,15 @@ import {chatkitty, channelDisplayName} from '../ChatKitty';
 import {ActivityIndicator, View} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
+import LoginScreen from '../Screens/LoginScreen';
+import SignupScreen from '../Screens/SignupScreen';
 
 const Stack = createStackNavigator();
 
-export default function HomeStack() {
+export default function HomeStack({initialRoot} : any) {
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null)
-
+  const [user, setUser] = useState<any>(null);
+  const [initial, setInitailRoot] = useState(initialRoot);
   const getData = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('user');
@@ -27,33 +29,43 @@ export default function HomeStack() {
   };
 
   useEffect(() => {
-    getData()
-  },[])
+    getData();
+  }, []);
 
   const onLogout = async (navigation: any) => {
     try {
       setLoading(true);
-      await AsyncStorage.clear();
-      await chatkitty.endSession();
-      auth().signOut();
-      setLoading(false);
-      //navigation.replace('LoginScreen')
+      //  await chatkitty.endSession();
+       await AsyncStorage.clear();
+       await auth().signOut();
+       setLoading(false);
+       navigation.replace('Login');
     } catch (error) {
       setLoading(false);
     }
   };
   return (
     <Stack.Navigator
+      initialRouteName={initialRoot}
       screenOptions={{
         headerStyle: {
           backgroundColor: Colors.firstColor,
         },
         headerTintColor: '#ffffff',
-        //headerTitle: 'Shayan Chat',
         headerTitleStyle: {
           fontSize: 22,
         },
       }}>
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Signup"
+        component={SignupScreen}
+        options={{headerShown: false}}
+      />
       <Stack.Screen
         name="HomeScreen"
         component={HomeScreen}
@@ -96,7 +108,10 @@ export default function HomeStack() {
         name="Chat"
         component={ChatScreen}
         options={({route}: any) => ({
-          title: channelDisplayName(route.params.channel, user?.displayName) /* Add this */,
+          title: channelDisplayName(
+            route.params.channel,
+            user?.id,
+          ) /* Add this */,
         })}
       />
     </Stack.Navigator>
