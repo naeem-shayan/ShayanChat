@@ -5,8 +5,8 @@ import Colors from '../Contants/Colors';
 import {IconButton} from 'react-native-paper';
 import CreateChannelScreen from '../Screens/CreateChannelScreen';
 import ChatScreen from '../Screens/ChatScreen';
-import {chatkitty, channelDisplayName} from '../ChatKitty';
-import {ActivityIndicator, View} from 'react-native';
+import {chatkitty, channelDisplayName, checkUserStatus} from '../ChatKitty';
+import {ActivityIndicator, View, Text} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
 import LoginScreen from '../Screens/LoginScreen';
@@ -108,10 +108,17 @@ export default function HomeStack({initialRoot} : any) {
         name="Chat"
         component={ChatScreen}
         options={({route}: any) => ({
-          title: channelDisplayName(
-            route.params.channel,
-            user?.id,
-          ) /* Add this */,
+          // title: channelDisplayName(route.params.channel, user?.id)
+          headerTitle: props => (
+            <View style={{flexDirection: 'column'}}>
+              <Text>{channelDisplayName(route.params.channel, user?.id)}</Text>
+              {checkUserStatus(route.params.channel, user?.id) ? (
+                <Text>Online</Text>
+              ) : (
+                <Text>Offline</Text>
+              )}
+            </View>
+          ),
         })}
       />
     </Stack.Navigator>
