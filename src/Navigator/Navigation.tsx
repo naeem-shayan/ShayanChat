@@ -35,7 +35,7 @@ const Navigation = () => {
   }
   return (
     <NavigationContainer>
-      <HomeStack initialRoot={!user ? 'Login' : 'HomeScreen'} />
+      <HomeStack initialRoot={!user ? 'Login' : 'Home'} />
     </NavigationContainer>
   );
 };

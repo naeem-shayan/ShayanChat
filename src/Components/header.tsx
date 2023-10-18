@@ -29,7 +29,7 @@ const CustomHeader = ({
         )}
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{title}</Text>
-          {userStatus && <Text>{status? 'online' : 'Ofline'}</Text>}
+          {userStatus && <Text style={styles.status}>{status? 'online' : 'Offline'}</Text>}
         </View>
       </View>
       {displayActions && (
@@ -61,6 +61,7 @@ const CustomHeader = ({
 const styles = StyleSheet.create({
   rootContainer: {
     width: '100%',
+    height: 60,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -79,7 +80,9 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontWeight: '600',
   },
-  status: {},
+  status: {
+    color : Colors.white
+  },
   loaderContainer: {
     height: 60,
     width: 50,
