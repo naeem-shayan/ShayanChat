@@ -12,7 +12,12 @@
           "package_name": "com.shayanchat"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "9475515452-vlaj16b1r27sqf8joap26ca240cse5va.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBmnCcxgnGlrMYSTZW3POC8a4OswVjtlY8"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "9475515452-vlaj16b1r27sqf8joap26ca240cse5va.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "9475515452-2b6qf62bgrbams93c7kdspqg2dlsqa3j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.shayanchat"
+              }
+            }
+          ]
         }
       }
     }
