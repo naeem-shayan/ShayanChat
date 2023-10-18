@@ -1,12 +1,14 @@
 import React, {useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
+//@ts-ignore
+import UserAvatar from 'react-native-user-avatar';
 import Colors from '../Contants/Colors';
 
 const User = ({item, onPress,...props}: any) => {
 
   return (
     <TouchableOpacity onPress={onPress} style={styles.container}>
-      <Image source={{uri: item?.displayPictureUrl}} style={styles.image} />
+      <UserAvatar size={45} name={item.displayName} />
       <View style={styles.contentContainer}>
         <View style={styles.row}>
           <Text ellipsizeMode="tail" numberOfLines={1} style={styles.userName}>
