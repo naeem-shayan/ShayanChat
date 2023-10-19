@@ -15,6 +15,7 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import moment from 'moment';
+import ImageView from 'react-native-image-viewing';
 import CustomHeader from '../Components/header';
 import messaging from '@react-native-firebase/messaging';
 import {sendPushNotification} from '../Contants/SendPush';
@@ -24,6 +25,8 @@ export default function ChatScreen({route, navigation}: any) {
   const {channel, user} = route.params;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentImage, setCurrentImage] = useState('');
+  const [visible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const startChatSessionResult = chatkitty.startChatSession({
@@ -128,7 +131,13 @@ export default function ChatScreen({route, navigation}: any) {
     if (currentMessage?.type == 'FILE') {
       return (
         <View style={styles.imageMessage}>
-          <Image source={{uri: currentMessage?.file}} style={styles.image} />
+          <TouchableOpacity
+            onPress={() => {
+              setCurrentImage(currentMessage?.file);
+              setIsVisible(true);
+            }}>
+            <Image source={{uri: currentMessage?.file}} style={styles.image} />
+          </TouchableOpacity>
           <Text>{moment(currentMessage?.createdAt).format('LT')}</Text>
         </View>
       );
@@ -159,6 +168,14 @@ export default function ChatScreen({route, navigation}: any) {
         renderBubble={renderBubble}
         renderAvatar={renderAvatar}
         renderActions={renderActions}
+      />
+      <ImageView
+        images={[{uri: currentImage}]}
+        imageIndex={0}
+        visible={visible}
+        onRequestClose={() => setIsVisible(false)}
+        swipeToCloseEnabled
+        doubleTapToZoomEnabled
       />
     </>
   );
