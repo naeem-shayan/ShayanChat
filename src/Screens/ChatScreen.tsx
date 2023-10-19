@@ -7,7 +7,12 @@ import {
   GiftedChat,
 } from 'react-native-gifted-chat';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {chatkitty, channelDisplayName, checkUserStatus} from '../ChatKitty';
+import {
+  chatkitty,
+  channelDisplayName,
+  checkUserStatus,
+  participant,
+} from '../ChatKitty';
 import Loading from '../Components/loading';
 import {AuthContext} from '../Context/authProvider';
 import Colors from '../Contants/Colors';
@@ -27,10 +32,16 @@ export default function ChatScreen({route, navigation}: any) {
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState('');
   const [visible, setIsVisible] = useState(false);
+  const [participantDetails, setParticipantDetails] = useState<any>(null);
+  const [statusUpdated, setStatusUpdated] = useState(false);
 
   useEffect(() => {
     const startChatSessionResult = chatkitty.startChatSession({
       channel: channel,
+      onParticipantPresenceChanged: user => {
+        console.log('User:', user);
+        setParticipantDetails(user);
+      },
       onMessageReceived: message => {
         //@ts-ignore
         setMessages((currentMessages: any) =>
@@ -51,12 +62,18 @@ export default function ChatScreen({route, navigation}: any) {
     return startChatSessionResult.session.end;
   }, [user, channel]);
 
+  useEffect(() => {
+    const userData = participant(channel, user?.id);
+    console.log('Userr:', userData);
+    setParticipantDetails(userData);
+  }, []);
+
   async function handleSend(pendingMessages: any) {
     await chatkitty.sendMessage({
       channel: channel,
       body: pendingMessages[0].text,
     });
-    sendPushNotification(user?.deviceToken, {
+    sendPushNotification(participantDetails?.properties?.deviceToken, {
       title: user?.displayName,
       body: pendingMessages[0].text,
     });
@@ -157,7 +174,7 @@ export default function ChatScreen({route, navigation}: any) {
       <CustomHeader
         title={channelDisplayName(channel, user?.id)}
         showBack
-        status={checkUserStatus(channel, user?.id)}
+        status={participantDetails?.presence?.online ? 'online' : 'offline'}
         userStatus
         onBackPress={() => navigation.goBack()}
       />

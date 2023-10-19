@@ -10,6 +10,7 @@ import ChatThread from '../Components/chatThread';
 import Colors from '../Contants/Colors';
 import CustomHeader from '../Components/header';
 import messaging from '@react-native-firebase/messaging';
+import { ChatKitty } from '@chatkitty/core';
 
 export default function HomeScreen({navigation}: any) {
   const [channels, setChannels] = useState([]);
@@ -35,6 +36,7 @@ export default function HomeScreen({navigation}: any) {
       setConnecting(true);
       const user = await getData();
       await chatkitty.endSession();
+      console.log('USer:', JSON.stringify(user))
       const result: any = await chatkitty.startSession({
         username: user?.uid,
         authParams: {
@@ -44,6 +46,7 @@ export default function HomeScreen({navigation}: any) {
           userId: user?.id,
         },
       });
+      console.log("RESULT:", result)
       if (result.failed) {
         setConnecting(false);
       } else {
@@ -83,26 +86,26 @@ export default function HomeScreen({navigation}: any) {
     return unsubscribe;
   }, []);
 
-  useEffect(() => {
-    if (!connecting) {
-      let isCancelled = false;
-      chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
-        if (!isCancelled) {
-          setChannels(result.paginator.items);
+  // useEffect(() => {
+  //   if (!connecting) {
+  //     let isCancelled = false;
+  //     chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
+  //       if (!isCancelled) {
+  //         setChannels(result.paginator.items);
 
-          if (loading) {
-            setLoading(false);
-          }
-        }
-      });
+  //         if (loading) {
+  //           setLoading(false);
+  //         }
+  //       }
+  //     });
 
-      return () => {
-        isCancelled = true;
-      };
-    }
-  }, [isFocused, loading, connecting]);
+  //     return () => {
+  //       isCancelled = true;
+  //     };
+  //   }
+  // }, [isFocused, loading, connecting]);
 
-  if (loading || connecting) {
+  if (!loading || connecting) {
     return <Loading />;
   }
 

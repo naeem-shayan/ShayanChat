@@ -29,7 +29,7 @@ const CustomHeader = ({
         )}
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{title}</Text>
-          {userStatus && <Text style={styles.status}>{status? 'online' : 'Offline'}</Text>}
+          {userStatus && <Text style={styles.status}>{status}</Text>}
         </View>
       </View>
       {displayActions && (

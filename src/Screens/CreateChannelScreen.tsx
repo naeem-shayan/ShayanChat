@@ -36,6 +36,7 @@ export default function CreateChannelScreen({navigation}: any) {
 
   useEffect(() => {
     getData();
+    //getUsers();
   }, []);
 
   const getData = async () => {
@@ -47,6 +48,13 @@ export default function CreateChannelScreen({navigation}: any) {
       // error reading value
     }
   };
+
+  // const getUsers = async () => {
+  //   setLoading(true);
+  //   const users: any = await chatkitty.listUsers();
+  //   setUsers(users?.paginator?.items);
+  //   setLoading(false);
+  // };
 
   useEffect(() => {
     (async () => {

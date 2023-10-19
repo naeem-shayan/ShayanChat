@@ -145,7 +145,7 @@ export const handleGoogleLogin = async (navigation: any) => {
         displayName: res.user.displayName,
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      navigation.replace("HomeScreen")
+      navigation.replace("Home")
       // console.log("first", navigation.replace)
     })
     .catch(error => console.log('error: ' + error));
@@ -175,7 +175,7 @@ export const handleFacebookLogin = async (navigation: any) => {
         displayName: `fb_${new Date().getTime()}`
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      navigation.replace("HomeScreen")
+      navigation.replace("Home")
     })
     .catch(error => console.log('Error', error));
 };

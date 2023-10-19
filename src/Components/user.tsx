@@ -12,7 +12,7 @@ const User = ({item, onPress,...props}: any) => {
           <Text ellipsizeMode="tail" numberOfLines={1} style={styles.userName}>
             {item.displayName}
           </Text>
-          <Text style={styles.userStatus}>{item?.presence?.status}</Text>
+          <Text style={styles.userStatus}>{item?.presence?.online? 'online' : 'offline'}</Text>
         </View>
       </View>
     </TouchableOpacity>
