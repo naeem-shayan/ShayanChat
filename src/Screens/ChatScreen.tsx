@@ -16,6 +16,9 @@ import storage from '@react-native-firebase/storage';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import moment from 'moment';
 import CustomHeader from '../Components/header';
+import messaging from '@react-native-firebase/messaging';
+import {sendPushNotification} from '../Contants/SendPush';
+import User from '../Components/user';
 
 export default function ChatScreen({route, navigation}: any) {
   const {channel, user} = route.params;
@@ -48,6 +51,10 @@ export default function ChatScreen({route, navigation}: any) {
   async function handleSend(pendingMessages: any) {
     await chatkitty.sendMessage({
       channel: channel,
+      body: pendingMessages[0].text,
+    });
+    sendPushNotification(user?.deviceToken, {
+      title: user?.displayName,
       body: pendingMessages[0].text,
     });
   }
