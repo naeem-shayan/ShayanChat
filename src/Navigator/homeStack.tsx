@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from '../Screens/LoginScreen';
 import SignupScreen from '../Screens/SignupScreen';
 import BottomTab from './bottomTab';
+import ServerConnection from '../Contants/ServerConnection';
 
 const Stack = createStackNavigator();
 
@@ -65,6 +66,11 @@ export default function HomeStack({initialRoot} : any) {
       <Stack.Screen
         name="Chat"
         component={ChatScreen}
+        options={{headerShown : false}}
+      />
+      <Stack.Screen
+        name="Connect"
+        component={ServerConnection}
         options={{headerShown : false}}
       />
     </Stack.Navigator>

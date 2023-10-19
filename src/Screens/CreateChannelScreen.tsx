@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -36,7 +37,7 @@ export default function CreateChannelScreen({navigation}: any) {
 
   useEffect(() => {
     getData();
-    //getUsers();
+    getUsers();
   }, []);
 
   const getData = async () => {
@@ -49,34 +50,47 @@ export default function CreateChannelScreen({navigation}: any) {
     }
   };
 
-  // const getUsers = async () => {
-  //   setLoading(true);
-  //   const users: any = await chatkitty.listUsers();
-  //   setUsers(users?.paginator?.items);
-  //   setLoading(false);
-  // };
-
   useEffect(() => {
-    (async () => {
-      if (user) {
-        let fetctedUsers: any = [];
-        firestore()
-          .collection('Users')
-          .where('id', '!=', user?.id)
-          .get()
-          .then(querySnapshot => {
-            querySnapshot.forEach(documentSnapshot => {
-              fetctedUsers.push(documentSnapshot.data());
-            });
-            setUsers(fetctedUsers);
-            setLoading(false);
-          })
-          .catch(() => {
-            setLoading(false);
-          });
-      }
-    })();
-  }, [user]);
+    chatkitty.onUserPresenceChanged(async user => {
+      const presence = user.presence; // Update online users list
+      console.log('User:', user);
+    });
+  }, []);
+
+  const getUsers = async () => {
+    const data: any = await chatkitty.listUsers();
+    let users: any = data?.paginator?.items;
+    const statusOrder = [true, false];
+    users = users.sort(
+      (a: any, b: any) =>
+        statusOrder.indexOf(a.presence.online) -
+        statusOrder.indexOf(b.presence.online),
+    );
+    setUsers(users);
+    setLoading(false);
+  };
+
+  // useEffect(() => {
+  //   (async () => {
+  //     if (user) {
+  //       let fetctedUsers: any = [];
+  //       firestore()
+  //         .collection('Users')
+  //         .where('id', '!=', user?.id)
+  //         .get()
+  //         .then(querySnapshot => {
+  //           querySnapshot.forEach(documentSnapshot => {
+  //             fetctedUsers.push(documentSnapshot.data());
+  //           });
+  //           setUsers(fetctedUsers);
+  //           setLoading(false);
+  //         })
+  //         .catch(() => {
+  //           setLoading(false);
+  //         });
+  //     }
+  //   })();
+  // }, [user]);
 
   return (
     <>
