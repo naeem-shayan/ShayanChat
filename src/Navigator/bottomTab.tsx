@@ -1,0 +1,61 @@
+import React, {useContext, useEffect, useState} from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {AuthContext, AuthProvider} from '../Context/authProvider';
+import {chatkitty} from '../ChatKitty';
+import Loading from '../Components/loading';
+import HomeStack from './homeStack';
+import auth from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import HomeScreen from '../Screens/HomeScreen';
+import CreateChannelScreen from '../Screens/CreateChannelScreen';
+import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {Alert, Text, View} from 'react-native';
+import Profile from '../Screens/Profile';
+import Colors from '../Contants/Colors';
+
+const Tab = createBottomTabNavigator();
+
+const BottomTab = () => {
+  return (
+    <Tab.Navigator initialRouteName="HomeScreen" screenOptions={{headerShown: false}}>
+      <Tab.Screen
+        name="CreateChannelScreen"
+        component={CreateChannelScreen}
+        options={{
+          tabBarLabel: 'Users',
+          tabBarActiveTintColor: Colors.firstColor,
+          tabBarIcon: ({color, size}) => (
+            <Icons name="account-multiple" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="HomeScreen"
+        component={HomeScreen}
+        options={{
+          tabBarLabel: 'Chat',
+          tabBarActiveTintColor: Colors.firstColor,
+          tabBarIcon: ({color, size}) => (
+            <Icons name="chat" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          tabBarLabel: 'Profile',
+          tabBarActiveTintColor: Colors.firstColor,
+          tabBarIcon: ({color, size}) => (
+            <Icons name="account" color={color} size={size} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
+export default BottomTab;

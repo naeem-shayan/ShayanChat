@@ -8,8 +8,8 @@ import Loading from '../Components/loading';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ChatThread from '../Components/chatThread';
 import Colors from '../Contants/Colors';
-import auth from '@react-native-firebase/auth';
 import CustomHeader from '../Components/header';
+import messaging from '@react-native-firebase/messaging';
 
 export default function HomeScreen({navigation}: any) {
   const [channels, setChannels] = useState([]);
@@ -30,19 +30,6 @@ export default function HomeScreen({navigation}: any) {
     }
   };
 
-  const onLogout = async () => {
-    try {
-      setLoadingOut(true);
-      //await chatkitty.endSession();
-      await AsyncStorage.clear();
-      await auth().signOut();
-      setLoadingOut(false);
-      navigation.replace('Login');
-    } catch (error) {
-      setLoadingOut(false);
-    }
-  };
-
   useEffect(() => {
     (async () => {
       setConnecting(true);
@@ -53,11 +40,14 @@ export default function HomeScreen({navigation}: any) {
         authParams: {
           idToken: user?.idToken,
           displayName: user?.displayName,
+          deviceToken: user?.deviceToken,
+          userId: user?.id,
         },
       });
       if (result.failed) {
         setConnecting(false);
       } else {
+        console.log('UpdatedUser:', result?.session?.user);
         const updatedUser = {
           ...user,
           id: result?.session?.user?.id,
@@ -86,6 +76,14 @@ export default function HomeScreen({navigation}: any) {
   }, []);
 
   useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
     if (!connecting) {
       let isCancelled = false;
       chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
@@ -110,13 +108,7 @@ export default function HomeScreen({navigation}: any) {
 
   return (
     <>
-      <CustomHeader
-        title={'Conversations'}
-        displayActions
-        loading={loadingOut}
-        onAddPress={() => navigation.navigate('CreateChannel')}
-        onLogoutPress={onLogout}
-      />
+      <CustomHeader title={'Conversations'} />
       <View style={styles.container}>
         <FlatList
           data={channels}

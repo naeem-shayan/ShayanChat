@@ -20,3 +20,10 @@ export function checkUserStatus(channel: any, id: any) {
       .online;
   }
 }
+
+export function userDeviceToken(channel: any, id: any) {
+  if (channel.type === 'DIRECT') {
+    return channel.members.filter((member: any) => member.id != id)[0]
+      ?.deviceToken;
+  }
+}

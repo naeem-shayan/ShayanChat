@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {LoginManager, AccessToken} from 'react-native-fbsdk-next';
 import Toast from 'react-native-toast-message';
+import messaging from '@react-native-firebase/messaging';
 
 export const validateName = (name: string) => {
   if (!name) {
@@ -52,13 +53,17 @@ export const signin = (
     .then(async userCredential => {
       const currentUser = userCredential.user;
       const idToken = await currentUser.getIdToken()
+      await messaging().registerDeviceForRemoteMessages();
+      const token = await messaging().getToken();
+      console.log("Token:", token)
       const user = {
         uid: currentUser.uid,
         idToken: idToken,
+        deviceToken: token
       }
       await AsyncStorage.setItem('user', JSON.stringify(user));
       setLoading(false)
-      navigation.replace('HomeScreen')
+      navigation.replace('Home')
     })
     .catch(error => {
       setLoading(false);
@@ -98,14 +103,17 @@ export const signup = (
       });
       const currentUser = userCredential.user;
       const idToken = await currentUser.getIdToken()
+      await messaging().registerDeviceForRemoteMessages();
+      const token = await messaging().getToken();
       const user = {
         uid: currentUser.uid,
         idToken: idToken,
-        displayName: name
+        displayName: name,
+        deviceToken: token
       }
       await AsyncStorage.setItem('user', JSON.stringify(user));
       setLoading(false)
-      navigation.replace('HomeScreen')
+      navigation.replace('Home')
     })
     .catch(error => {
       setLoading(false);
