@@ -13,8 +13,15 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Colors from '../Contants/Colors';
-import {signin, validateEmail, validatePassword} from '../Contants/Utils';
-import { chatkitty } from '../ChatKitty';
+import {
+  signin,
+  validateEmail,
+  validatePassword,
+  handleGoogleLogin,
+  handleFacebookLogin,
+} from '../Contants/Utils';
+import {chatkitty} from '../ChatKitty';
+import {IconButton} from 'react-native-paper';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
@@ -101,6 +108,20 @@ const LoginScreen = (props: any) => {
               <Text style={styles.signupText}>Login</Text>
             )}
           </TouchableOpacity>
+          <View style={styles.socialButtons}>
+            <IconButton
+              icon="google-plus"
+              size={30}
+              iconColor={Colors.firstColor}
+              onPress={() => handleGoogleLogin(navigation)}
+            />
+            <IconButton
+              icon="facebook"
+              size={30}
+              iconColor={Colors.firstColor}
+              onPress={() => handleFacebookLogin(navigation)}
+            />
+          </View>
           <Text
             style={styles.newAccountText}
             onPress={() => !loading && navigation.navigate('Signup')}>
@@ -176,8 +197,15 @@ const styles = StyleSheet.create({
   },
   newAccountText: {
     margin: 20,
+    marginTop:10,
     color: Colors.textColor,
     alignSelf: 'center',
+  },
+  socialButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop:15,
   },
 });
 

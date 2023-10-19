@@ -2,6 +2,8 @@ import auth from '@react-native-firebase/auth';
 import {chatkitty} from '../ChatKitty';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {LoginManager, AccessToken} from 'react-native-fbsdk-next';
 import Toast from 'react-native-toast-message';
 import messaging from '@react-native-firebase/messaging';
 
@@ -129,4 +131,51 @@ export const signup = (
               }`,
       });
     });
+};
+
+export const handleGoogleLogin = async (navigation: any) => {
+  const {idToken} = await GoogleSignin.signIn();
+  const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+  auth()
+    .signInWithCredential(googleCredential)
+    .then(async res => {
+      const user = {
+        uid: res.user.uid,
+        idToken,
+        displayName: res.user.displayName,
+      };
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      navigation.replace("HomeScreen")
+      // console.log("first", navigation.replace)
+    })
+    .catch(error => console.log('error: ' + error));
+};
+
+export const handleFacebookLogin = async (navigation: any) => {
+  const result = await LoginManager.logInWithPermissions([
+    'public_profile',
+    'email',
+  ]);
+  if (result.isCancelled) {
+    throw 'User cancelled the login process';
+  }
+  const data = await AccessToken.getCurrentAccessToken();
+  if (!data) {
+    throw 'Something went wrong obtaining access token';
+  }
+  const facebookCredential = auth.FacebookAuthProvider.credential(
+    data.accessToken,
+  );
+  auth()
+    .signInWithCredential(facebookCredential)
+    .then(async res => {
+      const user = {
+        uid: data.userID,
+        idToken: data.accessToken,
+        displayName: `fb_${new Date().getTime()}`
+      };
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      navigation.replace("HomeScreen")
+    })
+    .catch(error => console.log('Error', error));
 };
