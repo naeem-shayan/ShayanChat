@@ -14,11 +14,12 @@ import {FlatList} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import User from '../Components/user';
+import CustomHeader from '../Components/header';
 
 export default function CreateChannelScreen({navigation}: any) {
   const [channelName, setChannelName] = useState('');
   const [channelError, setChannelError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any>();
   const [user, setUser] = useState<any>(null);
 
@@ -60,23 +61,36 @@ export default function CreateChannelScreen({navigation}: any) {
               fetctedUsers.push(documentSnapshot.data());
             });
             setUsers(fetctedUsers);
+            setLoading(false);
+          })
+          .catch(() => {
+            setLoading(false);
           });
       }
     })();
   }, [user]);
 
   return (
-    <View style={styles.rootContainer}>
-      <FlatList
-        data={users}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={(item: any) => item.id}
-        ItemSeparatorComponent={() => <Divider />}
-        renderItem={({item}: any) => (
-          <User item={item} onPress={() => handleButtonPress(item)} />
+    <>
+      <CustomHeader title={'Users'} />
+      <View style={styles.rootContainer}>
+        {loading ? (
+          <View style={styles.loader}>
+            <ActivityIndicator size={'large'} color={Colors.firstColor} />
+          </View>
+        ) : (
+          <FlatList
+            data={users}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item: any) => item.id}
+            ItemSeparatorComponent={() => <Divider />}
+            renderItem={({item}: any) => (
+              <User item={item} onPress={() => handleButtonPress(item)} />
+            )}
+          />
         )}
-      />
-    </View>
+      </View>
+    </>
   );
 }
 
@@ -155,5 +169,10 @@ const styles = StyleSheet.create({
   },
   listDescription: {
     fontSize: 16,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
