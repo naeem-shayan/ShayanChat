@@ -34,11 +34,12 @@ function App(): JSX.Element {
       subscription.remove();
     };
   }, []);
+  const toastConfig = { success: () => <></>};
   return (
     <PaperProvider>
       <AuthProvider>
         <Navigation />
-        <Toast />
+        <Toast config={toastConfig}/>
       </AuthProvider>
     </PaperProvider>
   );

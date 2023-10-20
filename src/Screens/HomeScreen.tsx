@@ -1,6 +1,13 @@
 import {useIsFocused} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {Alert, FlatList, StyleSheet, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  View,
+  Text
+} from 'react-native';
 import {Divider, List} from 'react-native-paper';
 import {chatkitty, channelDisplayName} from './../ChatKitty';
 import Loading from '../Components/loading';
@@ -53,15 +60,27 @@ export default function HomeScreen({navigation}: any) {
   useEffect(() => {
     let isCancelled = false;
     getData();
-    chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
-      if (!isCancelled) {
-        setChannels(result.paginator.items);
-
-        if (loading) {
-          setLoading(false);
-        }
-      }
-    });
+    chatkitty
+      .listChannels({filter: {joined: true, unread: true}})
+      .then((result: any) => {
+        let unreads: any = [];
+        result.paginator.items?.forEach((el: any) => {
+          unreads.push(el?.id);
+        });
+        chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
+          if (!isCancelled) {
+            let channels = result.paginator.items;
+            const newArray = channels.map((obj: any) => ({
+              ...obj, // Spread the existing object properties
+              unread: unreads.includes(obj.id), // Add "unread" key based on the match
+            }));
+            setChannels(newArray);
+            if (loading) {
+              setLoading(false);
+            }
+          }
+        });
+      });
 
     return () => {
       isCancelled = true;
@@ -76,20 +95,33 @@ export default function HomeScreen({navigation}: any) {
     <>
       <CustomHeader title={'Conversations'} />
       <View style={styles.container}>
-        <FlatList
-          data={channels}
-          showsVerticalScrollIndicator={false}
-          keyExtractor={(item: any) => item.id.toString()}
-          ItemSeparatorComponent={() => <Divider />}
-          renderItem={({item}: any) => (
-            <ChatThread
-              item={item}
-              user={user}
-              name={channelDisplayName(item, user?.id)}
-              onPress={() => navigation.navigate('Chat', {channel: item, user})}
-            />
-          )}
-        />
+        {loading ? (
+          <View style={styles.loader}>
+            <ActivityIndicator size={'large'} color={Colors.firstColor} />
+          </View>
+        ) : (
+          <FlatList
+            data={channels}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item: any) => item.id.toString()}
+            ItemSeparatorComponent={() => <Divider />}
+            ListEmptyComponent={
+              <View style={styles.loader}>
+                <Text style={styles.notFound}>No Record Found</Text>
+              </View>
+            }
+            renderItem={({item}: any) => (
+              <ChatThread
+                item={item}
+                user={user}
+                name={channelDisplayName(item, user?.id)}
+                onPress={() => {
+                  navigation.navigate('Chat', {channel: item, user});
+                }}
+              />
+            )}
+          />
+        )}
       </View>
     </>
   );
@@ -106,5 +138,13 @@ const styles = StyleSheet.create({
   },
   listDescription: {
     fontSize: 16,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notFound: {
+    marginTop: 300,
   },
 });

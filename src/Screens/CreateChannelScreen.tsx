@@ -40,6 +40,13 @@ export default function CreateChannelScreen({navigation}: any) {
     getUsers();
   }, []);
 
+  useEffect(() => {
+    chatkitty.onUserPresenceChanged(async user => {
+      const presence = user.presence; // Update online users list
+      getUsers();
+    });
+  }, []);
+
   const getData = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('user');
@@ -49,13 +56,6 @@ export default function CreateChannelScreen({navigation}: any) {
       // error reading value
     }
   };
-
-  useEffect(() => {
-    chatkitty.onUserPresenceChanged(async user => {
-      const presence = user.presence; // Update online users list
-      console.log('User:', user);
-    });
-  }, []);
 
   const getUsers = async () => {
     const data: any = await chatkitty.listUsers();
@@ -70,28 +70,6 @@ export default function CreateChannelScreen({navigation}: any) {
     setLoading(false);
   };
 
-  // useEffect(() => {
-  //   (async () => {
-  //     if (user) {
-  //       let fetctedUsers: any = [];
-  //       firestore()
-  //         .collection('Users')
-  //         .where('id', '!=', user?.id)
-  //         .get()
-  //         .then(querySnapshot => {
-  //           querySnapshot.forEach(documentSnapshot => {
-  //             fetctedUsers.push(documentSnapshot.data());
-  //           });
-  //           setUsers(fetctedUsers);
-  //           setLoading(false);
-  //         })
-  //         .catch(() => {
-  //           setLoading(false);
-  //         });
-  //     }
-  //   })();
-  // }, [user]);
-
   return (
     <>
       <CustomHeader title={'Users'} />
@@ -104,6 +82,11 @@ export default function CreateChannelScreen({navigation}: any) {
           <FlatList
             data={users}
             showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.loader}>
+                <Text style={styles.notFound}>No Record Found</Text>
+              </View>
+            }
             keyExtractor={(item: any) => item.id}
             ItemSeparatorComponent={() => <Divider />}
             renderItem={({item}: any) => (
@@ -196,5 +179,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  notFound: {
+    marginTop: 300,
   },
 });

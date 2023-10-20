@@ -34,6 +34,9 @@ export default function ChatScreen({route, navigation}: any) {
   const [visible, setIsVisible] = useState(false);
   const [participantDetails, setParticipantDetails] = useState<any>(null);
   const [statusUpdated, setStatusUpdated] = useState(false);
+  const [loadEarlier, setLoadEarlier] = useState(false);
+  const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
+  const [messagePaginator, setMessagePaginator] = useState<any>(null);
 
   useEffect(() => {
     const startChatSessionResult = chatkitty.startChatSession({
@@ -56,6 +59,8 @@ export default function ChatScreen({route, navigation}: any) {
       })
       .then((result: any) => {
         setMessages(result.paginator.items.map(mapMessage));
+        setMessagePaginator(result.paginator);
+        setLoadEarlier(result.paginator.hasNextPage);
         setLoading(false);
       });
 
@@ -77,6 +82,20 @@ export default function ChatScreen({route, navigation}: any) {
       title: user?.displayName,
       body: pendingMessages[0].text,
     });
+  }
+
+  async function handleLoadEarlier() {
+    if (!messagePaginator.hasNextPage) {
+      setLoadEarlier(false);
+      return;
+    }
+    setIsLoadingEarlier(true);
+    const nextPaginator = await messagePaginator.nextPage();
+    setMessagePaginator(nextPaginator);
+    setMessages(currentMessages =>
+      GiftedChat.prepend(currentMessages, nextPaginator.items.map(mapMessage)),
+    );
+    setIsLoadingEarlier(false);
   }
 
   async function handleSendImage(params: any) {
@@ -182,6 +201,9 @@ export default function ChatScreen({route, navigation}: any) {
         messages={messages}
         onSend={handleSend}
         user={mapUser(user)}
+        loadEarlier={loadEarlier}
+        isLoadingEarlier={isLoadingEarlier}
+        onLoadEarlier={handleLoadEarlier}
         renderBubble={renderBubble}
         renderAvatar={renderAvatar}
         renderActions={renderActions}

@@ -59,6 +59,7 @@ export const signin = (
         uid: currentUser.uid,
         idToken: idToken,
         deviceToken: token,
+        userType: 'email'
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
       setLoading(false);
@@ -109,6 +110,7 @@ export const signup = (
         idToken: idToken,
         displayName: name,
         deviceToken: token,
+        userType: 'email'
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
       setLoading(false);
@@ -139,10 +141,14 @@ export const handleGoogleLogin = async (navigation: any) => {
     .signInWithCredential(googleCredential)
     .then(async res => {
       const token = await auth().currentUser?.getIdToken();
+      await messaging().registerDeviceForRemoteMessages();
+      const deviceToken = await messaging().getToken();
       const user = {
         uid: res.user.uid,
         idToken: token,
         displayName: res.user.displayName,
+        deviceToken,
+        userType: 'google'
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
       navigation.replace('Connect');
@@ -170,10 +176,14 @@ export const handleFacebookLogin = async (navigation: any) => {
     .then(async res => {
       const currentUser = await auth().currentUser;
       const token = await currentUser?.getIdToken();
+      await messaging().registerDeviceForRemoteMessages();
+      const deviceToken = await messaging().getToken();
       const user = {
         uid: currentUser?.uid,
         idToken: token,
         displayName: currentUser?.displayName,
+        deviceToken,
+        userType: 'facebook'
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
       navigation.replace('Connect');

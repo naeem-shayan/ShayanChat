@@ -1,18 +1,26 @@
 import React, {useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import Colors from '../Contants/Colors';
+//@ts-ignore
+import UserAvatar from 'react-native-user-avatar';
 
 const User = ({item, onPress,...props}: any) => {
 
   return (
     <TouchableOpacity onPress={onPress} style={styles.container}>
-      <Image source={{uri: item?.displayPictureUrl}} style={styles.image} />
+      <View>
+        {/* <Image source={{uri: item?.displayPictureUrl}} style={styles.image} /> */}
+        <UserAvatar size={50} name={item.displayName} />
+        {item?.presence?.online && <View style={styles.online} />}
+      </View>
       <View style={styles.contentContainer}>
         <View style={styles.row}>
           <Text ellipsizeMode="tail" numberOfLines={1} style={styles.userName}>
             {item.displayName}
           </Text>
-          <Text style={styles.userStatus}>{item?.presence?.online? 'online' : 'offline'}</Text>
+          <Text style={styles.userStatus}>
+            {item?.presence?.online ? 'online' : 'offline'}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -54,7 +62,16 @@ const styles = StyleSheet.create({
   },
   userStatus: {
     color: Colors.userStatusColor,
-    fontSize:10
+    fontSize: 10,
+  },
+  online: {
+    height: 12,
+    width: 12,
+    backgroundColor: '#1EED11',
+    borderRadius: 12 / 2,
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
   },
 });
 
