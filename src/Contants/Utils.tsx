@@ -52,18 +52,18 @@ export const signin = (
     .signInWithEmailAndPassword(email.trim(), password.trim())
     .then(async userCredential => {
       const currentUser = userCredential.user;
-      const idToken = await currentUser.getIdToken()
+      const idToken = await currentUser.getIdToken();
       await messaging().registerDeviceForRemoteMessages();
       const token = await messaging().getToken();
-      console.log("Token:", token)
       const user = {
         uid: currentUser.uid,
         idToken: idToken,
-        deviceToken: token
-      }
+        deviceToken: token,
+        userType: 'email'
+      };
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      setLoading(false)
-      navigation.replace('Home')
+      setLoading(false);
+      navigation.replace('Connect');
     })
     .catch(error => {
       setLoading(false);
@@ -92,7 +92,7 @@ export const signup = (
   email: string,
   password: string,
   setLoading: (loading: boolean) => void,
-  navigation: any
+  navigation: any,
 ) => {
   setLoading(true);
   auth()
@@ -102,18 +102,19 @@ export const signup = (
         displayName: name,
       });
       const currentUser = userCredential.user;
-      const idToken = await currentUser.getIdToken()
+      const idToken = await currentUser.getIdToken();
       await messaging().registerDeviceForRemoteMessages();
       const token = await messaging().getToken();
       const user = {
         uid: currentUser.uid,
         idToken: idToken,
         displayName: name,
-        deviceToken: token
-      }
+        deviceToken: token,
+        userType: 'email'
+      };
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      setLoading(false)
-      navigation.replace('Home')
+      setLoading(false);
+      navigation.replace('Connect');
     })
     .catch(error => {
       setLoading(false);
@@ -139,14 +140,18 @@ export const handleGoogleLogin = async (navigation: any) => {
   auth()
     .signInWithCredential(googleCredential)
     .then(async res => {
+      const token = await auth().currentUser?.getIdToken();
+      await messaging().registerDeviceForRemoteMessages();
+      const deviceToken = await messaging().getToken();
       const user = {
         uid: res.user.uid,
-        idToken,
+        idToken: token,
         displayName: res.user.displayName,
+        deviceToken,
+        userType: 'google'
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      navigation.replace("HomeScreen")
-      // console.log("first", navigation.replace)
+      navigation.replace('Connect');
     })
     .catch(error => console.log('error: ' + error));
 };
@@ -169,13 +174,19 @@ export const handleFacebookLogin = async (navigation: any) => {
   auth()
     .signInWithCredential(facebookCredential)
     .then(async res => {
+      const currentUser = await auth().currentUser;
+      const token = await currentUser?.getIdToken();
+      await messaging().registerDeviceForRemoteMessages();
+      const deviceToken = await messaging().getToken();
       const user = {
-        uid: data.userID,
-        idToken: data.accessToken,
-        displayName: `fb_${new Date().getTime()}`
+        uid: currentUser?.uid,
+        idToken: token,
+        displayName: currentUser?.displayName,
+        deviceToken,
+        userType: 'facebook'
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
-      navigation.replace("HomeScreen")
+      navigation.replace('Connect');
     })
     .catch(error => console.log('Error', error));
 };

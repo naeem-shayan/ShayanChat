@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -36,6 +37,14 @@ export default function CreateChannelScreen({navigation}: any) {
 
   useEffect(() => {
     getData();
+    getUsers();
+  }, []);
+
+  useEffect(() => {
+    chatkitty.onUserPresenceChanged(async user => {
+      const presence = user.presence; // Update online users list
+      getUsers();
+    });
   }, []);
 
   const getData = async () => {
@@ -48,27 +57,18 @@ export default function CreateChannelScreen({navigation}: any) {
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      if (user) {
-        let fetctedUsers: any = [];
-        firestore()
-          .collection('Users')
-          .where('id', '!=', user?.id)
-          .get()
-          .then(querySnapshot => {
-            querySnapshot.forEach(documentSnapshot => {
-              fetctedUsers.push(documentSnapshot.data());
-            });
-            setUsers(fetctedUsers);
-            setLoading(false);
-          })
-          .catch(() => {
-            setLoading(false);
-          });
-      }
-    })();
-  }, [user]);
+  const getUsers = async () => {
+    const data: any = await chatkitty.listUsers();
+    let users: any = data?.paginator?.items;
+    const statusOrder = [true, false];
+    users = users.sort(
+      (a: any, b: any) =>
+        statusOrder.indexOf(a.presence.online) -
+        statusOrder.indexOf(b.presence.online),
+    );
+    setUsers(users);
+    setLoading(false);
+  };
 
   return (
     <>
@@ -82,6 +82,11 @@ export default function CreateChannelScreen({navigation}: any) {
           <FlatList
             data={users}
             showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.loader}>
+                <Text style={styles.notFound}>No Record Found</Text>
+              </View>
+            }
             keyExtractor={(item: any) => item.id}
             ItemSeparatorComponent={() => <Divider />}
             renderItem={({item}: any) => (
@@ -174,5 +179,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  notFound: {
+    marginTop: 300,
   },
 });

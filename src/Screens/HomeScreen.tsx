@@ -1,8 +1,14 @@
 import {useIsFocused} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {FlatList, StyleSheet, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  View,
+  Text
+} from 'react-native';
 import {Divider, List} from 'react-native-paper';
-import firestore from '@react-native-firebase/firestore';
 import {chatkitty, channelDisplayName} from './../ChatKitty';
 import Loading from '../Components/loading';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +24,7 @@ export default function HomeScreen({navigation}: any) {
   const [user, setUser] = useState<any>(null);
   const isFocused = useIsFocused();
   const [connecting, setConnecting] = useState(true);
+  const [reload, setReload] = useState<any>();
 
   const getData = async () => {
     try {
@@ -31,78 +38,56 @@ export default function HomeScreen({navigation}: any) {
   };
 
   useEffect(() => {
-    (async () => {
-      setConnecting(true);
-      const user = await getData();
-      await chatkitty.endSession();
-      const result: any = await chatkitty.startSession({
-        username: user?.uid,
-        authParams: {
-          idToken: user?.idToken,
-          displayName: user?.displayName,
-          deviceToken: user?.deviceToken,
-          userId: user?.id,
-        },
-      });
-      if (result.failed) {
-        setConnecting(false);
-      } else {
-        console.log('UpdatedUser:', result?.session?.user);
-        const updatedUser = {
-          ...user,
-          id: result?.session?.user?.id,
-          callStatus: result?.session?.user?.callStatus,
-          displayName: result?.session?.user?.displayName,
-          displayPictureUrl: result?.session?.user?.displayPictureUrl,
-          name: result?.session?.user?.name,
-          presence: result?.session?.user?.presence,
-          properties: result?.session?.user?.properties,
-        };
+    const unsubscribe = messaging().setBackgroundMessageHandler(
+      async remoteMessage => {
+        //console.log('Message handled in the background!', remoteMessage);
+        setReload(Math.random());
+      },
+    );
 
-        firestore()
-          .collection('Users')
-          .doc(`${result?.session?.user?.id}`)
-          .set(updatedUser)
-          .then(async () => {
-            await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-            setUser(updatedUser);
-            setConnecting(false);
-          })
-          .catch(error => {
-            setConnecting(false);
-          });
-      }
-    })();
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+      //console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+      setReload(Math.random());
     });
 
     return unsubscribe;
   }, []);
 
   useEffect(() => {
-    if (!connecting) {
-      let isCancelled = false;
-      chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
-        if (!isCancelled) {
-          setChannels(result.paginator.items);
-
-          if (loading) {
-            setLoading(false);
+    let isCancelled = false;
+    getData();
+    chatkitty
+      .listChannels({filter: {joined: true, unread: true}})
+      .then((result: any) => {
+        let unreads: any = [];
+        result.paginator.items?.forEach((el: any) => {
+          unreads.push(el?.id);
+        });
+        chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
+          if (!isCancelled) {
+            let channels = result.paginator.items;
+            const newArray = channels.map((obj: any) => ({
+              ...obj, // Spread the existing object properties
+              unread: unreads.includes(obj.id), // Add "unread" key based on the match
+            }));
+            setChannels(newArray);
+            if (loading) {
+              setLoading(false);
+            }
           }
-        }
+        });
       });
 
-      return () => {
-        isCancelled = true;
-      };
-    }
-  }, [isFocused, loading, connecting]);
+    return () => {
+      isCancelled = true;
+    };
+  }, [isFocused, loading, connecting, reload]);
 
-  if (loading || connecting) {
+  if (loading) {
     return <Loading />;
   }
 
@@ -110,20 +95,33 @@ export default function HomeScreen({navigation}: any) {
     <>
       <CustomHeader title={'Conversations'} />
       <View style={styles.container}>
-        <FlatList
-          data={channels}
-          showsVerticalScrollIndicator={false}
-          keyExtractor={(item: any) => item.id.toString()}
-          ItemSeparatorComponent={() => <Divider />}
-          renderItem={({item}: any) => (
-            <ChatThread
-              item={item}
-              user={user}
-              name={channelDisplayName(item, user?.id)}
-              onPress={() => navigation.navigate('Chat', {channel: item, user})}
-            />
-          )}
-        />
+        {loading ? (
+          <View style={styles.loader}>
+            <ActivityIndicator size={'large'} color={Colors.firstColor} />
+          </View>
+        ) : (
+          <FlatList
+            data={channels}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item: any) => item.id.toString()}
+            ItemSeparatorComponent={() => <Divider />}
+            ListEmptyComponent={
+              <View style={styles.loader}>
+                <Text style={styles.notFound}>No Record Found</Text>
+              </View>
+            }
+            renderItem={({item}: any) => (
+              <ChatThread
+                item={item}
+                user={user}
+                name={channelDisplayName(item, user?.id)}
+                onPress={() => {
+                  navigation.navigate('Chat', {channel: item, user});
+                }}
+              />
+            )}
+          />
+        )}
       </View>
     </>
   );
@@ -140,5 +138,13 @@ const styles = StyleSheet.create({
   },
   listDescription: {
     fontSize: 16,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notFound: {
+    marginTop: 300,
   },
 });

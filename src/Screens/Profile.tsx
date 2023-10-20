@@ -13,6 +13,9 @@ import auth from '@react-native-firebase/auth';
 import {Button} from 'react-native-paper';
 import Colors from '../Contants/Colors';
 import CustomHeader from '../Components/header';
+//@ts-ignore
+import UserAvatar from 'react-native-user-avatar';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 // create a component
 const Profile = ({navigation}: any) => {
@@ -52,7 +55,12 @@ const Profile = ({navigation}: any) => {
               setLoading(true);
               //await chatkitty.endSession();
               await AsyncStorage.clear();
-              await auth().signOut();
+              if (user?.userType == 'google') {
+                GoogleSignin?.revokeAccess();
+                await auth().signOut();
+              } else {
+                await auth().signOut();
+              }
               setLoading(false);
               navigation.replace('Login');
             } catch (error) {
@@ -68,6 +76,7 @@ const Profile = ({navigation}: any) => {
     <>
       <CustomHeader title={'Profile'} />
       <View style={styles.container}>
+        <UserAvatar size={100} name={user?.displayName} />
         <Text style={styles.userName}>{user?.displayName}</Text>
         <Button
           icon="logout"
@@ -91,7 +100,7 @@ const styles = StyleSheet.create({
     //backgroundColor: '#2c3e50',
   },
   userName: {
-    fontSize: 40,
+    fontSize: 24,
     fontWeight: 'bold',
     color: Colors.firstColor,
     marginVertical: 20,

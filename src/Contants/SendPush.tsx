@@ -5,8 +5,8 @@ export const sendPushNotification = async (token: any, data: any,) => {
         `${token}`,
       ],
       notification: {
-        title: "india vs south africa test",
-        body: "IND chose to bat",
+        title: data?.title,
+        body: data?.body,
         vibrate: 1,
         sound: 1,
         show_in_foreground: true,
