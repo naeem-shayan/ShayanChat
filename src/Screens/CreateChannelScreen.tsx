@@ -23,6 +23,14 @@ export default function CreateChannelScreen({navigation}: any) {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any>();
   const [user, setUser] = useState<any>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    //set isRefreshing to true
+    setIsRefreshing(true);
+    getUsers();
+    // and set isRefreshing to false at the end of your callApiMethod()
+  };
 
   function handleButtonPress(item: any) {
     chatkitty
@@ -67,6 +75,7 @@ export default function CreateChannelScreen({navigation}: any) {
         statusOrder.indexOf(b.presence.online),
     );
     setUsers(users);
+    setIsRefreshing(false);
     setLoading(false);
   };
 
@@ -89,6 +98,8 @@ export default function CreateChannelScreen({navigation}: any) {
             }
             keyExtractor={(item: any) => item.id}
             ItemSeparatorComponent={() => <Divider />}
+            onRefresh={onRefresh}
+            refreshing={isRefreshing}
             renderItem={({item}: any) => (
               <User item={item} onPress={() => handleButtonPress(item)} />
             )}

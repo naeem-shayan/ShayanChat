@@ -25,6 +25,8 @@ import CustomHeader from '../Components/header';
 import messaging from '@react-native-firebase/messaging';
 import {sendPushNotification} from '../Contants/SendPush';
 import User from '../Components/user';
+//@ts-ignore
+import UserAvatar from 'react-native-user-avatar';
 
 export default function ChatScreen({route, navigation}: any) {
   const {channel, user} = route.params;
@@ -66,6 +68,10 @@ export default function ChatScreen({route, navigation}: any) {
 
     return startChatSessionResult.session.end;
   }, [user, channel]);
+
+  useEffect(() => {
+    chatkitty.readChannel({channel});
+  }, []);
 
   useEffect(() => {
     const userData = participant(channel, user?.id);
@@ -181,7 +187,7 @@ export default function ChatScreen({route, navigation}: any) {
   }
 
   const renderAvatar = (props: any) => {
-    return <Avatar {...props} onPressAvatar={avatarUser => {}} />;
+    return <UserAvatar size={30} name={channelDisplayName(channel, user?.id)} />;
   };
 
   if (loading) {
