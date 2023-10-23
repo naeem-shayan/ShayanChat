@@ -35,7 +35,9 @@ const ChatThread = ({item, name, onPress, user, ...props}: any) => {
               ...styles.message,
               fontWeight: item?.unread ? 'bold' : 'normal',
             }}>
-            {item.lastReceivedMessage?.body}
+            {item.lastReceivedMessage?.type.toUpperCase() === 'TEXT'
+              ? item.lastReceivedMessage?.body
+              : 'image'}
           </Text>
           {item?.unread && (
             <View style={styles.messageContainer}>

@@ -35,7 +35,7 @@ const LoginScreen = (props: any) => {
 
   useEffect(() => {
     chatkitty.endSession();
-  },[])
+  }, []);
 
   const handleLogin = () => {
     const emailErrorMessage = validateEmail(email);
@@ -109,16 +109,16 @@ const LoginScreen = (props: any) => {
             )}
           </TouchableOpacity>
           <View style={styles.socialButtons}>
-            <IconButton
-              icon="google-plus"
-              size={30}
-              iconColor={Colors.firstColor}
-              onPress={() => handleGoogleLogin(navigation)}
-            />
+            <TouchableOpacity onPress={() => handleGoogleLogin(navigation)}>
+              <Image
+                source={require('../../assests/images/google.png')}
+                style={styles.socialIcons}
+              />
+            </TouchableOpacity>
             <IconButton
               icon="facebook"
-              size={30}
-              iconColor={Colors.firstColor}
+              size={33}
+              iconColor='#4267B2'
               onPress={() => handleFacebookLogin(navigation)}
             />
           </View>
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   newAccountText: {
     margin: 20,
-    marginTop:10,
+    marginTop: 10,
     color: Colors.textColor,
     alignSelf: 'center',
   },
@@ -205,7 +205,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop:15,
+    marginTop: 15,
+  },
+  socialIcons: {
+    height: 40,
+    width: 40,
   },
 });
 
