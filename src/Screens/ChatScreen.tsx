@@ -27,6 +27,7 @@ import {sendPushNotification} from '../Contants/SendPush';
 import User from '../Components/user';
 //@ts-ignore
 import UserAvatar from 'react-native-user-avatar';
+import {useIsFocused} from '@react-navigation/native';
 
 export default function ChatScreen({route, navigation}: any) {
   const {channel, user} = route.params;
@@ -52,7 +53,7 @@ export default function ChatScreen({route, navigation}: any) {
         setMessages((currentMessages: any) =>
           GiftedChat.append(currentMessages, [mapMessage(message)]),
         );
-        chatkitty.readChannel({channel});
+        // chatkitty.readChannel({channel});
       },
     });
 
@@ -73,6 +74,12 @@ export default function ChatScreen({route, navigation}: any) {
   useEffect(() => {
     chatkitty.readChannel({channel});
   }, []);
+
+  const isFocused = useIsFocused();
+
+  if (isFocused) {
+    chatkitty.readChannel({channel});
+  }
 
   useEffect(() => {
     const userData = participant(channel, user?.id);
@@ -188,7 +195,9 @@ export default function ChatScreen({route, navigation}: any) {
   }
 
   const renderAvatar = (props: any) => {
-    return <UserAvatar size={30} name={channelDisplayName(channel, user?.id)} />;
+    return (
+      <UserAvatar size={30} name={channelDisplayName(channel, user?.id)} />
+    );
   };
 
   if (loading) {
