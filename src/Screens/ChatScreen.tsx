@@ -140,9 +140,17 @@ export default function ChatScreen({route, navigation}: any) {
               progressListener: {
                 onStarted: () => {},
                 onProgress: progress => {},
-                onCompleted: result => {},
+                onCompleted: result => {
+                },
               },
             });
+            sendPushNotification(
+              participantDetails?.properties?.deviceToken,
+              {
+                title: user?.displayName,
+                body: 'image',
+              },
+            );
           });
       });
     }
