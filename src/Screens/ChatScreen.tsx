@@ -52,6 +52,7 @@ export default function ChatScreen({route, navigation}: any) {
         setMessages((currentMessages: any) =>
           GiftedChat.append(currentMessages, [mapMessage(message)]),
         );
+        chatkitty.readChannel({channel});
       },
     });
 
