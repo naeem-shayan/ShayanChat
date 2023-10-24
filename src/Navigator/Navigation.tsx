@@ -1,12 +1,15 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import {AuthContext, AuthProvider} from '../Context/authProvider';
 import {chatkitty} from '../ChatKitty';
 import Loading from '../Components/loading';
-import HomeStack from './homeStack';
 import auth from '@react-native-firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LoginScreen from '../Screens/LoginScreen';
+import SignupScreen from '../Screens/SignupScreen';
+import BottomTab from './bottomTab';
+import ChatScreen from '../Screens/ChatScreen';
+import ServerConnection from '../Contants/ServerConnection';
 
 const Stack = createStackNavigator();
 
@@ -35,7 +38,17 @@ const Navigation = () => {
   }
   return (
     <NavigationContainer>
-      <HomeStack initialRoot={!user ? 'Login' : 'Connect'} />
+      <Stack.Navigator
+        initialRouteName={user ? 'Connect' : 'Login'}
+        screenOptions={{
+          headerShown: false,
+        }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Signup" component={SignupScreen} />
+        <Stack.Screen name="Home" component={BottomTab} />
+        <Stack.Screen name="Chat" component={ChatScreen} />
+        <Stack.Screen name="Connect" component={ServerConnection} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };

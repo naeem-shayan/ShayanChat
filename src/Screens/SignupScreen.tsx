@@ -19,7 +19,6 @@ import {
   signup,
 } from '../Contants/Utils';
 import Colors from '../Contants/Colors';
-import {AuthContext} from '../Context/authProvider';
 
 const SignupScreen = (props: any) => {
   const {navigation} = props
@@ -31,7 +30,6 @@ const SignupScreen = (props: any) => {
   const [passwordError, setPasswordError] = useState('');
   const [credientalError, setCredientalError] = useState('');
   const [loading, setLoading] = useState(false);
-  const {register}: any = useContext(AuthContext);
 
   const handleSignup = () => {
     const nameErrorMessage = validateName(name);

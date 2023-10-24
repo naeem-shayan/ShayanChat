@@ -14,7 +14,6 @@ import {
   participant,
 } from '../ChatKitty';
 import Loading from '../Components/loading';
-import {AuthContext} from '../Context/authProvider';
 import Colors from '../Contants/Colors';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
@@ -28,6 +27,7 @@ import User from '../Components/user';
 //@ts-ignore
 import UserAvatar from 'react-native-user-avatar';
 import {useIsFocused} from '@react-navigation/native';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export default function ChatScreen({route, navigation}: any) {
   const {channel, user} = route.params;
@@ -41,11 +41,12 @@ export default function ChatScreen({route, navigation}: any) {
   const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
   const [messagePaginator, setMessagePaginator] = useState<any>(null);
 
+  const insets = useSafeAreaInsets();
+
   useEffect(() => {
     const startChatSessionResult = chatkitty.startChatSession({
       channel: channel,
       onParticipantPresenceChanged: user => {
-        console.log('User:', user);
         setParticipantDetails(user);
       },
       onMessageReceived: message => {
@@ -83,7 +84,6 @@ export default function ChatScreen({route, navigation}: any) {
 
   useEffect(() => {
     const userData = participant(channel, user?.id);
-    console.log('Userr:', userData);
     setParticipantDetails(userData);
   }, []);
 
@@ -213,7 +213,9 @@ export default function ChatScreen({route, navigation}: any) {
   }
 
   return (
-    <>
+    <SafeAreaView
+      style={{flex: 1, backgroundColor: Colors.white}}
+      edges={{bottom: 'maximum'}}>
       <CustomHeader
         title={channelDisplayName(channel, user?.id)}
         showBack
@@ -222,6 +224,7 @@ export default function ChatScreen({route, navigation}: any) {
         onBackPress={() => navigation.goBack()}
       />
       <GiftedChat
+        bottomOffset={insets.bottom}
         messages={messages}
         onSend={handleSend}
         user={mapUser(user)}
@@ -240,7 +243,7 @@ export default function ChatScreen({route, navigation}: any) {
         swipeToCloseEnabled
         doubleTapToZoomEnabled
       />
-    </>
+    </SafeAreaView>
   );
 }
 
