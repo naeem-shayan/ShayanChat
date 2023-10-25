@@ -1,24 +1,54 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# shayanChat
 
-# Getting Started
+## Motivation
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+The shayanChat app was born out of a deep-seated passion for enhancing human connections in the digital realm. In an era where communication has become increasingly fragmented and impersonal, our driving force is to create a platform that fosters genuine, meaningful interactions. We believe in the transformative power of technology to bridge gaps, cultivate understanding, and nurture relationships that transcend geographical boundaries. Our relentless pursuit of this vision fuels every aspect of ChatApp, propelling us to constantly innovate and create a space where people can truly connect, share, and thrive.
+
+# Coding Style
+
+#### React Native
+
+* **Components:** Utilize functional components for improved performance and code readability.
+* **Styling Approach:** Apply styles using the StyleSheet object to efficiently manage and reuse styles across components.
+* **Variable Naming Conventions:** Follow the camelCase convention for naming variables and ensure descriptive names for improved code maintainability.
+* **Reusable Functions:** Create a separate utils file to store reusable functions and utilize them throughout the application.
+
+
+#### Prettierr Settings
+*  **arrowParens:** avoid
+*  **bracketSameLine:** true
+*  **bracketSpacing:** false
+*  **singleQuote:** true
+*  **trailingComma:** all
+
+# Interface ScreenShots
+<img src="./readmeImages/images.png" width="800">
+
+
+# Technology & Framework used
+
+*  React Native
+*  Firebase
+
+# Features
+
+*  **One-to-One Communication:** Enable private communication between users.
+*  **Unread Message Indicator:** Provide a clear notification for unread messages.
+*  **File Sharing:** Support the sharing of various file types, including images.
+*  **New Message Notifications:** Send push or in-app notifications for new messages.
+*  **User Status Display:** Show the current status of users (Online, Offline, etc.).
+*  **Priority Display for Online Users:** Display online users first, followed by offline users on the user's screen.
+
+# How to run
 
 ## Step 1: Start the Metro Server
+To get started with this project, clone this repository to your local machine:
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+### `git clone`
 
-To start Metro, run the following command from the _root_ of your React Native project:
+Next, install the dependencies using npm:
 
-```bash
-# using npm
-npm start
-
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Start your Application
+### `yarn install`
 
 Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
 
@@ -42,36 +72,43 @@ npm run ios
 yarn ios
 ```
 
+## Prerequisites
+To run this project, you will need following installed on your machine.
 
+### Requirements for Running the app on Android Emulator
 
-## Step 3: Modifying your App
+* **Operating System:** Windows, macOS, or Linux
+* **Memory (RAM):** At least 16 GB is required for better performance
+* **Android Studio:** Installed with the Android SDK and AVD (Android Virtual Device) manager
+* **openjdk version:** "11.0.2" 2019-01-15
+* **Node version:** 18.18.0
+* **npm:** 9.8.1
+* **React Native CLI:** Installed globally on the system
+* **Watchman:** Installed to watch for changes in the file system
 
-Now that you have successfully run the app, let's modify it.
+### Requirements for Running the app on IOS Emulator
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
+* **Operating System:** macOS (as iOS development is exclusively available on macOS)
+* **Memory (RAM):** At least 16 GB is required for better performance
+* **Xcode:**   Installed from the Mac App Store
+* **openjdk version:** "11.0.2" 2019-01-15
+* **Node version:** 18.18.0
+* **npm:** 9.8.1
+* **React Native CLI:** Installed globally on the system
+* **Watchman:** Installed to watch for changes in the file system
 
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+# API references
+We are Using [Chatkitty Api's](https://chatkitty.com/) to send and receive messages.
 
-## Congratulations! :tada:
+# Build Status / Errors
+There are no errors or bugs in the project at all.
 
-You've successfully run and modified your React Native App. :partying_face:
+# How to Use?
+__Sign up:__ Create an account on the shayanChat by providing the required information, such as name, email, and password.
+__Login:__ Log in to your account using your credentials (username and password) to access the features.User can also sigin with your Google and Facebook account
+__Users Screen:__ To access the Users screen, tap the bottom tab. The Users screen displays a list of all users, with the first online user followed by others. To start a conversation, click the user's name; to send a message, type in the text field and click "Send"; and to send images, click the camera icon.
+__Chat Screen:__ The Chat Screen displays a list of previously chatted users, and if there's no chat history, it shows a message indicating no conversations.
+__Profile Screeen:__ Profile screen shows the name currently logged in user and a logout button. User can simply logout by clicking that button.
 
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+# License
+A succinct summary of the licence. Apache, MIT, etc.
