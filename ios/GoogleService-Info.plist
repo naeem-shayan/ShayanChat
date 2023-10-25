@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>9475515452-2b6qf62bgrbams93c7kdspqg2dlsqa3j.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.9475515452-2b6qf62bgrbams93c7kdspqg2dlsqa3j</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>9475515452-ltrh9c0vt0repki902pd4u3rtdv8tbf9.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyC31r-NdhIMUhxNACF5S273Px2JwEbfsCQ</string>
+	<key>GCM_SENDER_ID</key>
+	<string>9475515452</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.shayanchat</string>
+	<key>PROJECT_ID</key>
+	<string>shayanchat-f6fe7</string>
+	<key>STORAGE_BUCKET</key>
+	<string>shayanchat-f6fe7.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:9475515452:ios:f65336c5a01c4a91c68f39</string>
+</dict>
+</plist>

@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "9475515452",
+    "project_id": "shayanchat-f6fe7",
+    "storage_bucket": "shayanchat-f6fe7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:9475515452:android:1396ab70315a975cc68f39",
+        "android_client_info": {
+          "package_name": "com.shayanchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "9475515452-vlaj16b1r27sqf8joap26ca240cse5va.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmnCcxgnGlrMYSTZW3POC8a4OswVjtlY8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "9475515452-vlaj16b1r27sqf8joap26ca240cse5va.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "9475515452-2b6qf62bgrbams93c7kdspqg2dlsqa3j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.shayanchat"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
