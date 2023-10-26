@@ -16,6 +16,7 @@ import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import User from '../Components/user';
 import CustomHeader from '../Components/header';
+import QB from 'quickblox-react-native-sdk';
 
 export default function CreateChannelScreen({navigation}: any) {
   const [channelName, setChannelName] = useState('');
@@ -33,27 +34,36 @@ export default function CreateChannelScreen({navigation}: any) {
   };
 
   function handleButtonPress(item: any) {
-    chatkitty
-      .createChannel({
-        type: 'DIRECT',
-        members: [{id: item.id}],
+    const createDialogParam: any = {
+      type: QB.chat.DIALOG_TYPE.CHAT,
+      occupantsIds: [item?.id],
+    };
+
+    QB.chat
+      .createDialog(createDialogParam)
+      .then(function (dialog) {
+        // handle as neccessary, i.e.
+        // subscribe to chat events, typing events, etc.
+        console.log('subscribe to chat events, typing events, etc.')
+        console.log(dialog)
       })
-      .then((result: any) => {
-        navigation.navigate('Chat', {channel: result?.channel, user});
+      .catch(function (e) {
+        console.log('error:', e)
+        // handle error
       });
   }
 
   useEffect(() => {
-    getData();
+    //getData();
     getUsers();
   }, []);
 
-  useEffect(() => {
-    chatkitty.onUserPresenceChanged(async user => {
-      const presence = user.presence; // Update online users list
-      getUsers();
-    });
-  }, []);
+  // useEffect(() => {
+  //   chatkitty.onUserPresenceChanged(async user => {
+  //     const presence = user.presence; // Update online users list
+  //     getUsers();
+  //   });
+  // }, []);
 
   const getData = async () => {
     try {
@@ -66,17 +76,24 @@ export default function CreateChannelScreen({navigation}: any) {
   };
 
   const getUsers = async () => {
-    const data: any = await chatkitty.listUsers();
-    let users: any = data?.paginator?.items;
-    const statusOrder = [true, false];
-    users = users.sort(
-      (a: any, b: any) =>
-        statusOrder.indexOf(a.presence.online) -
-        statusOrder.indexOf(b.presence.online),
-    );
-    setUsers(users);
-    setIsRefreshing(false);
-    setLoading(false);
+    const filter = {
+      field: QB.users.USERS_FILTER.FIELD.ID,
+      type: QB.users.USERS_FILTER.TYPE.NUMBER,
+      operator: QB.users.USERS_FILTER.OPERATOR.IN,
+      value: '', // value should be of type String
+    };
+    QB.users
+      .getUsers({filter: filter})
+      .then(result => {
+        console.log('RESULT:', result);
+        setUsers(result?.users);
+        setIsRefreshing(false);
+        setLoading(false);
+      })
+      .catch(function (error) {
+        // handle error
+        console.log('handle error', error);
+      });
   };
 
   return (

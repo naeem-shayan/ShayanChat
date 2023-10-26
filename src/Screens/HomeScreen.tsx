@@ -6,7 +6,7 @@ import {
   FlatList,
   StyleSheet,
   View,
-  Text
+  Text,
 } from 'react-native';
 import {Divider, List} from 'react-native-paper';
 import {chatkitty, channelDisplayName} from './../ChatKitty';
@@ -16,6 +16,7 @@ import ChatThread from '../Components/chatThread';
 import Colors from '../Contants/Colors';
 import CustomHeader from '../Components/header';
 import messaging from '@react-native-firebase/messaging';
+import QB from 'quickblox-react-native-sdk';
 
 export default function HomeScreen({navigation}: any) {
   const [channels, setChannels] = useState([]);
@@ -37,55 +38,94 @@ export default function HomeScreen({navigation}: any) {
     }
   };
 
+  // useEffect(() => {
+  //   const unsubscribe = messaging().setBackgroundMessageHandler(
+  //     async remoteMessage => {
+  //       //console.log('Message handled in the background!', remoteMessage);
+  //       setReload(Math.random());
+  //     },
+  //   );
+
+  //   return unsubscribe;
+  // }, []);
+
+  // useEffect(() => {
+  //   const unsubscribe = messaging().onMessage(async remoteMessage => {
+  //     //console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+  //     setReload(Math.random());
+  //   });
+
+  //   return unsubscribe;
+  // }, []);
+
+  // useEffect(() => {
+  //   let isCancelled = false;
+  //   getData();
+  //   chatkitty
+  //     .listChannels({filter: {joined: true, unread: true}})
+  //     .then((result: any) => {
+  //       let unreads: any = [];
+  //       result.paginator.items?.forEach((el: any) => {
+  //         unreads.push(el?.id);
+  //       });
+  //       chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
+  //         if (!isCancelled) {
+  //           let channels = result.paginator.items;
+  //           const newArray = channels.map((obj: any) => ({
+  //             ...obj, // Spread the existing object properties
+  //             unread: unreads.includes(obj.id), // Add "unread" key based on the match
+  //           }));
+  //           setChannels(newArray);
+  //           if (loading) {
+  //             setLoading(false);
+  //           }
+  //         }
+  //       });
+  //     });
+
+  //   return () => {
+  //     isCancelled = true;
+  //   };
+  // }, [isFocused, loading, connecting, reload]);
+
+  function processDialogs(result: any) {
+    // dialogs found matching filter and sort
+    console.log('dialogs found matching filter and sort', result);
+    setChannels(result?.dialogs);
+    setLoading(false);
+  }
+
   useEffect(() => {
-    const unsubscribe = messaging().setBackgroundMessageHandler(
-      async remoteMessage => {
-        //console.log('Message handled in the background!', remoteMessage);
-        setReload(Math.random());
-      },
-    );
+    fetchDialogs()
+  },[])
 
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
-      //console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
-      setReload(Math.random());
-    });
-
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    let isCancelled = false;
-    getData();
-    chatkitty
-      .listChannels({filter: {joined: true, unread: true}})
-      .then((result: any) => {
-        let unreads: any = [];
-        result.paginator.items?.forEach((el: any) => {
-          unreads.push(el?.id);
-        });
-        chatkitty.listChannels({filter: {joined: true}}).then((result: any) => {
-          if (!isCancelled) {
-            let channels = result.paginator.items;
-            const newArray = channels.map((obj: any) => ({
-              ...obj, // Spread the existing object properties
-              unread: unreads.includes(obj.id), // Add "unread" key based on the match
-            }));
-            setChannels(newArray);
-            if (loading) {
-              setLoading(false);
-            }
-          }
-        });
-      });
-
-    return () => {
-      isCancelled = true;
+  const fetchDialogs = () => {
+    // get dialogs with 'chat' in name
+    const filter = {
+      field: QB.chat.DIALOGS_FILTER.FIELD.NAME,
+      operator: QB.chat.DIALOGS_FILTER.OPERATOR.CTN,
+      value: 'asim',
     };
-  }, [isFocused, loading, connecting, reload]);
+    // sorted ascending by "last_message_date_sent"
+    const sort = {
+      field: QB.chat.DIALOGS_SORT.FIELD.LAST_MESSAGE_DATE_SENT,
+      ascending: true,
+    };
+
+    const getDialogsQuery = {
+      filter: filter,
+      sort: sort,
+      limit: 10,
+      skip: 0,
+    };
+
+    QB.chat
+      .getDialogs(getDialogsQuery)
+      .then(processDialogs)
+      .catch(function (e) {
+        // handle error
+      });
+  };
 
   if (loading) {
     return <Loading />;

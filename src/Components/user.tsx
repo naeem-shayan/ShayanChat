@@ -10,13 +10,13 @@ const User = ({item, onPress,...props}: any) => {
     <TouchableOpacity onPress={onPress} style={styles.container}>
       <View>
         {/* <Image source={{uri: item?.displayPictureUrl}} style={styles.image} /> */}
-        <UserAvatar size={50} name={item.displayName} />
+        <UserAvatar size={50} name={item.fullName} />
         {item?.presence?.online && <View style={styles.online} />}
       </View>
       <View style={styles.contentContainer}>
         <View style={styles.row}>
           <Text ellipsizeMode="tail" numberOfLines={1} style={styles.userName}>
-            {item.displayName}
+            {item.fullName}
           </Text>
           <Text style={styles.userStatus}>
             {item?.presence?.online ? 'online' : 'offline'}

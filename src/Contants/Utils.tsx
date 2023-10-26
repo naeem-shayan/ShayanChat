@@ -6,6 +6,7 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {LoginManager, AccessToken} from 'react-native-fbsdk-next';
 import Toast from 'react-native-toast-message';
 import messaging from '@react-native-firebase/messaging';
+import QB from 'quickblox-react-native-sdk';
 
 export const validateName = (name: string) => {
   if (!name) {
@@ -48,43 +49,67 @@ export const signin = (
   navigation: any,
 ) => {
   setLoading(true);
-  auth()
-    .signInWithEmailAndPassword(email.trim(), password.trim())
-    .then(async userCredential => {
-      const currentUser = userCredential.user;
-      const idToken = await currentUser.getIdToken();
-      await messaging().registerDeviceForRemoteMessages();
-      const token = await messaging().getToken();
-      const user = {
-        uid: currentUser.uid,
-        idToken: idToken,
-        deviceToken: token,
-        userType: 'email'
-      };
-      await AsyncStorage.setItem('user', JSON.stringify(user));
+  QB.auth
+    .login({
+      login: email,
+      password: password,
+    })
+    .then(async function (info) {
+      // signed in successfully, handle info as necessary
+      // info.user - user information
+      // info.session - current session
+      console.log('signed in successfully, handle info as necessary');
+      console.log('user information', info.user);
+      console.log('current session', info.session);
+      await AsyncStorage.setItem(
+        'user',
+        JSON.stringify({...info.user, password: password}),
+      );
       setLoading(false);
       navigation.replace('Connect');
     })
-    .catch(error => {
+    .catch(function (e) {
+      console.log("error:", e)
       setLoading(false);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2:
-          error.code === 'auth/invalid-email'
-            ? 'Invalid Credentials'
-            : error.code === 'auth/network-request-failed'
-            ? 'Please connect to internet'
-            : error.code === 'auth/too-many-requests'
-            ? 'To many requests, please try again later.'
-            : error.code === 'auth/invalid-login'
-            ? 'Invalid login credentials'
-            : `${
-                error.code.split('/')[1].charAt(0).toUpperCase() +
-                error.code.split('/')[1].slice(1)
-              }`,
-      });
+      // handle error
     });
+  // auth()
+  //   .signInWithEmailAndPassword(email.trim(), password.trim())
+  //   .then(async userCredential => {
+  //     const currentUser = userCredential.user;
+  //     const idToken = await currentUser.getIdToken();
+  //     await messaging().registerDeviceForRemoteMessages();
+  //     const token = await messaging().getToken();
+  //     const user = {
+  //       uid: currentUser.uid,
+  //       idToken: idToken,
+  //       deviceToken: token,
+  //       userType: 'email',
+  //     };
+  //     await AsyncStorage.setItem('user', JSON.stringify(user));
+  //     setLoading(false);
+  //     navigation.replace('Connect');
+  //   })
+  //   .catch(error => {
+  //     setLoading(false);
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Error',
+  //       text2:
+  //         error.code === 'auth/invalid-email'
+  //           ? 'Invalid Credentials'
+  //           : error.code === 'auth/network-request-failed'
+  //           ? 'Please connect to internet'
+  //           : error.code === 'auth/too-many-requests'
+  //           ? 'To many requests, please try again later.'
+  //           : error.code === 'auth/invalid-login'
+  //           ? 'Invalid login credentials'
+  //           : `${
+  //               error.code.split('/')[1].charAt(0).toUpperCase() +
+  //               error.code.split('/')[1].slice(1)
+  //             }`,
+  //     });
+  //   });
 };
 
 export const signup = (
@@ -95,43 +120,64 @@ export const signup = (
   navigation: any,
 ) => {
   setLoading(true);
-  auth()
-    .createUserWithEmailAndPassword(email.trim(), password.trim())
-    .then(async userCredential => {
-      await auth().currentUser?.updateProfile({
-        displayName: name,
-      });
-      const currentUser = userCredential.user;
-      const idToken = await currentUser.getIdToken();
-      await messaging().registerDeviceForRemoteMessages();
-      const token = await messaging().getToken();
-      const user = {
-        uid: currentUser.uid,
-        idToken: idToken,
-        displayName: name,
-        deviceToken: token,
-        userType: 'email'
-      };
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-      setLoading(false);
-      navigation.replace('Connect');
+
+  const createUserParams = {
+    email: email,
+    fullName: name,
+    login: email,
+    password: password,
+    id: 1,
+  };
+
+  QB.users
+    .create(createUserParams)
+    .then(async function (user) {
+      // user created successfully
+      console.log('user created successfully', user)
+      signin(email, password, setLoading, navigation);
     })
-    .catch(error => {
+    .catch(function (e) {
+      // handle as necessary
+      console.log('handle as necessary', e);
       setLoading(false);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2:
-          error.code === 'auth/email-already-in-use'
-            ? 'Email already in use'
-            : error.code === 'auth/invalid-email'
-            ? 'Invalid credentials'
-            : `${
-                error.code.split('/')[1].charAt(0).toUpperCase() +
-                error.code.split('/')[1].slice(1)
-              }`,
-      });
     });
+  // auth()
+  //   .createUserWithEmailAndPassword(email.trim(), password.trim())
+  //   .then(async userCredential => {
+  //     await auth().currentUser?.updateProfile({
+  //       displayName: name,
+  //     });
+  //     const currentUser = userCredential.user;
+  //     const idToken = await currentUser.getIdToken();
+  //     await messaging().registerDeviceForRemoteMessages();
+  //     const token = await messaging().getToken();
+  //     const user = {
+  //       uid: currentUser.uid,
+  //       idToken: idToken,
+  //       displayName: name,
+  //       deviceToken: token,
+  //       userType: 'email'
+  //     };
+  //     await AsyncStorage.setItem('user', JSON.stringify(user));
+  //     setLoading(false);
+  //     navigation.replace('Connect');
+  //   })
+  //   .catch(error => {
+  //     setLoading(false);
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Error',
+  //       text2:
+  //         error.code === 'auth/email-already-in-use'
+  //           ? 'Email already in use'
+  //           : error.code === 'auth/invalid-email'
+  //           ? 'Invalid credentials'
+  //           : `${
+  //               error.code.split('/')[1].charAt(0).toUpperCase() +
+  //               error.code.split('/')[1].slice(1)
+  //             }`,
+  //     });
+  //   });
 };
 
 export const handleGoogleLogin = async (navigation: any) => {
@@ -148,7 +194,7 @@ export const handleGoogleLogin = async (navigation: any) => {
         idToken: token,
         displayName: res.user.displayName,
         deviceToken,
-        userType: 'google'
+        userType: 'google',
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
       navigation.replace('Connect');
@@ -183,7 +229,7 @@ export const handleFacebookLogin = async (navigation: any) => {
         idToken: token,
         displayName: currentUser?.displayName,
         deviceToken,
-        userType: 'facebook'
+        userType: 'facebook',
       };
       await AsyncStorage.setItem('user', JSON.stringify(user));
       navigation.replace('Connect');

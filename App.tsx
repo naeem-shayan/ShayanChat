@@ -7,6 +7,7 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {useEffect, useRef, useState} from 'react';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import Colors from './src/Contants/Colors';
+import QB from 'quickblox-react-native-sdk';
 
 GoogleSignin.configure({
   webClientId:
@@ -14,6 +15,26 @@ GoogleSignin.configure({
 });
 
 function App(): JSX.Element {
+  const appSettings = {
+    accountKey: 'ack_AkZzGjiD-eLYc4QsoaWy',
+    appId: '101977',
+    authKey: 'ak_Hb9zWK2A92OdLp6',
+    authSecret: 'as_8PYdf5ON9SQsD8t',
+  };
+
+  QB.settings
+    .init(appSettings)
+    .then(function () {
+      // SDK initialized successfully
+      console.log('SDK initialized successfully');
+    })
+    .catch(function (e) {
+      // Some error occurred, look at the exception message for more details
+      console.log(
+        'Some error occurred, look at the exception message for more details',
+      );
+    });
+
   const toastConfig = {success: () => <></>};
   return (
     <SafeAreaProvider>

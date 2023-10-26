@@ -38,7 +38,7 @@ const LoginScreen = (props: any) => {
   }, []);
 
   const handleLogin = () => {
-    const emailErrorMessage = validateEmail(email);
+    const emailErrorMessage = ''//validateEmail(email);
     const passwordErrorMessage = validatePassword(password);
     if (emailErrorMessage || passwordErrorMessage) {
       setEmailError(emailErrorMessage);
