@@ -25,6 +25,7 @@ export default function CreateChannelScreen({navigation}: any) {
   const [users, setUsers] = useState<any>();
   const [user, setUser] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoadingNextPage, setIsLoadingNextPage] = useState(false);
 
   const onRefresh = () => {
     //set isRefreshing to true
@@ -96,6 +97,34 @@ export default function CreateChannelScreen({navigation}: any) {
       });
   };
 
+  const renderFooter = () => {
+    return isLoadingNextPage ? (
+      <View style={styles.bottomLoader}>
+        <ActivityIndicator size="small" color={Colors.firstColor} />
+      </View>
+    ) : null;
+  };
+
+  const loadNextUsers = async () => {
+    const result: any = await chatkitty.listUsers();
+    const paginator: any = result?.paginator;
+    const items = paginator.items;
+    paginator.hasNextPage=true;
+    if (paginator.hasNextPage) {
+      setIsLoadingNextPage(true);
+      const nextPaginator = await paginator.nextPage();
+      let nextItems = nextPaginator.items;
+      const statusOrder = [true, false];
+      nextItems = nextItems.sort(
+        (a: any, b: any) =>
+          statusOrder.indexOf(a.presence.online) -
+          statusOrder.indexOf(b.presence.online),
+      );
+      setUsers([...users, ...nextItems]);
+      setIsLoadingNextPage(false);
+    }
+  };
+
   return (
     <>
       <CustomHeader title={'Users'} />
@@ -117,6 +146,9 @@ export default function CreateChannelScreen({navigation}: any) {
             ItemSeparatorComponent={() => <Divider />}
             onRefresh={onRefresh}
             refreshing={isRefreshing}
+            ListFooterComponent={renderFooter}
+            onEndReached={loadNextUsers}
+            onEndReachedThreshold={0}
             renderItem={({item}: any) => (
               <User item={item} onPress={() => handleButtonPress(item)} />
             )}
@@ -210,5 +242,10 @@ const styles = StyleSheet.create({
   },
   notFound: {
     marginTop: 300,
+  },
+  bottomLoader: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
   },
 });

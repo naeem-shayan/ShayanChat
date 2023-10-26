@@ -37,7 +37,7 @@ const ChatThread = ({item, name, onPress, user, ...props}: any) => {
             }}>
             {item.lastReceivedMessage?.type.toUpperCase() === 'TEXT'
               ? item.lastReceivedMessage?.body
-              : 'image'}
+              : '📸 Photo'}
           </Text>
           {item?.unread && (
             <View style={styles.messageContainer}>
