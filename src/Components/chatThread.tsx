@@ -35,13 +35,13 @@ const ChatThread = ({item, name, onPress, user, ...props}: any) => {
               ...styles.message,
               fontWeight: item?.unread ? 'bold' : 'normal',
             }}>
-            {item.lastReceivedMessage?.type.toUpperCase() === 'TEXT'
-              ? item.lastReceivedMessage?.body
-              : '📸 Photo'}
+            {item?.lastMessage}
           </Text>
-          {item?.unread && (
+          {item?.unreadMessagesCount > 0 && (
             <View style={styles.messageContainer}>
-              {/* <Text style={styles.messageCounter}>0</Text> */}
+              <Text style={styles.messageCounter}>
+                {item?.unreadMessagesCount}
+              </Text>
             </View>
           )}
         </View>
@@ -98,8 +98,8 @@ const styles = StyleSheet.create({
     width: 206,
   },
   messageContainer: {
-    height: 10,
-    width: 10,
+    height: 25,
+    width: 25,
     borderRadius: 25 / 2,
     backgroundColor: Colors.firstColor,
     justifyContent: 'center',

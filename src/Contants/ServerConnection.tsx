@@ -53,6 +53,19 @@ const ServerConnection = ({navigation}: any) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      firestore()
+        .collection('Users')
+        .doc(`${user?.id}`)
+        .update({
+          is_online: true,
+        })
+        .then(async () => {})
+        .catch(error => {});
+    }
+  }, [user]);
+
   // useEffect(() => {
   //   (async () => {
   //     setConnecting(true);

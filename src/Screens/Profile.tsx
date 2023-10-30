@@ -16,6 +16,7 @@ import CustomHeader from '../Components/header';
 //@ts-ignore
 import UserAvatar from 'react-native-user-avatar';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import QB from 'quickblox-react-native-sdk';
 
 // create a component
 const Profile = ({navigation}: any) => {
@@ -59,7 +60,15 @@ const Profile = ({navigation}: any) => {
                 GoogleSignin?.revokeAccess();
                 await auth().signOut();
               } else {
-                await auth().signOut();
+                //await auth().signOut();
+                QB.chat.disconnect();
+                QB.auth
+                  .logout()
+                  .then(() => {
+                    setLoading(false);
+                    navigation.replace('Login');
+                  })
+                  .catch(e => console.log(e));
               }
               setLoading(false);
               navigation.replace('Login');
@@ -76,8 +85,8 @@ const Profile = ({navigation}: any) => {
     <>
       <CustomHeader title={'Profile'} />
       <View style={styles.container}>
-        <UserAvatar size={100} name={user?.displayName} />
-        <Text style={styles.userName}>{user?.displayName}</Text>
+        <UserAvatar size={100} name={user?.fullName} />
+        <Text style={styles.userName}>{user?.fullName}</Text>
         <Button
           icon="logout"
           mode="contained"

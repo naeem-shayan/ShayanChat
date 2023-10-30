@@ -28,9 +28,11 @@ import User from '../Components/user';
 import UserAvatar from 'react-native-user-avatar';
 import {useIsFocused} from '@react-navigation/native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import QB from 'quickblox-react-native-sdk';
+import {NativeEventEmitter} from 'react-native';
 
 export default function ChatScreen({route, navigation}: any) {
-  const {channel, user} = route.params;
+  const {channel, dialogId, user, name} = route.params;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState('');
@@ -42,60 +44,123 @@ export default function ChatScreen({route, navigation}: any) {
   const [messagePaginator, setMessagePaginator] = useState<any>(null);
 
   const insets = useSafeAreaInsets();
+  //@ts-ignore
+  const emitter = new NativeEventEmitter(QB.chat);
 
-  useEffect(() => {
-    const startChatSessionResult = chatkitty.startChatSession({
-      channel: channel,
-      onParticipantPresenceChanged: user => {
-        setParticipantDetails(user);
+  const fetchChat = () => {
+    const getDialogMessagesParams: any = {
+      dialogId: dialogId,
+      sort: {
+        ascending: false,
+        field: QB.chat.MESSAGES_SORT.FIELD.DATE_SENT,
       },
-      onMessageReceived: message => {
-        //@ts-ignore
-        setMessages((currentMessages: any) =>
-          GiftedChat.append(currentMessages, [mapMessage(message)]),
-        );
-        // chatkitty.readChannel({channel});
-      },
-    });
+      markAsRead: true,
+    };
 
-    chatkitty
-      .listMessages({
-        channel: channel,
-      })
-      .then((result: any) => {
-        setMessages(result.paginator.items.map(mapMessage));
-        setMessagePaginator(result.paginator);
-        setLoadEarlier(result.paginator.hasNextPage);
+    QB.chat
+      .getDialogMessages(getDialogMessagesParams)
+      .then(function (result) {
+        // result.messages - array of messages found
+        // result.skip - number of items skipped
+        // result.limit - number of items returned per page
+        const msgs: any = result?.messages?.map((el: any) => ({
+          ...el,
+          _id: el?.id,
+          user: {_id: el?.senderId, name: el?.name},
+          text: el?.body,
+        }));
+        setMessages(msgs);
         setLoading(false);
+      })
+      .catch(function (e) {
+        // handle error
       });
-
-    return startChatSessionResult.session.end;
-  }, [user, channel]);
+  };
 
   useEffect(() => {
-    chatkitty.readChannel({channel});
+    fetchChat();
   }, []);
 
-  const isFocused = useIsFocused();
+  async function receivedNewMessage(event: any) {
+    const {type, payload} = event;
+    // handle new message
+    // type - event name (string)
+    // payload - message received (object)
+    //@ts-ignore
+    setMessages((currentMessages: any) =>
+      GiftedChat.append(currentMessages, [
+        {
+          ...payload,
+          _id: payload?.id,
+          user: {_id: payload?.senderId, name: payload?.name},
+          text: payload?.body,
+        },
+      ]),
+    );
+  }
 
-  if (isFocused) {
-    chatkitty.readChannel({channel});
+  function messageStatusHandler(event: any) {
+    // handle message status change
+    //console.log('MSG_STATUS:', JSON.stringify(event, null, 8));
+  }
+
+  function systemMessageHandler(event: any) {
+    // handle system message
+    //console.log('MSG_Handler:', JSON.stringify(event, null, 8));
+  }
+
+  function userTypingHandler(event: any) {
+    // handle user typing / stopped typing event
+    //console.log('MSG_Typing:', JSON.stringify(event, null, 8));
   }
 
   useEffect(() => {
-    const userData = participant(channel, user?.id);
-    setParticipantDetails(userData);
-  }, []);
+    emitter.addListener(
+      QB.chat.EVENT_TYPE.RECEIVED_NEW_MESSAGE,
+      receivedNewMessage,
+    );
+  
+    emitter.addListener(
+      QB.chat.EVENT_TYPE.MESSAGE_DELIVERED,
+      messageStatusHandler,
+    );
+  
+    emitter.addListener(QB.chat.EVENT_TYPE.MESSAGE_READ, messageStatusHandler);
+  
+    emitter.addListener(
+      QB.chat.EVENT_TYPE.RECEIVED_SYSTEM_MESSAGE,
+      systemMessageHandler,
+    );
+  
+    emitter.addListener(QB.chat.EVENT_TYPE.USER_IS_TYPING, userTypingHandler);
+  
+    emitter.addListener(
+      QB.chat.EVENT_TYPE.USER_STOPPED_TYPING,
+      userTypingHandler,
+    );
+
+    return emitter.removeAllListeners('')
+  },[])
 
   async function handleSend(pendingMessages: any) {
-    await chatkitty.sendMessage({
-      channel: channel,
+    const message = {
+      dialogId: dialogId,
       body: pendingMessages[0].text,
-    });
-    sendPushNotification(participantDetails?.properties?.deviceToken, {
-      title: user?.displayName,
-      body: pendingMessages[0].text,
-    });
+      saveToHistory: true,
+    };
+
+    QB.chat
+      .sendMessage(message)
+      .then(function () {
+        /* send successfully */
+      })
+      .catch(function (e) {
+        /* handle error */
+      });
+    // sendPushNotification(participantDetails?.properties?.deviceToken, {
+    //   title: user?.displayName,
+    //   body: pendingMessages[0].text,
+    // });
   }
 
   async function handleLoadEarlier() {
@@ -140,17 +205,13 @@ export default function ChatScreen({route, navigation}: any) {
               progressListener: {
                 onStarted: () => {},
                 onProgress: progress => {},
-                onCompleted: result => {
-                },
+                onCompleted: result => {},
               },
             });
-            sendPushNotification(
-              participantDetails?.properties?.deviceToken,
-              {
-                title: user?.displayName,
-                body: 'image',
-              },
-            );
+            // sendPushNotification(participantDetails?.properties?.deviceToken, {
+            //   title: user?.displayName,
+            //   body: 'image',
+            // });
           });
       });
     }
@@ -174,38 +235,21 @@ export default function ChatScreen({route, navigation}: any) {
 
   function renderBubble(props: any) {
     const {currentMessage} = props;
-    if (currentMessage?.type == 'TEXT') {
-      return (
-        <Bubble
-          {...props}
-          wrapperStyle={{
-            left: {
-              backgroundColor: '#d3d3d3',
-            },
-          }}
-        />
-      );
-    }
-    if (currentMessage?.type == 'FILE') {
-      return (
-        <View style={styles.imageMessage}>
-          <TouchableOpacity
-            onPress={() => {
-              setCurrentImage(currentMessage?.file);
-              setIsVisible(true);
-            }}>
-            <Image source={{uri: currentMessage?.file}} style={styles.image} />
-          </TouchableOpacity>
-          <Text>{moment(currentMessage?.createdAt).format('LT')}</Text>
-        </View>
-      );
-    }
+    return (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          left: {
+            backgroundColor: '#d3d3d3',
+          },
+        }}
+      />
+    );
   }
 
   const renderAvatar = (props: any) => {
-    return (
-      <UserAvatar size={30} name={channelDisplayName(channel, user?.id)} />
-    );
+    const {currentMessage} = props;
+    return <UserAvatar size={30} name={name} />;
   };
 
   if (loading) {
@@ -217,7 +261,7 @@ export default function ChatScreen({route, navigation}: any) {
       style={{flex: 1, backgroundColor: Colors.white}}
       edges={{bottom: 'maximum'}}>
       <CustomHeader
-        title={channelDisplayName(channel, user?.id)}
+        title={name}
         showBack
         status={participantDetails?.presence?.online ? 'online' : 'offline'}
         userStatus
@@ -227,13 +271,15 @@ export default function ChatScreen({route, navigation}: any) {
         bottomOffset={insets.bottom}
         messages={messages}
         onSend={handleSend}
-        user={mapUser(user)}
         loadEarlier={loadEarlier}
-        isLoadingEarlier={isLoadingEarlier}
-        onLoadEarlier={handleLoadEarlier}
+        user={{
+          _id: user?.id,
+        }}
+        // isLoadingEarlier={isLoadingEarlier}
+        // onLoadEarlier={handleLoadEarlier}
         renderBubble={renderBubble}
         renderAvatar={renderAvatar}
-        renderActions={renderActions}
+        //renderActions={renderActions}
       />
       <ImageView
         images={[{uri: currentImage}]}
@@ -260,7 +306,7 @@ function mapMessage(message: any) {
 
 function mapUser(user: any) {
   return {
-    _id: user?.id,
+    _id: user?.senderId,
     name: user?.displayName,
     avatar: user?.displayPictureUrl,
   };
