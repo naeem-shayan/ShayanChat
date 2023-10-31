@@ -35,8 +35,8 @@ export const validatePassword = (password: string) => {
   if (!password) {
     return 'Enter Your Password';
   }
-  if (password.length < 5) {
-    return 'Password must be at least 5 characters';
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters';
   } else {
     return '';
   }
@@ -58,58 +58,38 @@ export const signin = (
       // signed in successfully, handle info as necessary
       // info.user - user information
       // info.session - current session
-      console.log('signed in successfully, handle info as necessary');
-      console.log('user information', info.user);
-      console.log('current session', info.session);
-      await AsyncStorage.setItem(
-        'user',
-        JSON.stringify({...info.user, password: password}),
-      );
-      setLoading(false);
-      navigation.replace('Connect');
+      await messaging().registerDeviceForRemoteMessages();
+      const token = await messaging().getToken();
+      const user: any = {
+        ...info?.user,
+        deviceToken: token,
+        userType: 'email',
+        password: password,
+        is_online: true,
+      };
+      firestore()
+        .collection('Users')
+        .doc(`${user?.id}`)
+        .set(user)
+        .then(async () => {
+          await AsyncStorage.setItem('user', JSON.stringify(user));
+          setLoading(false);
+          navigation.replace('Connect');
+        })
+        .catch(error => {
+          setLoading(false);
+        });
     })
     .catch(function (e) {
-      console.log("error:", e)
+      console.log(e)
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Invalid login credentials',
+      });
       setLoading(false);
       // handle error
     });
-  // auth()
-  //   .signInWithEmailAndPassword(email.trim(), password.trim())
-  //   .then(async userCredential => {
-  //     const currentUser = userCredential.user;
-  //     const idToken = await currentUser.getIdToken();
-  //     await messaging().registerDeviceForRemoteMessages();
-  //     const token = await messaging().getToken();
-  //     const user = {
-  //       uid: currentUser.uid,
-  //       idToken: idToken,
-  //       deviceToken: token,
-  //       userType: 'email',
-  //     };
-  //     await AsyncStorage.setItem('user', JSON.stringify(user));
-  //     setLoading(false);
-  //     navigation.replace('Connect');
-  //   })
-  //   .catch(error => {
-  //     setLoading(false);
-  //     Toast.show({
-  //       type: 'error',
-  //       text1: 'Error',
-  //       text2:
-  //         error.code === 'auth/invalid-email'
-  //           ? 'Invalid Credentials'
-  //           : error.code === 'auth/network-request-failed'
-  //           ? 'Please connect to internet'
-  //           : error.code === 'auth/too-many-requests'
-  //           ? 'To many requests, please try again later.'
-  //           : error.code === 'auth/invalid-login'
-  //           ? 'Invalid login credentials'
-  //           : `${
-  //               error.code.split('/')[1].charAt(0).toUpperCase() +
-  //               error.code.split('/')[1].slice(1)
-  //             }`,
-  //     });
-  //   });
 };
 
 export const signup = (
@@ -120,7 +100,6 @@ export const signup = (
   navigation: any,
 ) => {
   setLoading(true);
-
   const createUserParams = {
     email: email,
     fullName: name,
@@ -128,56 +107,21 @@ export const signup = (
     password: password,
     id: 1,
   };
-
   QB.users
     .create(createUserParams)
     .then(async function (user) {
       // user created successfully
-      console.log('user created successfully', user)
       signin(email, password, setLoading, navigation);
     })
     .catch(function (e) {
       // handle as necessary
-      console.log('handle as necessary', e);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Email already in use',
+      });
       setLoading(false);
     });
-  // auth()
-  //   .createUserWithEmailAndPassword(email.trim(), password.trim())
-  //   .then(async userCredential => {
-  //     await auth().currentUser?.updateProfile({
-  //       displayName: name,
-  //     });
-  //     const currentUser = userCredential.user;
-  //     const idToken = await currentUser.getIdToken();
-  //     await messaging().registerDeviceForRemoteMessages();
-  //     const token = await messaging().getToken();
-  //     const user = {
-  //       uid: currentUser.uid,
-  //       idToken: idToken,
-  //       displayName: name,
-  //       deviceToken: token,
-  //       userType: 'email'
-  //     };
-  //     await AsyncStorage.setItem('user', JSON.stringify(user));
-  //     setLoading(false);
-  //     navigation.replace('Connect');
-  //   })
-  //   .catch(error => {
-  //     setLoading(false);
-  //     Toast.show({
-  //       type: 'error',
-  //       text1: 'Error',
-  //       text2:
-  //         error.code === 'auth/email-already-in-use'
-  //           ? 'Email already in use'
-  //           : error.code === 'auth/invalid-email'
-  //           ? 'Invalid credentials'
-  //           : `${
-  //               error.code.split('/')[1].charAt(0).toUpperCase() +
-  //               error.code.split('/')[1].slice(1)
-  //             }`,
-  //     });
-  //   });
 };
 
 export const handleGoogleLogin = async (navigation: any) => {

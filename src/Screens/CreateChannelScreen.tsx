@@ -27,11 +27,42 @@ export default function CreateChannelScreen({navigation}: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingNextPage, setIsLoadingNextPage] = useState(false);
 
-  const onRefresh = () => {
-    //set isRefreshing to true
-    setIsRefreshing(true);
-    getUsers();
-    // and set isRefreshing to false at the end of your callApiMethod()
+  useEffect(() => {
+    getData();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      const collectionRef = firestore()
+        .collection('Users')
+        .where('id', '!=', user?.id);
+      const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
+        const newData: any = [];
+        querySnapshot.forEach(doc => {
+          newData.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+
+        setUsers(newData);
+        setLoading(false);
+      });
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [user]);
+
+  const getData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('user');
+      const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
+      setUser(userData);
+    } catch (e) {
+      // error reading value
+    }
   };
 
   function handleButtonPress(item: any) {
@@ -45,57 +76,34 @@ export default function CreateChannelScreen({navigation}: any) {
       .then(function (dialog) {
         // handle as neccessary, i.e.
         // subscribe to chat events, typing events, etc.
-        console.log('subscribe to chat events, typing events, etc.')
-        console.log(dialog)
+        navigation.navigate('Chat', {dialogId: dialog?.id, user});
       })
       .catch(function (e) {
-        console.log('error:', e)
+        //console.log('error:', e);
         // handle error
       });
   }
 
-  useEffect(() => {
-    //getData();
-    getUsers();
-  }, []);
-
-  // useEffect(() => {
-  //   chatkitty.onUserPresenceChanged(async user => {
-  //     const presence = user.presence; // Update online users list
-  //     getUsers();
-  //   });
-  // }, []);
-
-  const getData = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
-      setUser(userData);
-    } catch (e) {
-      // error reading value
-    }
-  };
-
-  const getUsers = async () => {
-    const filter = {
-      field: QB.users.USERS_FILTER.FIELD.ID,
-      type: QB.users.USERS_FILTER.TYPE.NUMBER,
-      operator: QB.users.USERS_FILTER.OPERATOR.IN,
-      value: '', // value should be of type String
-    };
-    QB.users
-      .getUsers({filter: filter})
-      .then(result => {
-        console.log('RESULT:', result);
-        setUsers(result?.users);
-        setIsRefreshing(false);
-        setLoading(false);
-      })
-      .catch(function (error) {
-        // handle error
-        console.log('handle error', error);
-      });
-  };
+  // const getUsers = async () => {
+  //   const filter = {
+  //     field: QB.users.USERS_FILTER.FIELD.ID,
+  //     type: QB.users.USERS_FILTER.TYPE.NUMBER,
+  //     operator: QB.users.USERS_FILTER.OPERATOR.IN,
+  //     value: '', // value should be of type String
+  //   };
+  //   QB.users
+  //     .getUsers({filter: filter})
+  //     .then(result => {
+  //       console.log('RESULT:', JSON.stringify(result, null, 8));
+  //       setUsers(result?.users);
+  //       setIsRefreshing(false);
+  //       setLoading(false);
+  //     })
+  //     .catch(function (error) {
+  //       // handle error
+  //       console.log('handle error', error);
+  //     });
+  // };
 
   const renderFooter = () => {
     return isLoadingNextPage ? (
@@ -103,26 +111,6 @@ export default function CreateChannelScreen({navigation}: any) {
         <ActivityIndicator size="small" color={Colors.firstColor} />
       </View>
     ) : null;
-  };
-
-  const loadNextUsers = async () => {
-    const result: any = await chatkitty.listUsers();
-    const paginator: any = result?.paginator;
-    const items = paginator.items;
-    paginator.hasNextPage=true;
-    if (paginator.hasNextPage) {
-      setIsLoadingNextPage(true);
-      const nextPaginator = await paginator.nextPage();
-      let nextItems = nextPaginator.items;
-      const statusOrder = [true, false];
-      nextItems = nextItems.sort(
-        (a: any, b: any) =>
-          statusOrder.indexOf(a.presence.online) -
-          statusOrder.indexOf(b.presence.online),
-      );
-      setUsers([...users, ...nextItems]);
-      setIsLoadingNextPage(false);
-    }
   };
 
   return (
@@ -144,10 +132,10 @@ export default function CreateChannelScreen({navigation}: any) {
             }
             keyExtractor={(item: any) => item.id}
             ItemSeparatorComponent={() => <Divider />}
-            onRefresh={onRefresh}
+            //2onRefresh={onRefresh}
             refreshing={isRefreshing}
             ListFooterComponent={renderFooter}
-            onEndReached={loadNextUsers}
+            //onEndReached={loadNextUsers}
             onEndReachedThreshold={0}
             renderItem={({item}: any) => (
               <User item={item} onPress={() => handleButtonPress(item)} />

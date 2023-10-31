@@ -11,7 +11,7 @@ const User = ({item, onPress,...props}: any) => {
       <View>
         {/* <Image source={{uri: item?.displayPictureUrl}} style={styles.image} /> */}
         <UserAvatar size={50} name={item.fullName} />
-        {item?.presence?.online && <View style={styles.online} />}
+        {item?.is_online && <View style={styles.online} />}
       </View>
       <View style={styles.contentContainer}>
         <View style={styles.row}>
@@ -19,7 +19,7 @@ const User = ({item, onPress,...props}: any) => {
             {item.fullName}
           </Text>
           <Text style={styles.userStatus}>
-            {item?.presence?.online ? 'online' : 'offline'}
+            {item?.is_online ? 'online' : 'offline'}
           </Text>
         </View>
       </View>
