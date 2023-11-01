@@ -42,25 +42,25 @@ export default function HomeScreen({navigation}: any) {
     getData()
   },[])
 
-  // useEffect(() => {
-  //   const unsubscribe = messaging().setBackgroundMessageHandler(
-  //     async remoteMessage => {
-  //       //console.log('Message handled in the background!', remoteMessage);
-  //       setReload(Math.random());
-  //     },
-  //   );
+  useEffect(() => {
+    const unsubscribe = messaging().setBackgroundMessageHandler(
+      async remoteMessage => {
+        //console.log('Message handled in the background!', remoteMessage);
+        setReload(Math.random());
+      },
+    );
 
-  //   return unsubscribe;
-  // }, []);
+    return unsubscribe;
+  }, []);
 
-  // useEffect(() => {
-  //   const unsubscribe = messaging().onMessage(async remoteMessage => {
-  //     //console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
-  //     setReload(Math.random());
-  //   });
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      //console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+      setReload(Math.random());
+    });
 
-  //   return unsubscribe;
-  // }, []);
+    return unsubscribe;
+  }, []);
 
   function processDialogs(result: any) {
     // dialogs found matching filter and sort
@@ -69,8 +69,10 @@ export default function HomeScreen({navigation}: any) {
   }
 
   useEffect(() => {
-    fetchDialogs();
-  }, []);
+    if (isFocused) {
+      fetchDialogs();
+    }
+  }, [reload, isFocused]);
 
   const fetchDialogs = () => {
     // get dialogs with 'chat' in name
@@ -96,6 +98,7 @@ export default function HomeScreen({navigation}: any) {
       .getDialogs(getDialogsQuery)
       .then(processDialogs)
       .catch(function (e) {
+        setLoading(false);
         // handle error
       });
   };
@@ -129,7 +132,11 @@ export default function HomeScreen({navigation}: any) {
                 user={user}
                 name={item?.name}
                 onPress={() => {
-                  navigation.navigate('Chat', {dialogId: item?.id, user, name: item?.name});
+                  navigation.navigate('Chat', {
+                    user,
+                    name: item?.name,
+                    dialog: item,
+                  });
                 }}
               />
             )}

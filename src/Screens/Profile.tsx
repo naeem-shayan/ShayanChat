@@ -17,6 +17,7 @@ import CustomHeader from '../Components/header';
 import UserAvatar from 'react-native-user-avatar';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import QB from 'quickblox-react-native-sdk';
+import firestore from '@react-native-firebase/firestore';
 
 // create a component
 const Profile = ({navigation}: any) => {
@@ -38,6 +39,45 @@ const Profile = ({navigation}: any) => {
     getData();
   }, []);
 
+  const onLogout = async () => {
+    // Perform logout action here
+    try {
+      setLoading(true);
+      //await chatkitty.endSession();
+      await AsyncStorage.clear();
+      if (user?.userType == 'google') {
+        GoogleSignin?.revokeAccess();
+        await auth().signOut();
+      } else {
+        //await auth().signOut();
+        QB.chat.disconnect();
+        QB.auth
+          .logout()
+          .then(() => {
+            setLoading(false);
+            firestore()
+              .collection('Users')
+              .doc(`${user?.id}`)
+              .update({
+                is_online: false,
+                deviceToken: ''
+              })
+              .then(async () => {
+                navigation.replace('Login');
+              })
+              .catch(error => {
+                setLoading(false);
+              });
+          })
+          .catch(e => {});
+      }
+      setLoading(false);
+      navigation.replace('Login');
+    } catch (error) {
+      setLoading(false);
+    }
+  };
+
   const handleLogoutPress = () => {
     Alert.alert(
       'Logout',
@@ -45,37 +85,12 @@ const Profile = ({navigation}: any) => {
       [
         {
           text: 'Cancel',
-          onPress: () => console.log('Cancel Pressed'),
+          onPress: () => {},
           style: 'cancel',
         },
         {
           text: 'OK',
-          onPress: async () => {
-            // Perform logout action here
-            try {
-              setLoading(true);
-              //await chatkitty.endSession();
-              await AsyncStorage.clear();
-              if (user?.userType == 'google') {
-                GoogleSignin?.revokeAccess();
-                await auth().signOut();
-              } else {
-                //await auth().signOut();
-                QB.chat.disconnect();
-                QB.auth
-                  .logout()
-                  .then(() => {
-                    setLoading(false);
-                    navigation.replace('Login');
-                  })
-                  .catch(e => console.log(e));
-              }
-              setLoading(false);
-              navigation.replace('Login');
-            } catch (error) {
-              setLoading(false);
-            }
-          },
+          onPress: async () => onLogout(),
         },
       ],
       {cancelable: false},

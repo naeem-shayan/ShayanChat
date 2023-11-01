@@ -33,7 +33,7 @@ const ChatThread = ({item, name, onPress, user, ...props}: any) => {
             numberOfLines={1}
             style={{
               ...styles.message,
-              fontWeight: item?.unread ? 'bold' : 'normal',
+              fontWeight: item?.unreadMessagesCount > 0 ? 'bold' : 'normal',
             }}>
             {item?.lastMessage}
           </Text>

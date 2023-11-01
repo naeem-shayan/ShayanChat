@@ -76,7 +76,7 @@ export default function CreateChannelScreen({navigation}: any) {
       .then(function (dialog) {
         // handle as neccessary, i.e.
         // subscribe to chat events, typing events, etc.
-        navigation.navigate('Chat', {dialogId: dialog?.id, user});
+        navigation.navigate('Chat', {dialog, user});
       })
       .catch(function (e) {
         //console.log('error:', e);
