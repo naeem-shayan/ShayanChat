@@ -17,16 +17,14 @@ import {AppState} from 'react-native';
 const Stack = createStackNavigator();
 
 const Navigation = () => {
-  const [user, setUser] = useState<any>();
   const [loading, setLoading] = useState(true);
   const [initializing, setInitializing] = useState(true);
   const [session, setSession] = useState<any>(null);
   const appState = useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
-  const [state, setState] = useState('');
+  const [deviceState, setDeviceState] = useState('');
 
   useEffect(() => {
-    getData();
     QB.auth
       .getSession()
       .then(function (session) {
@@ -43,7 +41,7 @@ const Navigation = () => {
     const subscription = AppState.addEventListener('change', nextAppState => {
       appState.current = nextAppState;
       setAppStateVisible(appState.current);
-      setState(appState?.current);
+      setDeviceState(appState?.current);
       console.log(appState?.current);
     });
 
@@ -52,31 +50,20 @@ const Navigation = () => {
     };
   }, []);
 
-  const getData = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
-      setUser(userData);
-      // setLoading(false);
-    } catch (e) {
-      // error reading value
-    }
-  };
-
   useEffect(() => {
-    if (session) {
+    QB.auth.getSession().then(function (session) {
       firestore()
         .collection('Users')
-        .doc(`${user?.id}`)
+        .doc(`${session?.userId}`)
         .update({
-          is_online: appState.current !== 'background',
+          is_online: deviceState !== 'background',
         })
         .then(async () => {})
         .catch(error => {
           setLoading(false);
         });
-    }
-  }, [session, state]);
+    });
+  }, [deviceState]);
 
   if (loading) {
     return <Loading />;

@@ -17,7 +17,7 @@ import Loading from '../Components/loading';
 import Colors from '../Contants/Colors';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Image, LogBox, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import moment from 'moment';
 import ImageView from 'react-native-image-viewing';
 import CustomHeader from '../Components/header';
@@ -30,9 +30,10 @@ import {useIsFocused} from '@react-navigation/native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import QB from 'quickblox-react-native-sdk';
 import {NativeEventEmitter} from 'react-native';
+import firestore from '@react-native-firebase/firestore';
 
 export default function ChatScreen({route, navigation}: any) {
-  const {channel, dialogId, user, name} = route.params;
+  const {channel, dialog, user, name} = route.params;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState('');
@@ -42,14 +43,17 @@ export default function ChatScreen({route, navigation}: any) {
   const [loadEarlier, setLoadEarlier] = useState(false);
   const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
   const [messagePaginator, setMessagePaginator] = useState<any>(null);
+  const [friend, setFriend] = useState<any>({});
 
   const insets = useSafeAreaInsets();
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
 
+  LogBox.ignoreAllLogs();
+
   const fetchChat = () => {
     const getDialogMessagesParams: any = {
-      dialogId: dialogId,
+      dialogId: dialog?.id,
       sort: {
         ascending: false,
         field: QB.chat.MESSAGES_SORT.FIELD.DATE_SENT,
@@ -81,6 +85,22 @@ export default function ChatScreen({route, navigation}: any) {
     fetchChat();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      const collectionRef = firestore()
+        .collection('Users')
+        .doc(`${dialog?.userId}`);
+      const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
+        setFriend(querySnapshot.data());
+        setLoading(false);
+      });
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [user]);
+
   async function receivedNewMessage(event: any) {
     const {type, payload} = event;
     // handle new message
@@ -97,6 +117,7 @@ export default function ChatScreen({route, navigation}: any) {
         },
       ]),
     );
+    QB.chat.getDialogMessages({dialogId: dialog?.id, markAsRead: true});
   }
 
   function messageStatusHandler(event: any) {
@@ -144,7 +165,7 @@ export default function ChatScreen({route, navigation}: any) {
 
   async function handleSend(pendingMessages: any) {
     const message = {
-      dialogId: dialogId,
+      dialogId: dialog?.id,
       body: pendingMessages[0].text,
       saveToHistory: true,
     };
@@ -157,10 +178,10 @@ export default function ChatScreen({route, navigation}: any) {
       .catch(function (e) {
         /* handle error */
       });
-    // sendPushNotification(participantDetails?.properties?.deviceToken, {
-    //   title: user?.displayName,
-    //   body: pendingMessages[0].text,
-    // });
+    sendPushNotification(friend?.deviceToken, {
+      title: user?.fullName,
+      body: pendingMessages[0].text,
+    });
   }
 
   async function handleLoadEarlier() {
@@ -261,9 +282,9 @@ export default function ChatScreen({route, navigation}: any) {
       style={{flex: 1, backgroundColor: Colors.white}}
       edges={{bottom: 'maximum'}}>
       <CustomHeader
-        title={name}
+        title={friend?.fullName}
         showBack
-        status={participantDetails?.presence?.online ? 'online' : 'offline'}
+        status={friend?.is_online ? 'online' : 'offline'}
         userStatus
         onBackPress={() => navigation.goBack()}
       />
