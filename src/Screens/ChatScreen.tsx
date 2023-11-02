@@ -17,7 +17,15 @@ import Loading from '../Components/loading';
 import Colors from '../Contants/Colors';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
-import {Image, LogBox, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {
+  Alert,
+  Image,
+  LogBox,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import moment from 'moment';
 import ImageView from 'react-native-image-viewing';
 import CustomHeader from '../Components/header';
@@ -44,7 +52,7 @@ export default function ChatScreen({route, navigation}: any) {
   const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
   const [messagePaginator, setMessagePaginator] = useState<any>(null);
   const [friend, setFriend] = useState<any>({});
-
+  const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
@@ -87,9 +95,11 @@ export default function ChatScreen({route, navigation}: any) {
 
   useEffect(() => {
     if (user) {
-      const collectionRef = firestore()
-        .collection('Users')
-        .doc(`${dialog?.userId}`);
+      let id =
+        dialog?.occupantsIds[0] === user.id
+          ? dialog?.occupantsIds[1]
+          : dialog?.occupantsIds[0];
+      const collectionRef = firestore().collection('Users').doc(`${id}`);
       const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
         setFriend(querySnapshot.data());
         setLoading(false);
@@ -117,7 +127,7 @@ export default function ChatScreen({route, navigation}: any) {
         },
       ]),
     );
-    QB.chat.getDialogMessages({dialogId: dialog?.id, markAsRead: true});
+    QB.chat.markMessageRead({message: payload});
   }
 
   function messageStatusHandler(event: any) {
@@ -136,32 +146,44 @@ export default function ChatScreen({route, navigation}: any) {
   }
 
   useEffect(() => {
-    emitter.addListener(
-      QB.chat.EVENT_TYPE.RECEIVED_NEW_MESSAGE,
-      receivedNewMessage,
-    );
-  
-    emitter.addListener(
-      QB.chat.EVENT_TYPE.MESSAGE_DELIVERED,
-      messageStatusHandler,
-    );
-  
-    emitter.addListener(QB.chat.EVENT_TYPE.MESSAGE_READ, messageStatusHandler);
-  
-    emitter.addListener(
-      QB.chat.EVENT_TYPE.RECEIVED_SYSTEM_MESSAGE,
-      systemMessageHandler,
-    );
-  
-    emitter.addListener(QB.chat.EVENT_TYPE.USER_IS_TYPING, userTypingHandler);
-  
-    emitter.addListener(
-      QB.chat.EVENT_TYPE.USER_STOPPED_TYPING,
-      userTypingHandler,
-    );
+    if (isFocused) {
+      emitter.addListener(
+        QB.chat.EVENT_TYPE.RECEIVED_NEW_MESSAGE,
+        receivedNewMessage,
+      );
 
-    return emitter.removeAllListeners('')
-  },[])
+      emitter.addListener(
+        QB.chat.EVENT_TYPE.MESSAGE_DELIVERED,
+        messageStatusHandler,
+      );
+
+      emitter.addListener(
+        QB.chat.EVENT_TYPE.MESSAGE_READ,
+        messageStatusHandler,
+      );
+
+      emitter.addListener(
+        QB.chat.EVENT_TYPE.RECEIVED_SYSTEM_MESSAGE,
+        systemMessageHandler,
+      );
+
+      emitter.addListener(QB.chat.EVENT_TYPE.USER_IS_TYPING, userTypingHandler);
+
+      emitter.addListener(
+        QB.chat.EVENT_TYPE.USER_STOPPED_TYPING,
+        userTypingHandler,
+      );
+
+      return () => {
+        emitter.removeAllListeners(QB.chat.EVENT_TYPE.RECEIVED_NEW_MESSAGE);
+        emitter.removeAllListeners(QB.chat.EVENT_TYPE.MESSAGE_DELIVERED);
+        emitter.removeAllListeners(QB.chat.EVENT_TYPE.MESSAGE_READ);
+        emitter.removeAllListeners(QB.chat.EVENT_TYPE.RECEIVED_SYSTEM_MESSAGE);
+        emitter.removeAllListeners(QB.chat.EVENT_TYPE.USER_IS_TYPING);
+        emitter.removeAllListeners(QB.chat.EVENT_TYPE.USER_STOPPED_TYPING);
+      };
+    }
+  }, [isFocused]);
 
   async function handleSend(pendingMessages: any) {
     const message = {
