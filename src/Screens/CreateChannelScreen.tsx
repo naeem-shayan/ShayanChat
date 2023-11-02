@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import User from '../Components/user';
 import CustomHeader from '../Components/header';
 import QB from 'quickblox-react-native-sdk';
+import {useIsFocused, useFocusEffect} from '@react-navigation/native';
 
 export default function CreateChannelScreen({navigation}: any) {
   const [channelName, setChannelName] = useState('');
@@ -66,11 +67,15 @@ export default function CreateChannelScreen({navigation}: any) {
   };
 
   function handleButtonPress(item: any) {
+    const customObject = {
+      class_name: 'moreInfo',
+      time: 0,
+    };
     const createDialogParam: any = {
       type: QB.chat.DIALOG_TYPE.CHAT,
       occupantsIds: [item?.id],
+      customData: customObject,
     };
-
     QB.chat
       .createDialog(createDialogParam)
       .then(function (dialog) {

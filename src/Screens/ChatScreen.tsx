@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {
   Actions,
   ActionsProps,
@@ -17,8 +17,16 @@ import Loading from '../Components/loading';
 import Colors from '../Contants/Colors';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
-import {Image, LogBox, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import moment from 'moment';
+import {
+  Alert,
+  Image,
+  LogBox,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import moment, {calendarFormat} from 'moment';
 import ImageView from 'react-native-image-viewing';
 import CustomHeader from '../Components/header';
 import messaging from '@react-native-firebase/messaging';
@@ -31,6 +39,9 @@ import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import QB from 'quickblox-react-native-sdk';
 import {NativeEventEmitter} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
+import Modal from 'react-native-modal';
+
+let time = 0;
 
 export default function ChatScreen({route, navigation}: any) {
   const {channel, dialog, user, name} = route.params;
@@ -44,13 +55,13 @@ export default function ChatScreen({route, navigation}: any) {
   const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
   const [messagePaginator, setMessagePaginator] = useState<any>(null);
   const [friend, setFriend] = useState<any>({});
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isChatBlocked, setChatBlocked] = useState<boolean>(false);
 
   const insets = useSafeAreaInsets();
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
-
   LogBox.ignoreAllLogs();
-
   const fetchChat = () => {
     const getDialogMessagesParams: any = {
       dialogId: dialog?.id,
@@ -81,15 +92,92 @@ export default function ChatScreen({route, navigation}: any) {
       });
   };
 
+  const isFocused = useIsFocused();
+
+  const fetchSingleDialog = () => {
+    setLoading(true);
+    console.log('dialogId', dialog?.id);
+    QB.chat
+      .getDialogs(dialog?.id)
+      .then((dialog: any) => {
+        time = dialog?.dialogs?.reduce(
+          (max: number, obj: any) =>
+            obj.customData.time > max ? obj.customData.time : max,
+          -Infinity,
+        );
+        cacluatetime();
+      })
+      .catch(error => {
+        console.error('Error retrieving dialog:', error);
+      });
+  };
+
+  useEffect(() => {
+    fetchSingleDialog();
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        time = 0;
+      }
+    };
+  }, []);
+
+  const cacluatetime = () => {
+    if (isFocused) {
+      intervalRef.current = setInterval(() => {
+        if (time === 600 || time > 600) {
+          time = 600;
+          setChatBlocked(true);
+          clearInterval(intervalRef.current ? intervalRef.current : '');
+        }
+        time++;
+      }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if ((intervalRef && intervalRef.current) || isChatBlocked) {
+        clearInterval(intervalRef.current ? intervalRef.current : '');
+        time = 0;
+      }
+    };
+  }, [isFocused]);
+
+  const updateUserDialog = () => {
+    const updateDialogParam = {
+      dialogId: dialog?.id,
+      customData: {
+        class_name: 'moreInfo',
+        time,
+      },
+    };
+    QB.chat
+      .updateDialog(updateDialogParam)
+      .then(function (updatedDialog) {
+        console.log('updatedDialog=======', updatedDialog);
+      })
+      .catch(function (e) {
+        console.log('Error::::', e);
+      });
+  };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', updateUserDialog);
+    return unsubscribe;
+  }, [navigation]);
+
   useEffect(() => {
     fetchChat();
   }, []);
 
   useEffect(() => {
     if (user) {
-      const collectionRef = firestore()
-        .collection('Users')
-        .doc(`${dialog?.userId}`);
+      let id =
+        dialog?.occupantsIds[0] === user.id
+          ? dialog?.occupantsIds[1]
+          : dialog?.occupantsIds[0];
+      const collectionRef = firestore().collection('Users').doc(`${id}`);
       const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
         setFriend(querySnapshot.data());
         setLoading(false);
@@ -140,28 +228,28 @@ export default function ChatScreen({route, navigation}: any) {
       QB.chat.EVENT_TYPE.RECEIVED_NEW_MESSAGE,
       receivedNewMessage,
     );
-  
+
     emitter.addListener(
       QB.chat.EVENT_TYPE.MESSAGE_DELIVERED,
       messageStatusHandler,
     );
-  
+
     emitter.addListener(QB.chat.EVENT_TYPE.MESSAGE_READ, messageStatusHandler);
-  
+
     emitter.addListener(
       QB.chat.EVENT_TYPE.RECEIVED_SYSTEM_MESSAGE,
       systemMessageHandler,
     );
-  
+
     emitter.addListener(QB.chat.EVENT_TYPE.USER_IS_TYPING, userTypingHandler);
-  
+
     emitter.addListener(
       QB.chat.EVENT_TYPE.USER_STOPPED_TYPING,
       userTypingHandler,
     );
 
-    return emitter.removeAllListeners('')
-  },[])
+    return emitter.removeAllListeners('');
+  }, []);
 
   async function handleSend(pendingMessages: any) {
     const message = {
@@ -310,6 +398,23 @@ export default function ChatScreen({route, navigation}: any) {
         swipeToCloseEnabled
         doubleTapToZoomEnabled
       />
+      <View>
+        <Modal isVisible={isChatBlocked}>
+          <View style={styles.content}>
+            <Text style={styles.subscription}>Subscription Needed</Text>
+            <Text style={styles.subscription}>
+              Please subscribe to continue chatting.
+            </Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                navigation.goBack();
+              }}>
+              <Text style={styles.textStyle}>Buy Subscription</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+      </View>
     </SafeAreaView>
   );
 }
@@ -342,5 +447,37 @@ const styles = StyleSheet.create({
     height: 100,
     width: 150,
     borderRadius: 10,
+  },
+  subscription: {
+    color: 'black',
+    alignSelf: 'center',
+  },
+  content: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+    backgroundColor: 'red',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    backgroundColor: '#2196F3',
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+    marginTop: 20,
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
