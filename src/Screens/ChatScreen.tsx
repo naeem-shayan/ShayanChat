@@ -99,8 +99,9 @@ export default function ChatScreen({route, navigation}: any) {
       .getDialogs(dialog?.id)
       .then((dialog: any) => {
         time = dialog?.dialogs?.reduce(
-          (sum: number, obj: any) => sum + (obj.customData?.time || 0),
-          0,
+          (max: number, obj: any) =>
+            obj.customData.time > max ? obj.customData.time : max,
+          -Infinity,
         );
         cacluatetime();
       })
@@ -142,7 +143,8 @@ export default function ChatScreen({route, navigation}: any) {
     };
     QB.chat
       .updateDialog(updateDialogParam)
-      .then(function (updatedDialog) {})
+      .then(function (updatedDialog) {
+      })
       .catch(function (e) {
         console.error('Error::::', e);
       });
