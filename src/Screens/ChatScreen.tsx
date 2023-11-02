@@ -18,7 +18,6 @@ import Colors from '../Contants/Colors';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 import {
-  Alert,
   Image,
   LogBox,
   StyleSheet,
@@ -26,7 +25,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import moment, {calendarFormat} from 'moment';
+import moment from 'moment';
 import ImageView from 'react-native-image-viewing';
 import CustomHeader from '../Components/header';
 import messaging from '@react-native-firebase/messaging';
@@ -125,7 +124,7 @@ export default function ChatScreen({route, navigation}: any) {
   const cacluatetime = () => {
     if (isFocused) {
       intervalRef.current = setInterval(() => {
-        if (time === 600 || time > 600) {
+        if (time >= 600) {
           time = 600;
           setChatBlocked(true);
           clearInterval(intervalRef.current ? intervalRef.current : '');
@@ -155,7 +154,6 @@ export default function ChatScreen({route, navigation}: any) {
     QB.chat
       .updateDialog(updateDialogParam)
       .then(function (updatedDialog) {
-        console.log('updatedDialog=======', updatedDialog);
       })
       .catch(function (e) {
         console.log('Error::::', e);
@@ -173,7 +171,7 @@ export default function ChatScreen({route, navigation}: any) {
 
   useEffect(() => {
     if (user) {
-      let id =
+      const id =
         dialog?.occupantsIds[0] === user.id
           ? dialog?.occupantsIds[1]
           : dialog?.occupantsIds[0];
