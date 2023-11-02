@@ -60,11 +60,7 @@ export default function ChatScreen({route, navigation}: any) {
   const insets = useSafeAreaInsets();
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
-  LogBox.ignoreLogs(['new NativeEventEmitter()']);
-  LogBox.ignoreLogs([
-    'new NativeEventEmitter() was called with a non-null argument without the required removeListeners method',
-  ]);
-  LogBox.ignoreAllLogs();
+  LogBox.ignoreAllLogs()
   const fetchChat = () => {
     const getDialogMessagesParams: any = {
       dialogId: dialog?.id,
