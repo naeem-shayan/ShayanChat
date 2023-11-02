@@ -60,6 +60,10 @@ export default function ChatScreen({route, navigation}: any) {
   const insets = useSafeAreaInsets();
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
+  LogBox.ignoreLogs(['new NativeEventEmitter()']);
+  LogBox.ignoreLogs([
+    'new NativeEventEmitter() was called with a non-null argument without the required removeListeners method',
+  ]);
   LogBox.ignoreAllLogs();
   const fetchChat = () => {
     const getDialogMessagesParams: any = {
@@ -95,14 +99,12 @@ export default function ChatScreen({route, navigation}: any) {
 
   const fetchSingleDialog = () => {
     setLoading(true);
-    console.log('dialogId', dialog?.id);
     QB.chat
       .getDialogs(dialog?.id)
       .then((dialog: any) => {
         time = dialog?.dialogs?.reduce(
-          (max: number, obj: any) =>
-            obj.customData.time > max ? obj.customData.time : max,
-          -Infinity,
+          (sum: number, obj: any) => sum + (obj.customData?.time || 0),
+          0,
         );
         cacluatetime();
       })
@@ -134,15 +136,6 @@ export default function ChatScreen({route, navigation}: any) {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      if ((intervalRef && intervalRef.current) || isChatBlocked) {
-        clearInterval(intervalRef.current ? intervalRef.current : '');
-        time = 0;
-      }
-    };
-  }, [isFocused]);
-
   const updateUserDialog = () => {
     const updateDialogParam = {
       dialogId: dialog?.id,
@@ -153,10 +146,9 @@ export default function ChatScreen({route, navigation}: any) {
     };
     QB.chat
       .updateDialog(updateDialogParam)
-      .then(function (updatedDialog) {
-      })
+      .then(function (updatedDialog) {})
       .catch(function (e) {
-        console.log('Error::::', e);
+        console.error('Error::::', e);
       });
   };
 
