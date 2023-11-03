@@ -119,7 +119,7 @@ const LoginScreen = (props: any) => {
               icon="facebook"
               size={33}
               iconColor='#4267B2'
-              onPress={() => handleFacebookLogin(navigation)}
+              onPress={() => handleFacebookLogin(setLoading, navigation)}
             />
           </View>
           <Text
