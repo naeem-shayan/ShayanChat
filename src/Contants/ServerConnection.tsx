@@ -33,7 +33,7 @@ const ServerConnection = ({navigation}: any) => {
       QB.chat
         .connect({
           userId: user?.id,
-          password: user?.password,
+          password: user.userType === 'facebook' ? user?.token : user?.password,
         })
         .then(function () {
           // connected successfully

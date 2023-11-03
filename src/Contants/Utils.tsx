@@ -146,7 +146,10 @@ export const handleGoogleLogin = async (navigation: any) => {
     .catch(error => console.log('error: ' + error));
 };
 
-export const handleFacebookLogin = async (navigation: any) => {
+export const handleFacebookLogin = async (
+  setLoading: (loading: boolean) => void,
+  navigation: any,
+) => {
   const result = await LoginManager.logInWithPermissions([
     'public_profile',
     'email',
@@ -158,25 +161,32 @@ export const handleFacebookLogin = async (navigation: any) => {
   if (!data) {
     throw 'Something went wrong obtaining access token';
   }
-  const facebookCredential = auth.FacebookAuthProvider.credential(
-    data.accessToken,
-  );
-  auth()
-    .signInWithCredential(facebookCredential)
-    .then(async res => {
-      const currentUser = await auth().currentUser;
-      const token = await currentUser?.getIdToken();
+  QB.auth
+    .loginWithFacebook(data?.accessToken)
+    .then(async function (info) {
       await messaging().registerDeviceForRemoteMessages();
-      const deviceToken = await messaging().getToken();
-      const user = {
-        uid: currentUser?.uid,
-        idToken: token,
-        displayName: currentUser?.displayName,
-        deviceToken,
+      const token = await messaging().getToken();
+      const user: any = {
+        ...info?.user,
+        token: info?.session?.token,
+        deviceToken: token,
         userType: 'facebook',
+        is_online: true,
       };
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-      navigation.replace('Connect');
+      firestore()
+        .collection('Users')
+        .doc(`${user?.id}`)
+        .set(user)
+        .then(async () => {
+          await AsyncStorage.setItem('user', JSON.stringify(user));
+          setLoading(false);
+          navigation.replace('Connect');
+        })
+        .catch(error => {
+          setLoading(false);
+        });
     })
-    .catch(error => console.log('Error', error));
+    .catch(function (e: any) {
+      console.error('error', e);
+    });
 };
