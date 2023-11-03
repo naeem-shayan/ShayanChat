@@ -4,8 +4,8 @@ import {PixelRatio} from 'react-native';
 const width = Math.round(Dimensions.get('window').width);
 const height = Math.round(Dimensions.get('window').height);
 
-const guidelineBaseWidth = 450;
-const guidelineBaseHeight = 950;
+const guidelineBaseWidth = 400;
+const guidelineBaseHeight = 850;
 
 const xdHeight = xdHeight => {
   const heightPercent = Math.round((xdHeight / guidelineBaseHeight) * 100);
