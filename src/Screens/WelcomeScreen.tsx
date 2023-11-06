@@ -37,23 +37,21 @@ const WelcomeScreen = ({navigation}:any) => {
           <Pressable onPress={() => handleTabPress(0)} style={styles.tab}>
             <Image
               source={require('../../assests/images/user.png')}
-              style={{
-                width: 34,
-                height: 32,
-                alignSelf: 'center',
-                tintColor: selected === 0 ? 'white' : 'black',
-              }}
+              style={[
+                styles.user,
+                {tintColor: selected === 0 ? 'white' : 'black'},
+              ]}
             />
           </Pressable>
           <Pressable onPress={() => handleTabPress(1)} style={styles.tab}>
             <Image
               source={require('../../assests/images/consultant.png')}
-              style={{
-                width: 40,
-                height: 40,
-                alignSelf: 'center',
-                tintColor: selected === 1 ? 'white' : 'black',
-              }}
+              style={[
+                styles.consultant,
+                {
+                  tintColor: selected === 1 ? 'white' : 'black',
+                },
+              ]}
             />
           </Pressable>
         </View>
@@ -127,6 +125,16 @@ const styles = StyleSheet.create({
     width: mvs(88),
     backgroundColor: Colors.firstColor,
     borderRadius: 50,
+  },
+  user: {
+    width: 34,
+    height: 32,
+    alignSelf: 'center',
+  },
+  consultant: {
+    width: 40,
+    height: 40,
+    alignSelf: 'center',
   },
   labelsContainer: {
     flexDirection: 'row',
