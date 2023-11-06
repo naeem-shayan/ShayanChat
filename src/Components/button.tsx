@@ -11,12 +11,19 @@ import Colors from '../Contants/Colors';
 import {mvs} from '../Config/metrices';
 
 // create a component
-const CustomButton = ({loading, title = 'Title', onPress, ...props}: any) => {
+const CustomButton = ({
+  loading,
+  title = 'Title',
+  mt,
+  mb,
+  onPress,
+  ...props
+}: any) => {
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={loading}
-      style={styles.container}>
+      style={{...styles.container, marginTop: mt, marginBottom: mb}}>
       {loading ? (
         <ActivityIndicator size={'small'} color={Colors.buttonText} />
       ) : (
@@ -29,7 +36,7 @@ const CustomButton = ({loading, title = 'Title', onPress, ...props}: any) => {
 // define your styles
 const styles = StyleSheet.create({
   container: {
-    height: mvs(46),
+    paddingVertical: mvs(8),
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.firstColor,
@@ -39,6 +46,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: mvs(20),
     color: Colors.buttonText,
+    fontFamily: 'Poppins-Medium',
+    lineHeight : mvs(28)
   },
 });
 

@@ -21,7 +21,15 @@ import {
   handleFacebookLogin,
 } from '../Contants/Utils';
 import {chatkitty} from '../ChatKitty';
-import {IconButton} from 'react-native-paper';
+import {Divider, IconButton} from 'react-native-paper';
+import {mvs} from '../Config/metrices';
+import CustomHeader from '../Components/header';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import CustomHeader1 from '../Components/header1';
+import PageTitleAndDes from '../Components/pageTitleAndDes';
+import CustomInput from '../Components/textInput';
+import CustomButton from '../Components/button';
+import {FaceBook} from '../../assests/svgs';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
@@ -32,13 +40,18 @@ const LoginScreen = (props: any) => {
   const [credientalError, setCredientalError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [switchValue, setSwitchValue] = useState(false);
+
+  const toggleSwitch = () => {
+    setSwitchValue(!switchValue);
+  };
 
   useEffect(() => {
     chatkitty.endSession();
   }, []);
 
   const handleLogin = () => {
-    const emailErrorMessage = ''//validateEmail(email);
+    const emailErrorMessage = validateEmail(email);
     const passwordErrorMessage = validatePassword(password);
     if (emailErrorMessage || passwordErrorMessage) {
       setEmailError(emailErrorMessage);
@@ -51,85 +64,70 @@ const LoginScreen = (props: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.flex}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}>
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={{paddingBottom: 60}}
-          showsVerticalScrollIndicator={false}>
+    <KeyboardAwareScrollView
+      showsVerticalScrollIndicator={false}
+      style={{
+        flex: 1,
+        backgroundColor: Colors.white,
+        paddingHorizontal: mvs(22),
+      }}>
+      <CustomHeader1 />
+      <PageTitleAndDes
+        title="Hello, Welcome Back"
+        des="Happy to see you again, to use your account please login first."
+      />
+      <CustomInput
+        mt={mvs(35)}
+        label="Email Address"
+        placeholder="Enter your email address"
+        value={email}
+        error={emailError}
+        onChangeText={(text: any) => setEmail(text)}
+      />
+      <CustomInput
+        label="Password"
+        placeholder="Enter your password"
+        password
+        value={password}
+        error={passwordError}
+        onChangeText={(text: any) => setPassword(text)}
+      />
+      {/* <Text style={styles.forgot}>Forgot Password</Text> */}
+      <View style={styles.buttonContainer}>
+        <CustomButton
+          mt={mvs(40)}
+          loading={loading}
+          title={'Login'}
+          onPress={handleLogin}
+        />
+      </View>
+
+      <Text
+        style={styles.newAccountText}
+        onPress={() => !loading && navigation.navigate('Signup')}>
+        Don't have an account?<Text style={styles.signUp}>{` SignUp `}</Text>
+      </Text>
+
+      <View style={styles.dividerContainer}>
+        <View style={styles.divider} />
+        <Text style={styles.dividerLabel}>Or Login with</Text>
+        <View style={styles.divider} />
+      </View>
+      <View style={styles.socialButtons}>
+        {/* <TouchableOpacity onPress={() => handleGoogleLogin(navigation)}>
           <Image
-            source={require('../../assests/images/logo.png')}
-            style={styles.image}
+            source={require('../../assests/images/google.png')}
+            style={styles.socialIcons}
           />
-          <Text style={styles.title}>Login Here</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={{
-                ...styles.input,
-                borderColor: emailError ? 'red' : Colors.firstColor,
-              }}
-              placeholder="Enter your Email"
-              placeholderTextColor={Colors.placeholderColor}
-              selectionColor={Colors.selectionColor}
-              value={email}
-              onChangeText={text => setEmail(text)}
-            />
-            {emailError && <Text style={styles.errors}>{emailError}</Text>}
-          </View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={{
-                ...styles.input,
-                borderColor: passwordError ? 'red' : Colors.firstColor,
-              }}
-              placeholder="Enter your Password"
-              placeholderTextColor={Colors.placeholderColor}
-              selectionColor={Colors.selectionColor}
-              value={password}
-              secureTextEntry
-              onChangeText={text => setPassword(text)}
-            />
-            {passwordError && (
-              <Text style={styles.errors}>{passwordError}</Text>
-            )}
-          </View>
-          {credientalError && (
-            <Text style={styles.errors}>{credientalError}</Text>
-          )}
-          <TouchableOpacity
-            disabled={loading}
-            style={styles.signupButton}
-            onPress={handleLogin}>
-            {loading ? (
-              <ActivityIndicator size={'small'} color={Colors.white} />
-            ) : (
-              <Text style={styles.signupText}>Login</Text>
-            )}
-          </TouchableOpacity>
-          <View style={styles.socialButtons}>
-            <TouchableOpacity onPress={() => handleGoogleLogin(navigation)}>
-              <Image
-                source={require('../../assests/images/google.png')}
-                style={styles.socialIcons}
-              />
-            </TouchableOpacity>
-            <IconButton
-              icon="facebook"
-              size={33}
-              iconColor='#4267B2'
-              onPress={() => handleFacebookLogin(setLoading, navigation)}
-            />
-          </View>
-          <Text
-            style={styles.newAccountText}
-            onPress={() => !loading && navigation.navigate('Signup')}>
-            Create new account
-          </Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </TouchableOpacity> */}
+        <IconButton
+          icon="facebook"
+          size={33}
+          iconColor="#4267B2"
+          onPress={() => handleFacebookLogin(setLoading, navigation)}
+        />
+      </View>
+    </KeyboardAwareScrollView>
   );
 };
 
@@ -139,7 +137,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 24,
+    //padding: mvs(24),
     backgroundColor: 'white',
   },
   image: {
@@ -196,10 +194,15 @@ const styles = StyleSheet.create({
     marginLeft: 30,
   },
   newAccountText: {
-    margin: 20,
-    marginTop: 10,
+    marginTop: mvs(20),
     color: Colors.textColor,
     alignSelf: 'center',
+    fontFamily: 'Poppins-Regular',
+    fontSize: mvs(14),
+  },
+  signUp: {
+    color: Colors.firstColor,
+    fontFamily: 'Poppins-Medium',
   },
   socialButtons: {
     flexDirection: 'row',
@@ -210,6 +213,35 @@ const styles = StyleSheet.create({
   socialIcons: {
     height: 40,
     width: 40,
+  },
+  forgot: {
+    fontSize: mvs(13),
+    color: Colors.firstColor,
+    fontFamily: 'Poppins-Regular',
+    alignSelf: 'flex-end',
+    marginTop: mvs(13),
+    marginRight: mvs(8),
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginTop: mvs(60),
+    //borderWidth:1
+  },
+  divider: {
+    height: 1,
+    width: mvs(100),
+    borderWidth: 0.5,
+    borderColor: Colors.textColor,
+  },
+  dividerLabel: {
+    fontSize: mvs(15),
+    fontFamily: 'Poppins-Regular',
+    color: Colors.textColor,
+  },
+  buttonContainer: {
+    paddingHorizontal: mvs(8),
   },
 });
 

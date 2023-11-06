@@ -1,6 +1,6 @@
 //import liraries
 import React, {Component, useState} from 'react';
-import {View, Text, StyleSheet, Dimensions} from 'react-native';
+import {View, Text, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
 import {Shadow} from 'react-native-neomorph-shadows';
 import {mvs} from '../Config/metrices';
 import {TextInput} from 'react-native';
@@ -17,7 +17,7 @@ const CustomInput = ({
   label = 'Your Name',
   placeholder = '',
   value,
-  setValue,
+  onChangeText,
   password = false,
   error,
   ...props
@@ -47,26 +47,28 @@ const CustomInput = ({
             placeholderTextColor={Colors.placeholderColor}
             selectionColor={Colors.selectionColor}
             value={value}
-            onChangeText={setValue}
+            onChangeText={onChangeText}
+            secureTextEntry={password && !eye}
           />
           {password && (
-            <View style={styles.eyeContainer}>
+            <TouchableOpacity onPress={() => setEye(!eye)} style={styles.eyeContainer}>
               <IconMI
                 name={eye ? 'eye' : 'eye-outline'}
                 size={mvs(22)}
                 color={Colors.placeholderColor}
                 onPress={() => setEye(!eye)}
               />
-            </View>
+            </TouchableOpacity>
           )}
         </View>
       </Shadow>
-      {error && (
-        <View style={styles.errorContainer}>
+
+      <View style={styles.errorContainer}>
+        {error && (
           <Icon name="error" size={mvs(16)} color={Colors.errorColor} />
-          <Text style={styles.errors}>{error}</Text>
-        </View>
-      )}
+        )}
+        {error && <Text style={styles.errors}>{error}</Text>}
+      </View>
     </View>
   );
 };
@@ -104,7 +106,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     backgroundColor: Colors.textInput,
     width: width - mvs(44),
-    height: mvs(57),
+    height: mvs(55),
     justifyContent: 'center',
     overflow: 'hidden',
 
@@ -122,6 +124,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     marginRight: mvs(13),
     marginTop: mvs(5),
+    minHeight: mvs(20),
+    //borderWidth: 1
   },
   inputContainer: {
     flexDirection: 'row',
@@ -130,7 +134,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eyeContainer: {
-    //borderWidth: 1,
     //width: mvs(50),
     height: mvs(40),
     justifyContent: 'center',

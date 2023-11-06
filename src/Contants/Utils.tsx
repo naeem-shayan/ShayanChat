@@ -42,6 +42,14 @@ export const validatePassword = (password: string) => {
   }
 };
 
+export const validateConfirmPassword = (password: string, confirmPassword: string) => {
+  if (password != confirmPassword) {
+    return 'Password mismatch';
+  } else {
+    return '';
+  }
+};
+
 export const signin = (
   email: string,
   password: string,
