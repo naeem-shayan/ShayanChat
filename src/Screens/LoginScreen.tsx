@@ -71,7 +71,7 @@ const LoginScreen = (props: any) => {
         backgroundColor: Colors.white,
         paddingHorizontal: mvs(22),
       }}>
-      <CustomHeader1 />
+      <CustomHeader1 onBack={() => navigation.goBack()}/>
       <PageTitleAndDes
         title="Hello, Welcome Back"
         des="Happy to see you again, to use your account please login first."

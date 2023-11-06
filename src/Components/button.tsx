@@ -41,7 +41,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.firstColor,
     borderRadius: mvs(15),
-    width:"100%"
+    width:"100%",
+    minHeight:mvs(46)
   },
   title: {
     fontSize: mvs(20),
