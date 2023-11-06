@@ -14,6 +14,7 @@ import QB from 'quickblox-react-native-sdk';
 import firestore from '@react-native-firebase/firestore';
 import {AppState} from 'react-native';
 import WelcomeScreen from '../Screens/WelcomeScreen';
+import OnboardingScreen from '../Screens/OnboardingScreen';
 
 const Stack = createStackNavigator();
 
@@ -77,6 +78,7 @@ const Navigation = () => {
           headerShown: false,
         }}>
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name='Onboarding' component={OnboardingScreen}/>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="Home" component={BottomTab} />

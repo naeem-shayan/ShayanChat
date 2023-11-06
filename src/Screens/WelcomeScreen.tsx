@@ -4,6 +4,7 @@ import {Shadow} from 'react-native-neomorph-shadows';
 import CustomButton from '../Components/button';
 import Colors from '../Contants/Colors';
 import {mvs} from '../Config/metrices';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const WelcomeScreen = ({navigation}:any) => {
   const [selected, setSelected] = useState(0);
@@ -18,8 +19,9 @@ const WelcomeScreen = ({navigation}:any) => {
     }).start();
   };
 
-  const handleStart=()=>{
-    navigation.navigate("Login")
+  const handleStart=async ()=>{
+    await AsyncStorage.setItem('userType', JSON.stringify(selected===0 ? "user":"consultant"));
+    navigation.navigate("Onboarding")
   }
 
   return (
@@ -39,7 +41,7 @@ const WelcomeScreen = ({navigation}:any) => {
               source={require('../../assests/images/user.png')}
               style={[
                 styles.user,
-                {tintColor: selected === 0 ? 'white' : 'black'},
+                {tintColor: selected === 0 ? 'white' : Colors.firstColor},
               ]}
             />
           </Pressable>
@@ -49,7 +51,7 @@ const WelcomeScreen = ({navigation}:any) => {
               style={[
                 styles.consultant,
                 {
-                  tintColor: selected === 1 ? 'white' : 'black',
+                  tintColor: selected === 1 ? 'white' : Colors.firstColor,
                 },
               ]}
             />

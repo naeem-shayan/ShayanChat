@@ -42,7 +42,10 @@ export const validatePassword = (password: string) => {
   }
 };
 
-export const validateConfirmPassword = (password: string, confirmPassword: string) => {
+export const validateConfirmPassword = (
+  password: string,
+  confirmPassword: string,
+) => {
   if (password != confirmPassword) {
     return 'Password mismatch';
   } else {
@@ -55,6 +58,7 @@ export const signin = (
   password: string,
   setLoading: (loading: boolean) => void,
   navigation: any,
+  userType: any,
 ) => {
   setLoading(true);
   QB.auth
@@ -71,7 +75,7 @@ export const signin = (
       const user: any = {
         ...info?.user,
         deviceToken: token,
-        userType: 'email',
+        ...(userType && {userType: userType}),
         password: password,
         is_online: true,
       };
@@ -89,7 +93,7 @@ export const signin = (
         });
     })
     .catch(function (e) {
-      console.log(e)
+      console.log(e);
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -108,6 +112,7 @@ export const signup = (
   navigation: any,
 ) => {
   setLoading(true);
+  // get user typpe
   const createUserParams = {
     email: email,
     fullName: name,
@@ -118,8 +123,8 @@ export const signup = (
   QB.users
     .create(createUserParams)
     .then(async function (user) {
-      // user created successfully
-      signin(email, password, setLoading, navigation);
+      const userType = await AsyncStorage.getItem('userType');
+      signin(email, password, setLoading, navigation, userType);
     })
     .catch(function (e) {
       // handle as necessary

@@ -30,6 +30,7 @@ import PageTitleAndDes from '../Components/pageTitleAndDes';
 import CustomInput from '../Components/textInput';
 import CustomButton from '../Components/button';
 import {FaceBook} from '../../assests/svgs';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
@@ -50,7 +51,7 @@ const LoginScreen = (props: any) => {
     chatkitty.endSession();
   }, []);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const emailErrorMessage = validateEmail(email);
     const passwordErrorMessage = validatePassword(password);
     if (emailErrorMessage || passwordErrorMessage) {
@@ -60,7 +61,7 @@ const LoginScreen = (props: any) => {
     }
     setEmailError('');
     setPasswordError('');
-    signin(email.trim(), password.trim(), setLoading, navigation);
+    signin(email.trim(), password.trim(), setLoading, navigation, null);
   };
 
   return (
@@ -71,7 +72,7 @@ const LoginScreen = (props: any) => {
         backgroundColor: Colors.white,
         paddingHorizontal: mvs(22),
       }}>
-      <CustomHeader1 onBack={() => navigation.goBack()}/>
+      <CustomHeader1 onBack={() => navigation.goBack()} />
       <PageTitleAndDes
         title="Hello, Welcome Back"
         des="Happy to see you again, to use your account please login first."
