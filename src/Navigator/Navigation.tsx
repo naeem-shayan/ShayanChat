@@ -13,6 +13,7 @@ import ServerConnection from '../Contants/ServerConnection';
 import QB from 'quickblox-react-native-sdk';
 import firestore from '@react-native-firebase/firestore';
 import {AppState} from 'react-native';
+import WelcomeScreen from '../Screens/WelcomeScreen';
 
 const Stack = createStackNavigator();
 
@@ -71,10 +72,11 @@ const Navigation = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={session?.applicationId ? 'Connect' : 'Login'}
+        initialRouteName={session?.applicationId ? 'Connect' : 'Welcome'}
         screenOptions={{
           headerShown: false,
         }}>
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="Home" component={BottomTab} />

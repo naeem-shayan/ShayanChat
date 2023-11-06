@@ -8,7 +8,7 @@ import {useEffect, useRef, useState} from 'react';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import Colors from './src/Contants/Colors';
 import QB from 'quickblox-react-native-sdk';
-
+console.warn = () => {};
 GoogleSignin.configure({
   webClientId:
     '9475515452-vlaj16b1r27sqf8joap26ca240cse5va.apps.googleusercontent.com',
