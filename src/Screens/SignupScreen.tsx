@@ -17,17 +17,26 @@ import {
   validateEmail,
   validatePassword,
   signup,
+  validateConfirmPassword,
 } from '../Contants/Utils';
 import Colors from '../Contants/Colors';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {mvs} from '../Config/metrices';
+import CustomHeader1 from '../Components/header1';
+import PageTitleAndDes from '../Components/pageTitleAndDes';
+import CustomInput from '../Components/textInput';
+import CustomButton from '../Components/button';
 
 const SignupScreen = (props: any) => {
-  const {navigation} = props
+  const {navigation} = props;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [credientalError, setCredientalError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -35,10 +44,20 @@ const SignupScreen = (props: any) => {
     const nameErrorMessage = validateName(name);
     const emailErrorMessage = validateEmail(email);
     const passwordErrorMessage = validatePassword(password);
-    if (nameErrorMessage || emailErrorMessage || passwordErrorMessage) {
+    const confirmPasswordErrorMessage = validateConfirmPassword(
+      password,
+      confirmPassword,
+    );
+    if (
+      nameErrorMessage ||
+      emailErrorMessage ||
+      passwordErrorMessage ||
+      confirmPasswordErrorMessage
+    ) {
       setNameError(nameErrorMessage);
       setEmailError(emailErrorMessage);
       setPasswordError(passwordErrorMessage);
+      setConfirmPasswordError(confirmPasswordErrorMessage);
       return;
     }
     setNameError('');
@@ -48,81 +67,59 @@ const SignupScreen = (props: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.flex}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}>
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={{paddingBottom: 50}}
-          showsVerticalScrollIndicator={false}>
-          <Image
-            source={require('../../assests/images/logo.png')}
-            style={styles.image}
-          />
-          <Text style={styles.title}>Signup Here</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={{
-                ...styles.input,
-                borderColor: nameError ? 'red' : Colors.firstColor,
-              }}
-              placeholder="Enter your Name"
-              placeholderTextColor={Colors.placeholderColor}
-              selectionColor={Colors.selectionColor}
-              value={name}
-              onChangeText={text => setName(text)}
-            />
-            {nameError && <Text style={styles.errors}>{nameError}</Text>}
-          </View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={{
-                ...styles.input,
-                borderColor: emailError ? 'red' : Colors.firstColor,
-              }}
-              placeholder="Enter your Email"
-              placeholderTextColor={Colors.placeholderColor}
-              selectionColor={Colors.selectionColor}
-              value={email}
-              keyboardType="email-address"
-              onChangeText={text => setEmail(text)}
-            />
-            {emailError && <Text style={styles.errors}>{emailError}</Text>}
-          </View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={{
-                ...styles.input,
-                borderColor: passwordError ? 'red' : Colors.firstColor,
-              }}
-              placeholder="Enter your Password"
-              placeholderTextColor={Colors.placeholderColor}
-              selectionColor={Colors.selectionColor}
-              value={password}
-              secureTextEntry
-              onChangeText={text => setPassword(text)}
-            />
-            {passwordError && (
-              <Text style={styles.errors}>{passwordError}</Text>
-            )}
-          </View>
-          {credientalError && (
-            <Text style={styles.errors}>{credientalError}</Text>
-          )}
-          <TouchableOpacity
-            disabled={loading}
-            style={styles.signupButton}
-            onPress={handleSignup}>
-            {loading ? (
-              <ActivityIndicator size={'small'} color={Colors.white} />
-            ) : (
-              <Text style={styles.signupText}>Sign Up</Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <KeyboardAwareScrollView
+      showsVerticalScrollIndicator={false}
+      style={{
+        flex: 1,
+        backgroundColor: Colors.white,
+        paddingHorizontal: mvs(22),
+      }}>
+      <CustomHeader1 onBack={() => navigation.goBack()} />
+      <PageTitleAndDes
+        title="Sign up with Email"
+        des="Get chatting with everyone today by signing up for chat"
+      />
+      <CustomInput
+        mt={mvs(35)}
+        label="Your name"
+        placeholder="Enter your name"
+        value={name}
+        error={nameError}
+        onChangeText={(text: any) => setName(text)}
+      />
+      <CustomInput
+        label="Your email"
+        placeholder="Enter your eamil address"
+        value={email}
+        error={emailError}
+        onChangeText={(text: any) => setEmail(text)}
+      />
+      <CustomInput
+        label="Password"
+        placeholder="********"
+        password
+        value={password}
+        error={passwordError}
+        onChangeText={(text: any) => setPassword(text)}
+      />
+      <CustomInput
+        label="Confirm Password"
+        placeholder="********"
+        password
+        value={confirmPassword}
+        error={confirmPasswordError}
+        onChangeText={(text: any) => setConfirmPassword(text)}
+      />
+      <View style={styles.buttonContainer}>
+        <CustomButton
+          mt={mvs(50)}
+          mb={mvs(50)}
+          loading={loading}
+          title={'Create an account'}
+          onPress={handleSignup}
+        />
+      </View>
+    </KeyboardAwareScrollView>
   );
 };
 
@@ -187,6 +184,9 @@ const styles = StyleSheet.create({
     marginLeft: 30,
     alignSelf: 'flex-start',
   },
+  buttonContainer: {
+    paddingHorizontal : mvs(8)
+  }
 });
 
 export default SignupScreen;
