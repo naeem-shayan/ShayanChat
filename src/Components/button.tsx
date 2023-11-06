@@ -34,6 +34,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.firstColor,
     borderRadius: mvs(15),
+    width:"100%"
   },
   title: {
     fontSize: mvs(20),
