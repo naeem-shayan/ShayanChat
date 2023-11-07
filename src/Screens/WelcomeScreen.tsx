@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   user: {
-    width: msv(34),
+    width: mvs(34),
     height: mvs(32),
     alignSelf: 'center',
   },
