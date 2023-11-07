@@ -26,7 +26,7 @@ const WelcomeScreen = ({navigation}: any) => {
   };
 
   const handleStart = async () => {
-    await AsyncStorage.setItem('userType', selected ? 'user' : 'consultant');
+    await AsyncStorage.setItem('userType', !selected ? 'user' : 'consultant');
     navigation.navigate('Onboarding');
   };
   let color = 'red';

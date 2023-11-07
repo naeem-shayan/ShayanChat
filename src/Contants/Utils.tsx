@@ -131,18 +131,6 @@ export const signin = (
           console.log(error)
         })
       }
-      // firestore()
-      //   .collection('Users')
-      //   .doc(`${user?.id}`)
-      //   .update(user)
-      //   .then(async () => {
-      //     await AsyncStorage.setItem('user', JSON.stringify(user));
-      //     setLoading(false);
-      //     navigation.replace('Connect');
-      //   })
-      //   .catch(error => {
-      //     setLoading(false);
-      //   });
     })
     .catch(function (e) {
       console.log(e);
