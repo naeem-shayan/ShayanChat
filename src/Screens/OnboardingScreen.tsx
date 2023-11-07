@@ -1,9 +1,8 @@
 import React from 'react';
-import {View, StyleSheet, Image} from 'react-native';
+import {View, StyleSheet, Text} from 'react-native';
 import Colors from '../Contants/Colors';
 import {mvs, width} from '../Config/metrices';
 import PageTitleAndDes from '../Components/pageTitleAndDes';
-import {Text} from 'react-native-paper';
 import CustomButton from '../Components/button';
 import {OnBoardingUers} from '../../assests/svgs';
 

@@ -46,8 +46,9 @@ export default function CreateChannelScreen({navigation}: any) {
         });
         const statusOrder = [true, false];
         const updatedUsers = newData.sort(
-          (a: any, b: any) =>
-            statusOrder.indexOf(a.is_online) - statusOrder.indexOf(b.is_online),
+          (userA: any, userB: any) =>
+            statusOrder.indexOf(userA.is_online) -
+            statusOrder.indexOf(userB.is_online),
         );
         setUsers(updatedUsers);
         setLoading(false);
