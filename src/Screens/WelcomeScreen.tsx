@@ -129,13 +129,13 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   user: {
-    width: 34,
-    height: 32,
+    width: msv(34),
+    height: mvs(32),
     alignSelf: 'center',
   },
   consultant: {
-    width: 40,
-    height: 40,
+    width: mvs(40),
+    height: mvs(40),
     alignSelf: 'center',
   },
   labelsContainer: {
