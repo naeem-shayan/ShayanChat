@@ -53,6 +53,39 @@ export const validateConfirmPassword = (
   }
 };
 
+const handleLogin = async (
+  user: any,
+) => {
+  firestore()
+    .collection('Users')
+    .doc(`${user?.id}`)
+    .update(user)
+    .then(async () => {
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      return true;
+    })
+    .catch(error => {
+      return false;
+    });
+};
+
+const handleSignup = async (
+  user: any,
+) => {
+  firestore()
+    .collection('Users')
+    .doc(`${user?.id}`)
+    .set(user)
+    .then(async () => {
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      return true;
+    })
+    .catch((error) => {
+      console.error("Error", error)
+      return false;
+    });
+};
+
 export const signin = (
   email: string,
   password: string,
@@ -79,18 +112,37 @@ export const signin = (
         password: password,
         is_online: true,
       };
-      firestore()
-        .collection('Users')
-        .doc(`${user?.id}`)
-        .set(user)
-        .then(async () => {
-          await AsyncStorage.setItem('user', JSON.stringify(user));
+      if(user.userType) {
+        handleSignup(user).then(()=>{
           setLoading(false);
           navigation.replace('Connect');
         })
-        .catch(error => {
+        .catch((error)=>{
+          console.error(error)
+        })
+        setLoading(false)
+      }
+      else{
+        handleLogin(user).then(()=>{
           setLoading(false);
-        });
+          navigation.replace('Connect');
+        })
+        .catch((error)=>{
+          console.log(error)
+        })
+      }
+      // firestore()
+      //   .collection('Users')
+      //   .doc(`${user?.id}`)
+      //   .update(user)
+      //   .then(async () => {
+      //     await AsyncStorage.setItem('user', JSON.stringify(user));
+      //     setLoading(false);
+      //     navigation.replace('Connect');
+      //   })
+      //   .catch(error => {
+      //     setLoading(false);
+      //   });
     })
     .catch(function (e) {
       console.log(e);

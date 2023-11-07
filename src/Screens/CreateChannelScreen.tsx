@@ -44,8 +44,12 @@ export default function CreateChannelScreen({navigation}: any) {
             ...doc.data(),
           });
         });
-
-        setUsers(newData);
+        const statusOrder = [true, false];
+        const updatedUsers = newData.sort(
+          (a: any, b: any) =>
+            statusOrder.indexOf(a.is_online) - statusOrder.indexOf(b.is_online),
+        );
+        setUsers(updatedUsers);
         setLoading(false);
       });
 
