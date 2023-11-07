@@ -5,8 +5,14 @@ import CustomButton from '../Components/button';
 import Colors from '../Contants/Colors';
 import {mvs} from '../Config/metrices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  LaymanUserWhite,
+  Consultant,
+  ConsultantWhite,
+  LaymanUser,
+} from '../../assests/svgs';
 
-const WelcomeScreen = ({navigation}:any) => {
+const WelcomeScreen = ({navigation}: any) => {
   const [selected, setSelected] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
 
@@ -19,10 +25,11 @@ const WelcomeScreen = ({navigation}:any) => {
     }).start();
   };
 
-  const handleStart=async ()=>{
-    await AsyncStorage.setItem('userType', JSON.stringify(selected===0 ? "user":"consultant"));
-    navigation.navigate("Onboarding")
-  }
+  const handleStart = async () => {
+    await AsyncStorage.setItem('userType', selected ? 'user' : 'consultant');
+    navigation.navigate('Onboarding');
+  };
+  let color = 'red';
 
   return (
     <View style={styles.rootContainer}>
@@ -37,24 +44,10 @@ const WelcomeScreen = ({navigation}:any) => {
             style={[styles.tabIndicator, {transform: [{translateX}]}]}
           />
           <Pressable onPress={() => handleTabPress(0)} style={styles.tab}>
-            <Image
-              source={require('../../assests/images/user.png')}
-              style={[
-                styles.user,
-                {tintColor: selected === 0 ? 'white' : Colors.firstColor},
-              ]}
-            />
+            {selected === 0 ? <LaymanUser /> : <LaymanUserWhite />}
           </Pressable>
           <Pressable onPress={() => handleTabPress(1)} style={styles.tab}>
-            <Image
-              source={require('../../assests/images/consultant.png')}
-              style={[
-                styles.consultant,
-                {
-                  tintColor: selected === 1 ? 'white' : Colors.firstColor,
-                },
-              ]}
-            />
+            {selected === 1 ? <ConsultantWhite /> : <Consultant />}
           </Pressable>
         </View>
       </Shadow>
@@ -62,7 +55,7 @@ const WelcomeScreen = ({navigation}:any) => {
         <Text style={styles.tabUser}>User</Text>
         <Text style={styles.tabConsultantText}>Consultant</Text>
       </View>
-      <CustomButton title="Get Started" onPress={handleStart}/>
+      <CustomButton title="Get Started" onPress={handleStart} />
     </View>
   );
 };
@@ -76,7 +69,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Colors.firstColor,
-    fontSize: mvs(20),
+    fontSize: mvs(29),
     textAlign: 'center',
     fontFamily: 'Poppins-Regular',
     marginTop: mvs(50),
