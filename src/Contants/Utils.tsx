@@ -61,7 +61,12 @@ const handleLogin = async (
     .doc(`${user?.id}`)
     .update(user)
     .then(async () => {
-      await AsyncStorage.setItem('user', JSON.stringify(user));
+      const documentSnapshotAfter = await firestore()
+        .collection('Users')
+        .doc(`${user?.id}`)
+        .get();
+      const currentUserDataAfter = documentSnapshotAfter.data();
+      await AsyncStorage.setItem('user', JSON.stringify(currentUserDataAfter));
       return true;
     })
     .catch(error => {
