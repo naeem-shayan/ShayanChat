@@ -27,5 +27,4 @@ export const sendPushNotification = async (token: any, data: any,) => {
       body: JSON.stringify(message),
     })
     response = await response.json()
-    console.log(response)
   }

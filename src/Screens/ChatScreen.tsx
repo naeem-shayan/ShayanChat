@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {
   Actions,
   ActionsProps,
@@ -7,20 +7,16 @@ import {
   GiftedChat,
 } from 'react-native-gifted-chat';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {
-  chatkitty,
-  channelDisplayName,
-  checkUserStatus,
-  participant,
-} from '../ChatKitty';
 import Loading from '../Components/loading';
 import Colors from '../Contants/Colors';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import storage from '@react-native-firebase/storage';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   LogBox,
+  Modal,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -29,9 +25,7 @@ import {
 import moment from 'moment';
 import ImageView from 'react-native-image-viewing';
 import CustomHeader from '../Components/header';
-import messaging from '@react-native-firebase/messaging';
 import {sendPushNotification} from '../Contants/SendPush';
-import User from '../Components/user';
 //@ts-ignore
 import UserAvatar from 'react-native-user-avatar';
 import {useIsFocused} from '@react-navigation/native';
@@ -39,24 +33,31 @@ import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import QB from 'quickblox-react-native-sdk';
 import {NativeEventEmitter} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
+import {mvs} from '../Config/metrices';
+import Video from 'react-native-video';
+import {createThumbnail} from 'react-native-create-thumbnail';
+import ChatVideo from '../Components/chatVideo';
+import LoadingOver from '../Components/loadingOver';
 
 export default function ChatScreen({route, navigation}: any) {
   const {channel, dialog, user, name} = route.params;
-  const [messages, setMessages] = useState([]);
+  const player = useRef(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [messages, setMessages] = useState<any>([]);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState('');
+  const [sending, setSending] = useState(false);
   const [visible, setIsVisible] = useState(false);
-  const [participantDetails, setParticipantDetails] = useState<any>(null);
-  const [statusUpdated, setStatusUpdated] = useState(false);
   const [loadEarlier, setLoadEarlier] = useState(false);
   const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
   const [messagePaginator, setMessagePaginator] = useState<any>(null);
   const [friend, setFriend] = useState<any>({});
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
+  const [video, setVideo] = useState('');
+  const [videoLoading, setVideoLoading] = useState(false);
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
-
   LogBox.ignoreAllLogs();
 
   const fetchChat = () => {
@@ -68,19 +69,21 @@ export default function ChatScreen({route, navigation}: any) {
       },
       markAsRead: true,
     };
-
     QB.chat
       .getDialogMessages(getDialogMessagesParams)
-      .then(function (result) {
-        // result.messages - array of messages found
-        // result.skip - number of items skipped
-        // result.limit - number of items returned per page
-        const msgs: any = result?.messages?.map((el: any) => ({
-          ...el,
-          _id: el?.id,
-          user: {_id: el?.senderId, name: el?.name},
-          text: el?.body,
-        }));
+      .then(async result => {
+        const msgs: any = await Promise.all(
+          result?.messages?.map(async (el: any) => {
+            return {
+              ...el,
+              _id: el?.id,
+              user: {_id: el?.senderId, name: el?.name},
+              text: el?.body,
+              type: el?.properties?.type,
+              url: el?.properties?.url || '',
+            };
+          }),
+        );
         setMessages(msgs);
         setLoading(false);
       })
@@ -113,10 +116,8 @@ export default function ChatScreen({route, navigation}: any) {
 
   async function receivedNewMessage(event: any) {
     const {type, payload} = event;
-    // handle new message
     // type - event name (string)
     // payload - message received (object)
-    //@ts-ignore
     setMessages((currentMessages: any) =>
       GiftedChat.append(currentMessages, [
         {
@@ -124,6 +125,9 @@ export default function ChatScreen({route, navigation}: any) {
           _id: payload?.id,
           user: {_id: payload?.senderId, name: payload?.name},
           text: payload?.body,
+          createdAt: payload?.createdAt,
+          type: payload?.properties?.type,
+          url: payload?.properties?.url || '',
         },
       ]),
     );
@@ -189,74 +193,59 @@ export default function ChatScreen({route, navigation}: any) {
     const message = {
       dialogId: dialog?.id,
       body: pendingMessages[0].text,
+      properties: {
+        type: 'text',
+      },
       saveToHistory: true,
     };
 
-    QB.chat
-      .sendMessage(message)
-      .then(function () {
-        /* send successfully */
-      })
-      .catch(function (e) {
-        /* handle error */
-      });
+    QB.chat.sendMessage(message);
     sendPushNotification(friend?.deviceToken, {
       title: user?.fullName,
       body: pendingMessages[0].text,
     });
   }
 
-  async function handleLoadEarlier() {
-    if (!messagePaginator.hasNextPage) {
-      setLoadEarlier(false);
-      return;
-    }
-    setIsLoadingEarlier(true);
-    const nextPaginator = await messagePaginator.nextPage();
-    setMessagePaginator(nextPaginator);
-    setMessages(currentMessages =>
-      GiftedChat.prepend(currentMessages, nextPaginator.items.map(mapMessage)),
-    );
-    setIsLoadingEarlier(false);
-  }
-
-  async function handleSendImage(params: any) {
-    const result: any = await launchImageLibrary({mediaType: 'photo'});
+  async function handleSendFile(type: any) {
+    const result: any = await launchImageLibrary({mediaType: type});
     if (!result?.didCancel) {
-      let name = JSON.stringify(new Date().getTime());
-      const reference = storage().ref(`images/${name}`);
-      const task = reference.putFile(result?.assets[0]?.uri);
-      task.on('state_changed', taskSnapshot => {
-        console.log(
-          `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
-        );
-      });
-      task.then(async () => {
-        console.log('Image uploaded to the bucket!');
-        await storage()
-          .ref(`images/${name}`)
-          .getDownloadURL()
-          .then(async url => {
-            await chatkitty.sendMessage({
-              channel: channel,
-              file: {
-                name: result?.assets[0]?.fileName,
-                size: result?.assets[0]?.fileSize,
-                contentType: result?.assets[0]?.type,
-                url: url,
-              },
-              progressListener: {
-                onStarted: () => {},
-                onProgress: progress => {},
-                onCompleted: result => {},
-              },
-            });
-            // sendPushNotification(participantDetails?.properties?.deviceToken, {
-            //   title: user?.displayName,
-            //   body: 'image',
-            // });
+      setSending(true);
+      const contentUploadParams = {
+        url: result?.assets[0]?.uri, // path to file in local file system
+        public: false,
+      };
+      QB.content
+        .upload(contentUploadParams)
+        .then(async (file: any) => {
+          const { uid } = file;
+          const contentGetFileUrlParams = { uid };
+          const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
+          // create a message
+          const message = {
+            dialogId: dialog?.id,
+            body: 'Attachment',
+            saveToHistory: true,
+            properties: {
+              type: file?.contentType.includes('image')
+                ? 'image'
+                : file?.contentType.includes('video')
+                ? 'video'
+                : 'file',
+              url: url,
+            },
+          };
+          //send a message
+          QB.chat.sendMessage(message);
+          setSending(false);
+          sendPushNotification(friend?.deviceToken, {
+            title: user?.fullName,
+            body: 'Attachment',
           });
-      });
+        })
+        .catch(function (e) {
+          setSending(false);
+          /* handle file upload error */
+        });
     }
   }
 
@@ -265,12 +254,15 @@ export default function ChatScreen({route, navigation}: any) {
       <Actions
         {...props}
         options={{
-          ['Send Image']: handleSendImage,
+          ['Send Image']: () => handleSendFile('image'),
+          ['Send Video']: () => handleSendFile('video'),
           Cancel: (props: any) => {
             console.log('Cancel');
           },
         }}
-        icon={() => <Icon name="camera" size={28} color={Colors.firstColor} />}
+        icon={() => (
+          <Icon name="attachment" size={28} color={Colors.firstColor} />
+        )}
         onSend={args => console.log(args)}
       />
     );
@@ -278,16 +270,41 @@ export default function ChatScreen({route, navigation}: any) {
 
   function renderBubble(props: any) {
     const {currentMessage} = props;
-    return (
-      <Bubble
-        {...props}
-        wrapperStyle={{
-          left: {
-            backgroundColor: '#d3d3d3',
-          },
-        }}
-      />
-    );
+    if (currentMessage?.type == 'image') {
+      return (
+        <TouchableOpacity
+          onPress={() => {
+            setCurrentImage(currentMessage?.url);
+            setIsVisible(true);
+          }}>
+          <Image
+            source={{uri: currentMessage?.url}}
+            height={150}
+            width={200}
+            borderRadius={mvs(20)}
+          />
+        </TouchableOpacity>
+      );
+    } else if (currentMessage?.type == 'video') {
+      return (
+        <ChatVideo
+          msg={currentMessage}
+          setVideo={setVideo}
+          setModalVisible={setModalVisible}
+        />
+      );
+    } else {
+      return (
+        <Bubble
+          {...props}
+          wrapperStyle={{
+            left: {
+              backgroundColor: '#d3d3d3',
+            },
+          }}
+        />
+      );
+    }
   }
 
   const renderAvatar = (props: any) => {
@@ -322,7 +339,7 @@ export default function ChatScreen({route, navigation}: any) {
         // onLoadEarlier={handleLoadEarlier}
         renderBubble={renderBubble}
         renderAvatar={renderAvatar}
-        //renderActions={renderActions}
+        renderActions={renderActions}
       />
       <ImageView
         images={[{uri: currentImage}]}
@@ -332,6 +349,43 @@ export default function ChatScreen({route, navigation}: any) {
         swipeToCloseEnabled
         doubleTapToZoomEnabled
       />
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert('Modal has been closed.');
+          setModalVisible(!modalVisible);
+        }}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Pressable
+              style={[styles.buttonClose]}
+              onPress={() => setModalVisible(!modalVisible)}>
+              <Icon name="close" color={Colors.white} size={mvs(30)} />
+            </Pressable>
+            <Video
+              source={{uri: video}}
+              style={{flex: 1}}
+              resizeMode="contain" // You can adjust this as needed
+              //controls={true} // Display video controls
+              paused={false} // Start the video playing
+              controls={true}
+              onLoadStart={() => setVideoLoading(true)}
+              onLoad={() => setVideoLoading(false)} // Callback when remote video is buffering
+              onError={() => setModalVisible(false)}
+            />
+            {videoLoading && (
+              <ActivityIndicator
+                style={styles.videoLoader}
+                size={'large'}
+                color={Colors.white}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
+      {sending && <LoadingOver/>}
     </SafeAreaView>
   );
 }
@@ -365,4 +419,60 @@ const styles = StyleSheet.create({
     width: 150,
     borderRadius: 10,
   },
+  video: {
+    height: 150,
+    width: 200,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    height: '100%',
+    width: '100%',
+    //margin: 20,
+    backgroundColor: '#000',
+    borderTopRightRadius: 20,
+    borderTopLeftRadius: 20,
+    padding: 35,
+    //alignItems: 'center'
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonOpen: {
+    backgroundColor: '#F194FF',
+  },
+  buttonClose: {
+    position: 'absolute',
+    top: mvs(20),
+    right: mvs(20),
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  backgroundVideo: {
+    position: 'absolute',
+    height: 'auto',
+    backgroundColor: 'red',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
+  videoLoader: {position: 'absolute', alignSelf: 'center', marginTop: mvs(350)},
 });
