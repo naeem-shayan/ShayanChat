@@ -7,7 +7,7 @@ const Category = ({name, image, onPress}: any) => {
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.container}>
-        <Image source={image} style={styles.image} />
+        <Image source={{uri: image}} style={styles.image} />
         <Text numberOfLines={1} style={styles.text}>
           {name}
         </Text>
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     marginLeft: mvs(5),
     fontFamily: 'Poppins-Regular',
     width: mvs(120),
-    marginTop:mvs(5)
+    marginTop: mvs(5),
   },
 });
 
