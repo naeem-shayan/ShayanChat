@@ -217,7 +217,8 @@ export default function ChatScreen({route, navigation}: any) {
       QB.content
         .upload(contentUploadParams)
         .then(async (file: any) => {
-          const contentGetFileUrlParams = {uid: file.uid};
+          const { uid } = file;
+          const contentGetFileUrlParams = { uid };
           const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
           // create a message
           const message = {
