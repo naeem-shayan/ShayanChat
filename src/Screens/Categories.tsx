@@ -15,10 +15,15 @@ import CustomSearch from '../Components/search';
 import _ from 'lodash';
 import CategoryCard from '../Components/category';
 
-const Categories = () => {
+const Categories = ({navigation}: any) => {
   const [categories, setCategories] = useState(categoriesList);
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const gotoUsersScreen = (categoryName: string) => {
+    navigation.replace('Home', { screen: 'CreateChannelScreen', params: { categoryName } });
+  };
+
   const debouncedSearch = _.debounce((value: string) => {
     setLoading(true);
     const filtered = categoriesList.filter(category =>
@@ -28,11 +33,10 @@ const Categories = () => {
     setLoading(false);
   }, 500);
   const handleSearchChange = (value: string) => {
-    if(value){
-      debouncedSearch(value?.trim());
-    }
-    else{
-      setCategories(categoriesList)
+    if (value?.trim()) {
+      debouncedSearch(value);
+    } else {
+      setCategories(categoriesList);
     }
   };
   return (
@@ -61,7 +65,7 @@ const Categories = () => {
                 <CategoryCard
                   name={item.name}
                   image={item.image}
-                  onPress={() => Alert.alert('clicked')}
+                  onPress={() => gotoUsersScreen(item.name)}
                 />
               </View>
             )}

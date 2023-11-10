@@ -17,8 +17,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import User from '../Components/user';
 import CustomHeader from '../Components/header';
 import QB from 'quickblox-react-native-sdk';
+import CustomSearch from '../Components/search';
+//@ts-ignore
+import _ from 'lodash';
+import {useRoute} from '@react-navigation/native';
+import {mvs} from '../Config/metrices';
 
 export default function CreateChannelScreen({navigation}: any) {
+  const {params}: any = useRoute();
   const [channelName, setChannelName] = useState('');
   const [channelError, setChannelError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -26,6 +32,7 @@ export default function CreateChannelScreen({navigation}: any) {
   const [user, setUser] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingNextPage, setIsLoadingNextPage] = useState(false);
+  const [value, setValue] = useState('');
 
   useEffect(() => {
     getData();
@@ -33,32 +40,54 @@ export default function CreateChannelScreen({navigation}: any) {
 
   useEffect(() => {
     if (user) {
-      const collectionRef = firestore()
-        .collection('Users')
-        .where('id', '!=', user?.id);
-      const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
-        const newData: any = [];
-        querySnapshot.forEach(doc => {
-          newData.push({
-            id: doc.id,
-            ...doc.data(),
-          });
-        });
-        const statusOrder = [true, false];
-        const updatedUsers = newData.sort(
-          (userA: any, userB: any) =>
-            statusOrder.indexOf(userA.is_online) -
-            statusOrder.indexOf(userB.is_online),
-        );
-        setUsers(updatedUsers);
-        setLoading(false);
-      });
-
-      return () => {
-        unsubscribe();
-      };
+      fetchUsers();
     }
   }, [user]);
+
+  const fetchUsers = async () => {
+    let data = await firestore().collection('Users').get();
+    const userData = data.docs.map(doc => doc.data());
+    const filteredUsers = userData.filter(
+      (consultant: any) =>
+        consultant.profession === params?.categoryName &&
+        consultant?.id !== user?.id,
+    );
+    const statusOrder = [true, false];
+    const updatedUsers = filteredUsers.sort(
+      (userA: any, userB: any) =>
+        statusOrder.indexOf(userA.is_online) -
+        statusOrder.indexOf(userB.is_online),
+    );
+    setUsers(updatedUsers);
+    setLoading(false);
+  };
+
+  // useEffect(() => {
+  //     const collectionRef = firestore()
+  //       .collection('Users')
+  //       .where('id', '!=', user?.id)
+  //       .where('profession','==', params?.categoryName)
+  //     const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
+  //       const newData: any = [];
+  //       querySnapshot?.forEach(doc => {
+  //         newData.push({
+  //           id: doc.id,
+  //           ...doc.data(),
+  //         });
+  //       });
+  //       const statusOrder = [true, false];
+  //       const updatedUsers = newData.sort(
+  //         (userA: any, userB: any) =>
+  //           statusOrder.indexOf(userA.is_online) -
+  //           statusOrder.indexOf(userB.is_online),
+  //       );
+  //       setUsers(updatedUsers);
+  //       setLoading(false);
+  //     });
+  //     return () => {
+  //       unsubscribe();
+  //     };
+  // }, [user]);
 
   const getData = async () => {
     try {
@@ -118,13 +147,44 @@ export default function CreateChannelScreen({navigation}: any) {
     ) : null;
   };
 
+  const debouncedSearch = _.debounce((value: string) => {
+    setLoading(true);
+    const filteredUsers = users.filter((user: any) =>
+      user?.fullName.toLowerCase().includes(value.toLowerCase()),
+    );
+    setUsers(filteredUsers);
+    setLoading(false);
+  }, 500);
+  const handleSearchChange = (value: string) => {
+    if (value) {
+      debouncedSearch(value?.trim());
+    } else {
+      fetchUsers();
+    }
+  };
+
   return (
     <>
-      <CustomHeader title={'Users'} />
+      <CustomHeader
+        title={'Users'}
+        showBack
+        onBackPress={() => navigation.replace('Category')}
+      />
+      <CustomSearch
+        placeholder="Search Users"
+        value={value}
+        setValue={setValue}
+        onChangeText={(text: any) => handleSearchChange(text)}
+        mb={10}
+      />
       <View style={styles.rootContainer}>
         {loading ? (
           <View style={styles.loader}>
             <ActivityIndicator size={'large'} color={Colors.firstColor} />
+          </View>
+        ) : users.length === 0 ? (
+          <View style={styles.messageContainer}>
+            <Text style={styles.messageText}>Not Found</Text>
           </View>
         ) : (
           <FlatList
@@ -143,7 +203,11 @@ export default function CreateChannelScreen({navigation}: any) {
             //onEndReached={loadNextUsers}
             onEndReachedThreshold={0}
             renderItem={({item}: any) => (
-              <User item={item} onPress={() => handleButtonPress(item)} />
+              <User
+                item={item}
+                category={params?.categoryName}
+                onPress={() => handleButtonPress(item)}
+              />
             )}
           />
         )}
@@ -155,7 +219,6 @@ export default function CreateChannelScreen({navigation}: any) {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: Colors.white,
     paddingHorizontal: 15,
   },
   closeButtonContainer: {
@@ -219,7 +282,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   container: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'red',
     flex: 1,
   },
   listTitle: {
@@ -240,5 +303,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 10,
+  },
+  messageContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  messageText: {
+    color: Colors.firstColor,
+    fontSize: mvs(25),
+    fontFamily: 'Poppins-Regular',
   },
 });
