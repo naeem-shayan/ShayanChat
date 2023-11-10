@@ -13,12 +13,14 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Image,
   LogBox,
   Modal,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -38,6 +40,8 @@ import Video from 'react-native-video';
 import {createThumbnail} from 'react-native-create-thumbnail';
 import ChatVideo from '../Components/chatVideo';
 import LoadingOver from '../Components/loadingOver';
+import {replaceObjectById} from '../Contants/Utils';
+import ChatImage from '../Components/chatImage';
 
 export default function ChatScreen({route, navigation}: any) {
   const {channel, dialog, user, name} = route.params;
@@ -59,6 +63,49 @@ export default function ChatScreen({route, navigation}: any) {
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
   LogBox.ignoreAllLogs();
+
+  const [newMessage, setNewMessage] = useState('');
+  const [mediaUri, setMediaUri] = useState(null);
+
+  const renderItem = ({item}: any) => {
+    if (item?.properties?.type == 'photo') {
+      return (
+        <ChatImage
+          msg={item}
+          setImage={setCurrentImage}
+          setIsVisible={setIsVisible}
+          user={user}
+        />
+      );
+    } else if (item?.properties?.type == 'video') {
+      return (
+        <ChatVideo
+          msg={item}
+          setVideo={setVideo}
+          setModalVisible={setModalVisible}
+          user={user}
+        />
+      );
+    } else {
+      return (
+        <View
+          style={
+            item.senderId === user?.id
+              ? styles.userMessage
+              : styles.otherMessage
+          }>
+          <Text
+            style={{
+              ...styles.messageText,
+              color:
+                item.senderId === user?.id ? Colors.white : Colors.textColor,
+            }}>
+            {item.body}
+          </Text>
+        </View>
+      );
+    }
+  };
 
   const fetchChat = () => {
     const getDialogMessagesParams: any = {
@@ -84,7 +131,8 @@ export default function ChatScreen({route, navigation}: any) {
             };
           }),
         );
-        setMessages(msgs);
+        setMessages(result?.messages);
+        // console.log("MSGS:", result?.messages)
         setLoading(false);
       })
       .catch(function (e) {
@@ -118,19 +166,14 @@ export default function ChatScreen({route, navigation}: any) {
     const {type, payload} = event;
     // type - event name (string)
     // payload - message received (object)
-    setMessages((currentMessages: any) =>
-      GiftedChat.append(currentMessages, [
-        {
-          ...payload,
-          _id: payload?.id,
-          user: {_id: payload?.senderId, name: payload?.name},
-          text: payload?.body,
-          createdAt: payload?.createdAt,
-          type: payload?.properties?.type,
-          url: payload?.properties?.url || '',
-        },
-      ]),
-    );
+    setMessages(async (currentMessages: any) => {
+      const newMsges = await replaceObjectById(
+        payload?.properties?.id,
+        payload,
+        currentMessages,
+      );
+      setMessages([...newMsges]);
+    });
     QB.chat.markMessageRead({message: payload});
   }
 
@@ -190,15 +233,28 @@ export default function ChatScreen({route, navigation}: any) {
   }, [isFocused]);
 
   async function handleSend(pendingMessages: any) {
-    const message = {
-      dialogId: dialog?.id,
-      body: pendingMessages[0].text,
+    if (newMessage.trim() === '') {
+      return;
+    }
+    const newMsg = {
+      id: Date.now(),
+      body: 'loading',
       properties: {
         type: 'text',
       },
+      senderId: user?.id, // Assuming the new message is sent by the user
+    };
+    setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
+    setNewMessage('');
+    const message = {
+      dialogId: dialog?.id,
+      body: newMessage,
+      properties: {
+        type: 'text',
+        id: `${newMsg?.id}`,
+      },
       saveToHistory: true,
     };
-
     QB.chat.sendMessage(message);
     sendPushNotification(friend?.deviceToken, {
       title: user?.fullName,
@@ -210,6 +266,17 @@ export default function ChatScreen({route, navigation}: any) {
     const result: any = await launchImageLibrary({mediaType: type});
     if (!result?.didCancel) {
       setSending(true);
+      const newMsg = {
+        id: Date.now(),
+        body: 'loading',
+        properties: {
+          type: type,
+          url: '',
+        },
+        senderId: user?.id, // Assuming the new message is sent by the user
+      };
+      setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
+      setNewMessage('');
       const contentUploadParams = {
         url: result?.assets[0]?.uri, // path to file in local file system
         public: false,
@@ -217,8 +284,8 @@ export default function ChatScreen({route, navigation}: any) {
       QB.content
         .upload(contentUploadParams)
         .then(async (file: any) => {
-          const { uid } = file;
-          const contentGetFileUrlParams = { uid };
+          const {uid} = file;
+          const contentGetFileUrlParams = {uid};
           const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
           // create a message
           const message = {
@@ -227,11 +294,12 @@ export default function ChatScreen({route, navigation}: any) {
             saveToHistory: true,
             properties: {
               type: file?.contentType.includes('image')
-                ? 'image'
+                ? 'photo'
                 : file?.contentType.includes('video')
                 ? 'video'
                 : 'file',
               url: url,
+              id: `${newMsg?.id}`,
             },
           };
           //send a message
@@ -249,69 +317,6 @@ export default function ChatScreen({route, navigation}: any) {
     }
   }
 
-  function renderActions(props: Readonly<ActionsProps>) {
-    return (
-      <Actions
-        {...props}
-        options={{
-          ['Send Image']: () => handleSendFile('image'),
-          ['Send Video']: () => handleSendFile('video'),
-          Cancel: (props: any) => {
-            console.log('Cancel');
-          },
-        }}
-        icon={() => (
-          <Icon name="attachment" size={28} color={Colors.firstColor} />
-        )}
-        onSend={args => console.log(args)}
-      />
-    );
-  }
-
-  function renderBubble(props: any) {
-    const {currentMessage} = props;
-    if (currentMessage?.type == 'image') {
-      return (
-        <TouchableOpacity
-          onPress={() => {
-            setCurrentImage(currentMessage?.url);
-            setIsVisible(true);
-          }}>
-          <Image
-            source={{uri: currentMessage?.url}}
-            height={150}
-            width={200}
-            borderRadius={mvs(20)}
-          />
-        </TouchableOpacity>
-      );
-    } else if (currentMessage?.type == 'video') {
-      return (
-        <ChatVideo
-          msg={currentMessage}
-          setVideo={setVideo}
-          setModalVisible={setModalVisible}
-        />
-      );
-    } else {
-      return (
-        <Bubble
-          {...props}
-          wrapperStyle={{
-            left: {
-              backgroundColor: '#d3d3d3',
-            },
-          }}
-        />
-      );
-    }
-  }
-
-  const renderAvatar = (props: any) => {
-    const {currentMessage} = props;
-    return <UserAvatar size={30} name={name} />;
-  };
-
   if (loading) {
     return <Loading />;
   }
@@ -327,20 +332,46 @@ export default function ChatScreen({route, navigation}: any) {
         userStatus
         onBackPress={() => navigation.goBack()}
       />
-      <GiftedChat
-        bottomOffset={insets.bottom}
-        messages={messages}
-        onSend={handleSend}
-        loadEarlier={loadEarlier}
-        user={{
-          _id: user?.id,
-        }}
-        // isLoadingEarlier={isLoadingEarlier}
-        // onLoadEarlier={handleLoadEarlier}
-        renderBubble={renderBubble}
-        renderAvatar={renderAvatar}
-        renderActions={renderActions}
-      />
+      <View style={styles.container}>
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          data={messages}
+          inverted
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          style={styles.messageList}
+        />
+        <View style={styles.inputContainer}>
+          {mediaUri && (
+            <Image
+              source={{uri: mediaUri}}
+              style={styles.previewImage}
+              resizeMode="cover"
+            />
+          )}
+          <TextInput
+            style={styles.input}
+            placeholder="Type your message..."
+            value={newMessage}
+            onChangeText={text => setNewMessage(text)}
+          />
+          <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.mediaButtonsContainer}>
+          <TouchableOpacity
+            style={styles.mediaButton}
+            onPress={() => handleSendFile('photo')}>
+            <Text style={styles.mediaButtonText}>Send Photo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.mediaButton}
+            onPress={() => handleSendFile('video')}>
+            <Text style={styles.mediaButtonText}>Send Video</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       <ImageView
         images={[{uri: currentImage}]}
         imageIndex={0}
@@ -385,28 +416,9 @@ export default function ChatScreen({route, navigation}: any) {
           </View>
         </View>
       </Modal>
-      {sending && <LoadingOver/>}
+      {/* {sending && <LoadingOver />} */}
     </SafeAreaView>
   );
-}
-
-function mapMessage(message: any) {
-  return {
-    _id: message.id,
-    text: message.body,
-    createdAt: new Date(message.createdTime),
-    user: mapUser(message.user),
-    type: message.type,
-    file: message?.file?.url,
-  };
-}
-
-function mapUser(user: any) {
-  return {
-    _id: user?.senderId,
-    name: user?.displayName,
-    avatar: user?.displayPictureUrl,
-  };
 }
 
 const styles = StyleSheet.create({
@@ -475,4 +487,78 @@ const styles = StyleSheet.create({
     right: 0,
   },
   videoLoader: {position: 'absolute', alignSelf: 'center', marginTop: mvs(350)},
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  messageList: {
+    flex: 1,
+  },
+  userMessage: {
+    alignSelf: 'flex-end',
+    marginVertical: 4,
+    maxWidth: '70%',
+    backgroundColor: Colors.firstColor,
+    borderRadius: 8,
+  },
+  otherMessage: {
+    alignSelf: 'flex-start',
+    marginVertical: 4,
+    maxWidth: '70%',
+    borderRadius: 8,
+    backgroundColor: 'lightgray',
+  },
+  messageText: {
+    color: '#000000',
+    padding: 8,
+    // backgroundColor: '#e0e0e0',
+  },
+  media: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  previewImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+  },
+  sendButton: {
+    marginLeft: 10,
+    padding: 10,
+    backgroundColor: Colors.firstColor,
+    borderRadius: 8,
+  },
+  sendButtonText: {
+    color: '#ffffff',
+  },
+  mediaButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  mediaButton: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 10,
+    backgroundColor: Colors.firstColor,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  mediaButtonText: {
+    color: '#ffffff',
+  },
 });
