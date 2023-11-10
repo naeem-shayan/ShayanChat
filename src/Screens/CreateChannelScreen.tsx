@@ -62,33 +62,6 @@ export default function CreateChannelScreen({navigation}: any) {
     setLoading(false);
   };
 
-  // useEffect(() => {
-  //     const collectionRef = firestore()
-  //       .collection('Users')
-  //       .where('id', '!=', user?.id)
-  //       .where('profession','==', params?.categoryName)
-  //     const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
-  //       const newData: any = [];
-  //       querySnapshot?.forEach(doc => {
-  //         newData.push({
-  //           id: doc.id,
-  //           ...doc.data(),
-  //         });
-  //       });
-  //       const statusOrder = [true, false];
-  //       const updatedUsers = newData.sort(
-  //         (userA: any, userB: any) =>
-  //           statusOrder.indexOf(userA.is_online) -
-  //           statusOrder.indexOf(userB.is_online),
-  //       );
-  //       setUsers(updatedUsers);
-  //       setLoading(false);
-  //     });
-  //     return () => {
-  //       unsubscribe();
-  //     };
-  // }, [user]);
-
   const getData = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('user');
@@ -156,11 +129,17 @@ export default function CreateChannelScreen({navigation}: any) {
     setLoading(false);
   }, 500);
   const handleSearchChange = (value: string) => {
+    setValue(value);
     if (value) {
       debouncedSearch(value?.trim());
     } else {
       fetchUsers();
     }
+  };
+
+  const handleClearSearch = () => {
+    setValue('');
+    handleSearchChange('');
   };
 
   return (
@@ -173,9 +152,9 @@ export default function CreateChannelScreen({navigation}: any) {
       <CustomSearch
         placeholder="Search Users"
         value={value}
-        setValue={setValue}
         onChangeText={(text: any) => handleSearchChange(text)}
         mb={10}
+        handleClearSearch={handleClearSearch}
       />
       <View style={styles.rootContainer}>
         {loading ? (
@@ -184,7 +163,9 @@ export default function CreateChannelScreen({navigation}: any) {
           </View>
         ) : users.length === 0 ? (
           <View style={styles.messageContainer}>
-            <Text style={styles.messageText}>Not Found</Text>
+            <Text style={styles.messageText}>
+              No users found for {params?.categoryName} category
+            </Text>
           </View>
         ) : (
           <FlatList

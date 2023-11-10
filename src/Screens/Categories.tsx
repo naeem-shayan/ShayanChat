@@ -33,11 +33,16 @@ const Categories = ({navigation}: any) => {
     setLoading(false);
   }, 500);
   const handleSearchChange = (value: string) => {
+    setValue(value)
     if (value?.trim()) {
       debouncedSearch(value);
     } else {
       setCategories(categoriesList);
     }
+  };
+  const handleClearSearch = () => {
+    setValue('')
+    handleSearchChange('')
   };
   return (
     <View style={styles.rootContainer}>
@@ -45,8 +50,8 @@ const Categories = ({navigation}: any) => {
       <CustomSearch
         placeholder="Search Category"
         value={value}
-        setValue={setValue}
         onChangeText={(text: any) => handleSearchChange(text)}
+        handleClearSearch={handleClearSearch}
         mb={10}
       />
       {loading ? (
