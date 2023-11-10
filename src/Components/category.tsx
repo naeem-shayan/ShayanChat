@@ -3,7 +3,7 @@ import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import {mvs} from '../Config/metrices';
 import Colors from '../Contants/Colors';
 
-const Category = ({name, image, onPress}: any) => {
+const CategoryCard = ({name, image, onPress}: any) => {
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.container}>
@@ -42,4 +42,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Category;
+export default CategoryCard;

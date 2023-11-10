@@ -7,13 +7,13 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import categoriesList from '../Catergories';
-import Category from '../Components/category';
+import categoriesList from '../Contants/catergoriesJSON';
 import {mvs} from '../Config/metrices';
 import Colors from '../Contants/Colors';
 import CustomSearch from '../Components/search';
 //@ts-ignore
 import _ from 'lodash';
+import CategoryCard from '../Components/category';
 
 const Categories = () => {
   const [categories, setCategories] = useState(categoriesList);
@@ -28,7 +28,12 @@ const Categories = () => {
     setLoading(false);
   }, 500);
   const handleSearchChange = (value: string) => {
-    debouncedSearch(value.trim());
+    if(value){
+      debouncedSearch(value?.trim());
+    }
+    else{
+      setCategories(categoriesList)
+    }
   };
   return (
     <View style={styles.rootContainer}>
@@ -53,7 +58,7 @@ const Categories = () => {
             showsVerticalScrollIndicator={false}
             renderItem={({item}) => (
               <View style={styles.container}>
-                <Category
+                <CategoryCard
                   name={item.name}
                   image={item.image}
                   onPress={() => Alert.alert('clicked')}

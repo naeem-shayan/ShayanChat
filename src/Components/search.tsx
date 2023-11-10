@@ -21,6 +21,7 @@ const CustomSearch = ({
   const clearTextInput = () => {
     if (inputRef.current) {
       inputRef.current.clear();
+      onChangeText()
     }
   };
   return (
