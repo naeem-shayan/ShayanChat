@@ -26,6 +26,7 @@ import CustomHeader1 from '../Components/header1';
 import PageTitleAndDes from '../Components/pageTitleAndDes';
 import CustomInput from '../Components/textInput';
 import CustomButton from '../Components/button';
+import {useDispatch, useSelector} from 'react-redux';
 
 const SignupScreen = (props: any) => {
   const {navigation} = props;
@@ -39,6 +40,8 @@ const SignupScreen = (props: any) => {
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [credientalError, setCredientalError] = useState('');
   const [loading, setLoading] = useState(false);
+  const userType = useSelector((state: any) => state.userType);
+  const dispatch = useDispatch();
 
   const handleSignup = () => {
     const nameErrorMessage = validateName(name);
@@ -63,7 +66,15 @@ const SignupScreen = (props: any) => {
     setNameError('');
     setEmailError('');
     setPasswordError('');
-    signup(name.trim(), email.trim(), password.trim(), setLoading, navigation);
+    signup(
+      name.trim(),
+      email.trim(),
+      password.trim(),
+      setLoading,
+      navigation,
+      dispatch,
+      userType,
+    );
   };
 
   return (

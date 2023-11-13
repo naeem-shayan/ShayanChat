@@ -17,30 +17,16 @@ import Colors from '../Contants/Colors';
 import CustomHeader from '../Components/header';
 import messaging from '@react-native-firebase/messaging';
 import QB from 'quickblox-react-native-sdk';
+import { useSelector } from 'react-redux';
 
 export default function HomeScreen({navigation}: any) {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingOut, setLoadingOut] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const isFocused = useIsFocused();
   const [connecting, setConnecting] = useState(true);
   const [reload, setReload] = useState<any>();
-
-  const getData = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
-      setUser(userData);
-      return userData;
-    } catch (e) {
-      // error reading value
-    }
-  };
-
-  useEffect(() => {
-    getData()
-  },[])
+  const user = useSelector((state: any) => state.user);
 
   useEffect(() => {
     const unsubscribe = messaging().setBackgroundMessageHandler(

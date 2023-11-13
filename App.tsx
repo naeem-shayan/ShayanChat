@@ -8,6 +8,8 @@ import {useEffect, useRef, useState} from 'react';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import Colors from './src/Contants/Colors';
 import QB from 'quickblox-react-native-sdk';
+import { Provider } from 'react-redux';
+import store from './src/Store/store';
 console.warn = () => {};
 GoogleSignin.configure({
   webClientId:
@@ -41,6 +43,7 @@ function App(): JSX.Element {
   }, []);
 
   return (
+    <Provider store={store}>
     <SafeAreaProvider>
       <SafeAreaView
         style={{flex: 1, backgroundColor: Colors.white}}
@@ -51,6 +54,7 @@ function App(): JSX.Element {
         </PaperProvider>
       </SafeAreaView>
     </SafeAreaProvider>
+    </Provider>
   );
 }
 

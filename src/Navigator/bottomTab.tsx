@@ -13,20 +13,23 @@ import {TouchableOpacity} from 'react-native-gesture-handler';
 import {Alert, Text, View} from 'react-native';
 import Profile from '../Screens/Profile';
 import Colors from '../Contants/Colors';
+import Categories from '../Screens/Categories';
 
 const Tab = createBottomTabNavigator();
 
 const BottomTab = () => {
   return (
-    <Tab.Navigator initialRouteName="HomeScreen" screenOptions={{headerShown: false}}>
+    <Tab.Navigator
+      initialRouteName="HomeScreen"
+      screenOptions={{headerShown: false}}>
       <Tab.Screen
-        name="CreateChannelScreen"
-        component={CreateChannelScreen}
+        name="Category"
+        component={Categories}
         options={{
-          tabBarLabel: 'Users',
+          tabBarLabel: 'Home',
           tabBarActiveTintColor: Colors.firstColor,
           tabBarIcon: ({color, size}) => (
-            <Icons name="account-multiple" color={color} size={size} />
+            <Icons name="home" color={color} size={size} />
           ),
         }}
       />

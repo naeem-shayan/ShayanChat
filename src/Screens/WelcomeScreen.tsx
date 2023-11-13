@@ -11,10 +11,13 @@ import {
   ConsultantWhite,
   LaymanUser,
 } from '../../assests/svgs';
+import {useDispatch} from 'react-redux';
+import {setUserType} from '../Actions/userAction';
 
 const WelcomeScreen = ({navigation}: any) => {
   const [selected, setSelected] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
+  const dispatch = useDispatch();
 
   const handleTabPress = (index: any) => {
     setSelected(index);
@@ -25,8 +28,8 @@ const WelcomeScreen = ({navigation}: any) => {
     }).start();
   };
 
-  const handleStart = async () => {
-    await AsyncStorage.setItem('userType', !selected ? 'user' : 'consultant');
+  const handleStart = () => {
+    dispatch(setUserType(!selected ? 'user' : 'consultant'));
     navigation.navigate('Onboarding');
   };
   let color = 'red';

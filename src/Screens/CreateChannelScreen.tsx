@@ -22,21 +22,18 @@ import CustomSearch from '../Components/search';
 import _ from 'lodash';
 import {useRoute} from '@react-navigation/native';
 import {mvs} from '../Config/metrices';
+import {useSelector} from 'react-redux';
 
-export default function CreateChannelScreen({navigation}: any) {
+export default function CreateChannelScreen(props: any) {
   const {params}: any = useRoute();
   const [channelName, setChannelName] = useState('');
   const [channelError, setChannelError] = useState('');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any>();
-  const [user, setUser] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingNextPage, setIsLoadingNextPage] = useState(false);
   const [value, setValue] = useState('');
-
-  useEffect(() => {
-    getData();
-  }, []);
+  const user = useSelector((state: any) => state.user);
 
   useEffect(() => {
     if (user) {
@@ -49,7 +46,7 @@ export default function CreateChannelScreen({navigation}: any) {
     const userData = data.docs.map(doc => doc.data());
     const filteredUsers = userData.filter(
       (consultant: any) =>
-        consultant.profession === params?.categoryName &&
+        consultant.profession === props.route.params.params.categoryName &&
         consultant?.id !== user?.id,
     );
     const statusOrder = [true, false];
@@ -60,16 +57,6 @@ export default function CreateChannelScreen({navigation}: any) {
     );
     setUsers(updatedUsers);
     setLoading(false);
-  };
-
-  const getData = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
-      setUser(userData);
-    } catch (e) {
-      // error reading value
-    }
   };
 
   function handleButtonPress(item: any) {
@@ -83,7 +70,7 @@ export default function CreateChannelScreen({navigation}: any) {
       .then(function (dialog) {
         // handle as neccessary, i.e.
         // subscribe to chat events, typing events, etc.
-        navigation.navigate('Chat', {dialog, user});
+        props.navigation.navigate('Chat', {dialog, user});
       })
       .catch(function (e) {
         //console.log('error:', e);
@@ -147,7 +134,7 @@ export default function CreateChannelScreen({navigation}: any) {
       <CustomHeader
         title={'Users'}
         showBack
-        onBackPress={() => navigation.replace('Category')}
+        onBackPress={() => props.navigation.replace('Home')}
       />
       <CustomSearch
         placeholder="Search Users"
@@ -164,7 +151,8 @@ export default function CreateChannelScreen({navigation}: any) {
         ) : users.length === 0 ? (
           <View style={styles.messageContainer}>
             <Text style={styles.messageText}>
-              No users found for {params?.categoryName} category
+              No users found for {props.route.params.params.categoryName}{' '}
+              category
             </Text>
           </View>
         ) : (
@@ -186,7 +174,7 @@ export default function CreateChannelScreen({navigation}: any) {
             renderItem={({item}: any) => (
               <User
                 item={item}
-                category={params?.categoryName}
+                category={props.route.params.params.categoryName}
                 onPress={() => handleButtonPress(item)}
               />
             )}
