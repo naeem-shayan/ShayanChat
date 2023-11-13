@@ -7,18 +7,23 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import categoriesList from '../Catergories';
-import Category from '../Components/category';
+import categoriesList from '../Contants/catergoriesJSON';
 import {mvs} from '../Config/metrices';
 import Colors from '../Contants/Colors';
 import CustomSearch from '../Components/search';
 //@ts-ignore
 import _ from 'lodash';
+import CategoryCard from '../Components/category';
 
-const Categories = () => {
+const Categories = ({navigation}: any) => {
   const [categories, setCategories] = useState(categoriesList);
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const gotoUsersScreen = (categoryName: string) => {
+    navigation.replace('Home', { screen: 'CreateChannelScreen', params: { categoryName } });
+  };
+
   const debouncedSearch = _.debounce((value: string) => {
     setLoading(true);
     const filtered = categoriesList.filter(category =>
@@ -28,7 +33,16 @@ const Categories = () => {
     setLoading(false);
   }, 500);
   const handleSearchChange = (value: string) => {
-    debouncedSearch(value.trim());
+    setValue(value)
+    if (value?.trim()) {
+      debouncedSearch(value);
+    } else {
+      setCategories(categoriesList);
+    }
+  };
+  const handleClearSearch = () => {
+    setValue('')
+    handleSearchChange('')
   };
   return (
     <View style={styles.rootContainer}>
@@ -36,8 +50,8 @@ const Categories = () => {
       <CustomSearch
         placeholder="Search Category"
         value={value}
-        setValue={setValue}
         onChangeText={(text: any) => handleSearchChange(text)}
+        handleClearSearch={handleClearSearch}
         mb={10}
       />
       {loading ? (
@@ -53,10 +67,10 @@ const Categories = () => {
             showsVerticalScrollIndicator={false}
             renderItem={({item}) => (
               <View style={styles.container}>
-                <Category
+                <CategoryCard
                   name={item.name}
                   image={item.image}
-                  onPress={() => Alert.alert('clicked')}
+                  onPress={() => gotoUsersScreen(item.name)}
                 />
               </View>
             )}

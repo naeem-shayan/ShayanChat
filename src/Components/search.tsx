@@ -1,5 +1,5 @@
 //import liraries
-import React, {useRef} from 'react';
+import React from 'react';
 import {View, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
 import {Shadow} from 'react-native-neomorph-shadows';
 import {mvs} from '../Config/metrices';
@@ -15,14 +15,9 @@ const CustomSearch = ({
   mb,
   placeholder = '',
   onChangeText,
+  handleClearSearch,
   ...props
 }: any) => {
-  const inputRef = useRef<TextInput | null>(null);
-  const clearTextInput = () => {
-    if (inputRef.current) {
-      inputRef.current.clear();
-    }
-  };
   return (
     <View
       style={{
@@ -36,21 +31,21 @@ const CustomSearch = ({
         style={styles?.shadow}>
         <View style={styles.inputContainer}>
           <TextInput
-            ref={inputRef}
             style={styles.input}
             placeholder={placeholder}
             placeholderTextColor={Colors.placeholderColor}
             selectionColor={Colors.selectionColor}
             onChangeText={onChangeText}
+            value={props.value}
           />
           <TouchableOpacity
             style={styles.eyeContainer}
-            onPress={clearTextInput}>
+            onPress={handleClearSearch}>
             <IconMI
               name="close"
               size={mvs(22)}
               color={Colors.placeholderColor}
-              onPress={clearTextInput}
+              onPress={handleClearSearch}
             />
           </TouchableOpacity>
         </View>

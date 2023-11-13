@@ -114,8 +114,8 @@ const ServerConnection = ({navigation}: any) => {
 
   useEffect(() => {
     if (!connecting) {
-      if (success) {
-        navigation.replace('Home');
+      if (success && user.userType==="user") {
+        navigation.replace('Category');
       } else {
         navigation.replace('Login');
       }
