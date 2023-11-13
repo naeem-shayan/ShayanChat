@@ -1,11 +1,4 @@
 import React, {useContext, useEffect, useRef, useState} from 'react';
-import {
-  Actions,
-  ActionsProps,
-  Avatar,
-  Bubble,
-  GiftedChat,
-} from 'react-native-gifted-chat';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Loading from '../Components/loading';
 import Colors from '../Contants/Colors';
@@ -40,11 +33,11 @@ import Video from 'react-native-video';
 import {createThumbnail} from 'react-native-create-thumbnail';
 import ChatVideo from '../Components/chatVideo';
 import LoadingOver from '../Components/loadingOver';
-import {replaceObjectById} from '../Contants/Utils';
+import {replaceObjectById, updateObjectById} from '../Contants/Utils';
 import ChatImage from '../Components/chatImage';
 
 export default function ChatScreen({route, navigation}: any) {
-  const {channel, dialog, user, name} = route.params;
+  const {dialog, user, name} = route.params;
   const player = useRef(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [messages, setMessages] = useState<any>([]);
@@ -52,9 +45,6 @@ export default function ChatScreen({route, navigation}: any) {
   const [currentImage, setCurrentImage] = useState('');
   const [sending, setSending] = useState(false);
   const [visible, setIsVisible] = useState(false);
-  const [loadEarlier, setLoadEarlier] = useState(false);
-  const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
-  const [messagePaginator, setMessagePaginator] = useState<any>(null);
   const [friend, setFriend] = useState<any>({});
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
@@ -94,6 +84,20 @@ export default function ChatScreen({route, navigation}: any) {
               ? styles.userMessage
               : styles.otherMessage
           }>
+          {user?.id == item?.senderId && (
+            <Icon
+              size={mvs(20)}
+              name={
+                item?.properties?.status == 'sending'
+                  ? 'clock-time-nine-outline'
+                  : item?.deliveredIds?.length > 1
+                  ? 'check-all'
+                  : 'check'
+              }
+              color={item?.readIds?.length > 1 ? 'blue' : 'gray'}
+              style={styles.status}
+            />
+          )}
           <Text
             style={{
               ...styles.messageText,
@@ -119,20 +123,19 @@ export default function ChatScreen({route, navigation}: any) {
     QB.chat
       .getDialogMessages(getDialogMessagesParams)
       .then(async result => {
-        const msgs: any = await Promise.all(
-          result?.messages?.map(async (el: any) => {
-            return {
-              ...el,
-              _id: el?.id,
-              user: {_id: el?.senderId, name: el?.name},
-              text: el?.body,
-              type: el?.properties?.type,
-              url: el?.properties?.url || '',
-            };
-          }),
-        );
         setMessages(result?.messages);
-        // console.log("MSGS:", result?.messages)
+        result?.messages?.forEach((element: any) => {
+          if (element?.readIds?.length < 2) {
+            const markMessageReadParams: any = {
+              message: {
+                id: element.id,
+                dialogId: element.dialogId,
+                senderId: element.senderId,
+              },
+            };
+            QB.chat.markMessageRead(markMessageReadParams);
+          }
+        });
         setLoading(false);
       })
       .catch(function (e) {
@@ -164,8 +167,6 @@ export default function ChatScreen({route, navigation}: any) {
 
   async function receivedNewMessage(event: any) {
     const {type, payload} = event;
-    // type - event name (string)
-    // payload - message received (object)
     setMessages(async (currentMessages: any) => {
       const newMsges = await replaceObjectById(
         payload?.properties?.id,
@@ -178,13 +179,24 @@ export default function ChatScreen({route, navigation}: any) {
   }
 
   function messageStatusHandler(event: any) {
+    const {type, payload} = event;
     // handle message status change
-    //console.log('MSG_STATUS:', JSON.stringify(event, null, 8));
+    if (payload?.userId !== user?.id) {
+      setMessages(async (currentMessages: any) => {
+        const newMsges = await updateObjectById(
+          payload?.messageId,
+          payload?.userId,
+          type,
+          currentMessages,
+        );
+        setMessages([...newMsges]);
+      });
+    }
   }
 
   function systemMessageHandler(event: any) {
     // handle system message
-    //console.log('MSG_Handler:', JSON.stringify(event, null, 8));
+    // console.log('MSG_Handler:', JSON.stringify(event, null, 8));
   }
 
   function userTypingHandler(event: any) {
@@ -238,23 +250,25 @@ export default function ChatScreen({route, navigation}: any) {
     }
     const newMsg = {
       id: Date.now(),
-      body: 'loading',
+      body: `${newMessage}`,
       properties: {
         type: 'text',
+        status: 'sending',
       },
       senderId: user?.id, // Assuming the new message is sent by the user
     };
     setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
-    setNewMessage('');
     const message = {
       dialogId: dialog?.id,
       body: newMessage,
       properties: {
         type: 'text',
         id: `${newMsg?.id}`,
+        status: 'sent',
       },
       saveToHistory: true,
     };
+    setNewMessage('');
     QB.chat.sendMessage(message);
     sendPushNotification(friend?.deviceToken, {
       title: user?.fullName,
@@ -325,6 +339,7 @@ export default function ChatScreen({route, navigation}: any) {
     <SafeAreaView
       style={{flex: 1, backgroundColor: Colors.white}}
       edges={{bottom: 'maximum'}}>
+      {loading && <LoadingOver />}
       <CustomHeader
         title={friend?.fullName}
         showBack
@@ -561,4 +576,5 @@ const styles = StyleSheet.create({
   mediaButtonText: {
     color: '#ffffff',
   },
+  status: {alignSelf: 'flex-end', marginHorizontal: mvs(5)},
 });
