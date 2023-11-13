@@ -31,6 +31,22 @@ export const validateEmail = (email: string) => {
   }
 };
 
+export const replaceObjectById = (
+  id: any,
+  newObject: any,
+  arrayOfObjects: any,
+) => {
+  // Find the index of the object with the specified id
+  const index = arrayOfObjects?.findIndex((obj: any) => obj.id == id);
+  // If the object with the given id is found, replace it
+  if (index !== -1) {
+    arrayOfObjects[index] = newObject;
+  } else {
+    arrayOfObjects = [newObject, ...arrayOfObjects]
+  }
+  return arrayOfObjects
+};
+
 export const validatePassword = (password: string) => {
   if (!password) {
     return 'Enter Your Password';
@@ -53,9 +69,7 @@ export const validateConfirmPassword = (
   }
 };
 
-const handleLogin = async (
-  user: any,
-) => {
+const handleLogin = async (user: any) => {
   firestore()
     .collection('Users')
     .doc(`${user?.id}`)
@@ -74,9 +88,7 @@ const handleLogin = async (
     });
 };
 
-const handleSignup = async (
-  user: any,
-) => {
+const handleSignup = async (user: any) => {
   firestore()
     .collection('Users')
     .doc(`${user?.id}`)
@@ -85,8 +97,8 @@ const handleSignup = async (
       await AsyncStorage.setItem('user', JSON.stringify(user));
       return true;
     })
-    .catch((error) => {
-      console.error("Error", error)
+    .catch(error => {
+      console.error('Error', error);
       return false;
     });
 };
@@ -117,24 +129,25 @@ export const signin = (
         password: password,
         is_online: true,
       };
-      if(user.userType) {
-        handleSignup(user).then(()=>{
-          setLoading(false);
-          navigation.replace('Connect');
-        })
-        .catch((error)=>{
-          console.error(error)
-        })
-        setLoading(false)
-      }
-      else{
-        handleLogin(user).then(()=>{
-          setLoading(false);
-          navigation.replace('Connect');
-        })
-        .catch((error)=>{
-          console.log(error)
-        })
+      if (user.userType) {
+        handleSignup(user)
+          .then(() => {
+            setLoading(false);
+            navigation.replace('Connect');
+          })
+          .catch(error => {
+            console.error(error);
+          });
+        setLoading(false);
+      } else {
+        handleLogin(user)
+          .then(() => {
+            setLoading(false);
+            navigation.replace('Connect');
+          })
+          .catch(error => {
+            console.log(error);
+          });
       }
     })
     .catch(function (e) {
