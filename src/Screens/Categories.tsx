@@ -21,7 +21,7 @@ const Categories = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);
 
   const gotoUsersScreen = (categoryName: string) => {
-    navigation.replace('Home', { screen: 'CreateChannelScreen', params: { categoryName } });
+    navigation.navigate('CreateChannelScreen', {params: { categoryName }})
   };
 
   const debouncedSearch = _.debounce((value: string) => {

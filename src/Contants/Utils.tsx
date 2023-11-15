@@ -7,6 +7,7 @@ import {LoginManager, AccessToken} from 'react-native-fbsdk-next';
 import Toast from 'react-native-toast-message';
 import messaging from '@react-native-firebase/messaging';
 import QB from 'quickblox-react-native-sdk';
+import {setUser, setUserType} from '../Actions/userAction';
 
 export const validateName = (name: string) => {
   if (!name) {
@@ -100,7 +101,7 @@ export const validateConfirmPassword = (
   }
 };
 
-const handleLogin = async (user: any) => {
+const handleLogin = async (user: any, dispatch: any) => {
   firestore()
     .collection('Users')
     .doc(`${user?.id}`)
@@ -111,7 +112,7 @@ const handleLogin = async (user: any) => {
         .doc(`${user?.id}`)
         .get();
       const currentUserDataAfter = documentSnapshotAfter.data();
-      await AsyncStorage.setItem('user', JSON.stringify(currentUserDataAfter));
+      dispatch(setUser(currentUserDataAfter));
       return true;
     })
     .catch(error => {
@@ -119,13 +120,13 @@ const handleLogin = async (user: any) => {
     });
 };
 
-const handleSignup = async (user: any) => {
+const handleSignup = async (user: any, dispatch: any) => {
   firestore()
     .collection('Users')
     .doc(`${user?.id}`)
     .set(user)
     .then(async () => {
-      await AsyncStorage.setItem('user', JSON.stringify(user));
+      dispatch(setUser(user))
       return true;
     })
     .catch(error => {
@@ -139,6 +140,7 @@ export const signin = (
   password: string,
   setLoading: (loading: boolean) => void,
   navigation: any,
+  dispatch: any,
   userType: any,
 ) => {
   setLoading(true);
@@ -161,7 +163,7 @@ export const signin = (
         is_online: true,
       };
       if (user.userType) {
-        handleSignup(user)
+        handleSignup(user, dispatch)
           .then(() => {
             setLoading(false);
             navigation.replace('Connect');
@@ -171,7 +173,7 @@ export const signin = (
           });
         setLoading(false);
       } else {
-        handleLogin(user)
+        handleLogin(user, dispatch)
           .then(() => {
             setLoading(false);
             navigation.replace('Connect');
@@ -199,6 +201,8 @@ export const signup = (
   password: string,
   setLoading: (loading: boolean) => void,
   navigation: any,
+  dispatch: any,
+  userType: any,
 ) => {
   setLoading(true);
   // get user typpe
@@ -212,8 +216,7 @@ export const signup = (
   QB.users
     .create(createUserParams)
     .then(async function (user) {
-      const userType = await AsyncStorage.getItem('userType');
-      signin(email, password, setLoading, navigation, userType);
+      signin(email, password, setLoading, navigation, dispatch, userType);
     })
     .catch(function (e) {
       // handle as necessary
@@ -251,6 +254,8 @@ export const handleGoogleLogin = async (navigation: any) => {
 export const handleFacebookLogin = async (
   setLoading: (loading: boolean) => void,
   navigation: any,
+  userType: any,
+  dispatch: any,
 ) => {
   const result = await LoginManager.logInWithPermissions([
     'public_profile',
@@ -268,25 +273,56 @@ export const handleFacebookLogin = async (
     .then(async function (info) {
       await messaging().registerDeviceForRemoteMessages();
       const token = await messaging().getToken();
-      const user: any = {
-        ...info?.user,
-        token: info?.session?.token,
-        deviceToken: token,
-        userType: 'facebook',
-        is_online: true,
-      };
-      firestore()
+      let userData = await firestore()
         .collection('Users')
-        .doc(`${user?.id}`)
-        .set(user)
-        .then(async () => {
-          await AsyncStorage.setItem('user', JSON.stringify(user));
-          setLoading(false);
-          navigation.replace('Connect');
-        })
-        .catch(error => {
-          setLoading(false);
-        });
+        .where('email', '==', info.user.email)
+        .get();
+      if (userData.docs.length > 0) {
+        const user: any = {
+          ...info?.user,
+          token: info?.session?.token,
+          deviceToken: token,
+          is_online: true,
+        };
+        firestore()
+          .collection('Users')
+          .doc(`${user?.id}`)
+          .update(user)
+          .then(async () => {
+            const documentSnapshotAfter = await firestore()
+              .collection('Users')
+              .doc(`${user?.id}`)
+              .get();
+            const updatedUser = documentSnapshotAfter.data();
+            dispatch(setUser(updatedUser));
+            setLoading(false);
+            navigation.replace('Connect');
+          })
+          .catch(error => {
+            setLoading(false);
+          });
+      } else {
+        const user: any = {
+          ...info?.user,
+          token: info?.session?.token,
+          deviceToken: token,
+          userType: userType,
+          socialType: 'facebook',
+          is_online: true,
+        };
+        firestore()
+          .collection('Users')
+          .doc(`${user?.id}`)
+          .set(user)
+          .then(async () => {
+            dispatch(setUser(user));
+            setLoading(false);
+            navigation.replace('Connect');
+          })
+          .catch(error => {
+            setLoading(false);
+          });
+      }
     })
     .catch(function (e: any) {
       console.error('error', e);

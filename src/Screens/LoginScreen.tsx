@@ -31,6 +31,7 @@ import CustomInput from '../Components/textInput';
 import CustomButton from '../Components/button';
 import {FaceBook} from '../../assests/svgs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch, useSelector } from 'react-redux';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
@@ -40,6 +41,9 @@ const LoginScreen = (props: any) => {
   const [passwordError, setPasswordError] = useState('');
   const [credientalError, setCredientalError] = useState('');
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const userType = useSelector((state: any) => state.userType);
+
 
   const [switchValue, setSwitchValue] = useState(false);
 
@@ -61,7 +65,7 @@ const LoginScreen = (props: any) => {
     }
     setEmailError('');
     setPasswordError('');
-    signin(email.trim(), password.trim(), setLoading, navigation, null);
+    signin(email.trim(), password.trim(), setLoading, navigation, dispatch, null);
   };
 
   return (
@@ -72,7 +76,7 @@ const LoginScreen = (props: any) => {
         backgroundColor: Colors.white,
         paddingHorizontal: mvs(22),
       }}>
-      <CustomHeader1 onBack={() => navigation.goBack()} />
+      <CustomHeader1 onBack={() => navigation.navigate('Onboarding')} />
       <PageTitleAndDes
         title="Hello, Welcome Back"
         des="Happy to see you again, to use your account please login first."
@@ -125,7 +129,7 @@ const LoginScreen = (props: any) => {
           icon="facebook"
           size={33}
           iconColor="#4267B2"
-          onPress={() => handleFacebookLogin(setLoading, navigation)}
+          onPress={() => handleFacebookLogin(setLoading, navigation, userType, dispatch)}
         />
       </View>
     </KeyboardAwareScrollView>

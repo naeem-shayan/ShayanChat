@@ -16,6 +16,7 @@ import {AppState} from 'react-native';
 import WelcomeScreen from '../Screens/WelcomeScreen';
 import OnboardingScreen from '../Screens/OnboardingScreen';
 import Categories from '../Screens/Categories';
+import CreateChannelScreen from '../Screens/CreateChannelScreen';
 
 const Stack = createStackNavigator();
 
@@ -79,10 +80,13 @@ const Navigation = () => {
           headerShown: false,
         }}>
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name='Onboarding' component={OnboardingScreen}/>
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
-        <Stack.Screen name="Category" component={Categories} />
+        <Stack.Screen
+          name="CreateChannelScreen"
+          component={CreateChannelScreen}
+        />
         <Stack.Screen name="Home" component={BottomTab} />
         <Stack.Screen name="Chat" component={ChatScreen} />
         <Stack.Screen name="Connect" component={ServerConnection} />

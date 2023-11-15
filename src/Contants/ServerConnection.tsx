@@ -1,39 +1,26 @@
 //import liraries
 import React, {Component, useEffect, useState} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet, Alert} from 'react-native';
 import {ActivityIndicator} from 'react-native-paper';
 import Colors from './Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {chatkitty} from '../ChatKitty';
 import firestore from '@react-native-firebase/firestore';
 import QB from 'quickblox-react-native-sdk';
+import {useSelector} from 'react-redux';
 
 // create a component
 const ServerConnection = ({navigation}: any) => {
   const [connecting, setConnecting] = useState(true);
-  const [user, setUser] = useState<any>(null);
   const [success, setSuccess] = useState(false);
-
-  const getData = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
-      setUser(userData);
-      return userData;
-    } catch (e) {
-      // error reading value
-    }
-  };
-  useEffect(() => {
-    getData();
-  }, []);
+  const user = useSelector((state: any) => state.user);
 
   useEffect(() => {
     if (user) {
       QB.chat
         .connect({
           userId: user?.id,
-          password: user.userType === 'facebook' ? user?.token : user?.password,
+          password: user?.password,
         })
         .then(function () {
           // connected successfully
@@ -114,10 +101,11 @@ const ServerConnection = ({navigation}: any) => {
 
   useEffect(() => {
     if (!connecting) {
-      if (success && user.userType==="user") {
-        navigation.replace('Category');
+      if (success && user.userType === 'user') {
+        navigation.replace('Home');
       } else {
-        navigation.replace('Login');
+        Alert.alert('consultant part comming soon');
+        navigation.replace('Welcome');
       }
     }
   }, [connecting]);

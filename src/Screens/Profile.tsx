@@ -18,26 +18,14 @@ import UserAvatar from 'react-native-user-avatar';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import QB from 'quickblox-react-native-sdk';
 import firestore from '@react-native-firebase/firestore';
+import {useDispatch, useSelector} from 'react-redux';
+import {clearUser, clearUserType} from '../Actions/userAction';
 
 // create a component
 const Profile = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>();
-
-  const getData = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      const userData = jsonValue != null ? JSON.parse(jsonValue) : null;
-      setUser(userData);
-      return userData;
-    } catch (e) {
-      // error reading value
-    }
-  };
-
-  useEffect(() => {
-    getData();
-  }, []);
+  const user = useSelector((state: any) => state.user);
+  const dispatch = useDispatch();
 
   const onLogout = async () => {
     // Perform logout action here
@@ -45,7 +33,7 @@ const Profile = ({navigation}: any) => {
       setLoading(true);
       //await chatkitty.endSession();
       await AsyncStorage.clear();
-      if (user?.userType == 'google') {
+      if (user?.socialType == 'google') {
         GoogleSignin?.revokeAccess();
         await auth().signOut();
       } else {
@@ -55,12 +43,14 @@ const Profile = ({navigation}: any) => {
           .logout()
           .then(() => {
             setLoading(false);
+            dispatch(clearUser());
+            dispatch(clearUserType());
             firestore()
               .collection('Users')
               .doc(`${user?.id}`)
               .update({
                 is_online: false,
-                deviceToken: ''
+                deviceToken: '',
               })
               .then(async () => {
                 navigation.replace('Login');
