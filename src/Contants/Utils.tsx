@@ -48,6 +48,37 @@ export const replaceObjectById = (
   return arrayOfObjects;
 };
 
+export const updateObjectById = (
+  id: any,
+  newId: any,
+  type: any,
+  arrayOfObjects: any,
+) => {
+  // Find the index of the object with the specified id
+  const index = arrayOfObjects?.findIndex((obj: any) => obj.id == id);
+  // If the object with the given id is found, replace it
+  let updatedData: any = [];
+  if (index !== -1) {
+    updatedData = [
+      ...arrayOfObjects.slice(0, index),
+      {
+        ...arrayOfObjects[index],
+        deliveredIds:
+          type == '@QB/MESSAGE_DELIVERED'
+            ? [...arrayOfObjects[index]?.deliveredIds, newId]
+            : [...arrayOfObjects[index]?.deliveredIds],
+        readIds:
+          type == '@QB/MESSAGE_READ'
+            ? [...arrayOfObjects[index]?.readIds, newId]
+            : [...arrayOfObjects[index]?.readIds],
+      },
+      ...arrayOfObjects.slice(index + 1),
+    ];
+
+    return updatedData;
+  }
+};
+
 export const validatePassword = (password: string) => {
   if (!password) {
     return 'Enter Your Password';
