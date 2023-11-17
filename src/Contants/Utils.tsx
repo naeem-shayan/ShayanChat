@@ -149,7 +149,7 @@ const handleSignup = async (user: any, dispatch: any) => {
   firestore()
     .collection('Users')
     .doc(`${user?.id}`)
-    .set(user)
+    .set(updatedUser)
     .then(async () => {
       dispatch(setUser(user))
       return true;
