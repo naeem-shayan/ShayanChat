@@ -356,8 +356,6 @@ export const handleFacebookLogin = async (
 
 export const onLogout = async (user: any, dispatch: any, navigation: any) => {
   try {
-    console.log('yes calling.........');
-    await AsyncStorage.clear();
     if (user?.socialType == 'google') {
       GoogleSignin?.revokeAccess();
       await auth().signOut();
