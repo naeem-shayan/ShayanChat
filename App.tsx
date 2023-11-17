@@ -2,14 +2,15 @@ import LoginScreen from './src/Screens/LoginScreen';
 import SignupScreen from './src/Screens/SignupScreen';
 import Navigation from './src/Navigator/Navigation';
 import Toast from 'react-native-toast-message';
-import {PaperProvider} from 'react-native-paper';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import {useEffect, useRef, useState} from 'react';
-import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
+import { PersistGate } from 'redux-persist/integration/react';
+import { PaperProvider } from 'react-native-paper';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { useEffect } from 'react';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Colors from './src/Contants/Colors';
 import QB from 'quickblox-react-native-sdk';
 import { Provider } from 'react-redux';
-import store from './src/Store/store';
+import { store, persistor } from './src/Store/store';
 console.warn = () => {};
 GoogleSignin.configure({
   webClientId:
@@ -44,16 +45,18 @@ function App(): JSX.Element {
 
   return (
     <Provider store={store}>
-    <SafeAreaProvider>
-      <SafeAreaView
-        style={{flex: 1, backgroundColor: Colors.white}}
-        edges={{bottom: 'off', top: 'maximum'}}>
-        <PaperProvider>
-          <Navigation />
-          <Toast config={toastConfig} />
-        </PaperProvider>
-      </SafeAreaView>
-    </SafeAreaProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <SafeAreaProvider>
+          <SafeAreaView
+            style={{ flex: 1, backgroundColor: Colors.white }}
+            edges={{ bottom: 'off', top: 'maximum' }}>
+            <PaperProvider>
+              <Navigation />
+              <Toast config={toastConfig} />
+            </PaperProvider>
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </PersistGate>
     </Provider>
   );
 }
