@@ -46,7 +46,7 @@ export default function CreateChannelScreen(props: any) {
     const userData = data.docs.map(doc => doc.data());
     const filteredUsers = userData.filter(
       (consultant: any) =>
-        consultant.profession === props.route.params.params.categoryName &&
+        consultant.category === props.route.params.params.categoryName &&
         consultant?.id !== user?.id,
     );
     const statusOrder = [true, false];

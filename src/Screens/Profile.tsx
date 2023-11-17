@@ -15,11 +15,9 @@ import Colors from '../Contants/Colors';
 import CustomHeader from '../Components/header';
 //@ts-ignore
 import UserAvatar from 'react-native-user-avatar';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import QB from 'quickblox-react-native-sdk';
-import firestore from '@react-native-firebase/firestore';
 import {useDispatch, useSelector} from 'react-redux';
-import {clearUser, clearUserType} from '../Actions/userAction';
+import { onLogout } from '../Contants/Utils';
+
 
 // create a component
 const Profile = ({navigation}: any) => {
@@ -27,46 +25,6 @@ const Profile = ({navigation}: any) => {
   const user = useSelector((state: any) => state.user);
   const dispatch = useDispatch();
 
-  const onLogout = async () => {
-    // Perform logout action here
-    try {
-      setLoading(true);
-      //await chatkitty.endSession();
-      await AsyncStorage.clear();
-      if (user?.socialType == 'google') {
-        GoogleSignin?.revokeAccess();
-        await auth().signOut();
-      } else {
-        //await auth().signOut();
-        QB.chat.disconnect();
-        QB.auth
-          .logout()
-          .then(() => {
-            setLoading(false);
-            dispatch(clearUser());
-            dispatch(clearUserType());
-            firestore()
-              .collection('Users')
-              .doc(`${user?.id}`)
-              .update({
-                is_online: false,
-                deviceToken: '',
-              })
-              .then(async () => {
-                navigation.replace('Login');
-              })
-              .catch(error => {
-                setLoading(false);
-              });
-          })
-          .catch(e => {});
-      }
-      setLoading(false);
-      navigation.replace('Login');
-    } catch (error) {
-      setLoading(false);
-    }
-  };
 
   const handleLogoutPress = () => {
     Alert.alert(
@@ -80,7 +38,7 @@ const Profile = ({navigation}: any) => {
         },
         {
           text: 'OK',
-          onPress: async () => onLogout(),
+          onPress: async () => onLogout(user, dispatch, navigation),
         },
       ],
       {cancelable: false},

@@ -7,7 +7,12 @@ import {LoginManager, AccessToken} from 'react-native-fbsdk-next';
 import Toast from 'react-native-toast-message';
 import messaging from '@react-native-firebase/messaging';
 import QB from 'quickblox-react-native-sdk';
-import {setUser, setUserType} from '../Actions/userAction';
+import {
+  clearUser,
+  clearUserType,
+  setUser,
+  setUserType,
+} from '../Actions/userAction';
 
 export const validateName = (name: string) => {
   if (!name) {
@@ -30,6 +35,22 @@ export const validateEmail = (email: string) => {
   } else {
     return '';
   }
+};
+
+export const isValidNumber = (age: any, name: string) => {
+  const ageNumber: number = parseInt(age, 10);
+  if (isNaN(ageNumber) || ageNumber <= 0) {
+    return `Enter valid ${name}`;
+  }
+  return '';
+};
+
+export const isValidDescription = (description: string) => {
+  const words = description.split(/\s+/);
+  if (words.length < 10) {
+    return 'Description must contain at least 10 words';
+  }
+  return '';
 };
 
 export const replaceObjectById = (
@@ -121,10 +142,14 @@ const handleLogin = async (user: any, dispatch: any) => {
 };
 
 const handleSignup = async (user: any, dispatch: any) => {
+  const updatedUser = {
+    ...user,
+    isProfileComplete: false,
+  };
   firestore()
     .collection('Users')
     .doc(`${user?.id}`)
-    .set(user)
+    .set(updatedUser)
     .then(async () => {
       dispatch(setUser(user))
       return true;
@@ -327,4 +352,38 @@ export const handleFacebookLogin = async (
     .catch(function (e: any) {
       console.error('error', e);
     });
+};
+
+export const onLogout = async (user: any, dispatch: any, navigation: any) => {
+  try {
+    if (user?.socialType == 'google') {
+      GoogleSignin?.revokeAccess();
+      await auth().signOut();
+    } else {
+      QB.chat.disconnect();
+      QB.auth
+        .logout()
+        .then(() => {
+          dispatch(clearUser());
+          dispatch(clearUserType());
+          firestore()
+            .collection('Users')
+            .doc(`${user?.id}`)
+            .update({
+              is_online: false,
+              deviceToken: '',
+            })
+            .then(async () => {
+              navigation.replace('Login');
+            })
+            .catch(error => {});
+        })
+        .catch(e => {
+          console.log('error', e);
+        });
+    }
+    navigation.replace('Login');
+  } catch (error) {
+    console.error(error);
+  }
 };
