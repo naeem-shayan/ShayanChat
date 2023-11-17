@@ -21,11 +21,10 @@ const CustomInput = ({
   password = false,
   error,
   multiline = false,
-  showNumericKeyboard = false,
+  keyboradType = "default",
   ...props
 }: any) => {
   const [eye, setEye] = useState(false);
-  let type: any = showNumericKeyboard ? 'numeric' : 'default';
   return (
     <View
       style={{
@@ -54,7 +53,7 @@ const CustomInput = ({
             onChangeText={onChangeText}
             secureTextEntry={password && !eye}
             multiline={multiline}
-            keyboardType={type}
+            keyboardType={keyboradType}
           />
           {password && (
             <TouchableOpacity

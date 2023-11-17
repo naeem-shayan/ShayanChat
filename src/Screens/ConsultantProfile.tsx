@@ -15,58 +15,62 @@ import CustomButton from '../Components/button';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {launchImageLibrary} from 'react-native-image-picker';
 import categoriesList from '../Contants/catergoriesJSON';
-import citiesList from '../Contants/citiesJSON';
 import {RadioButton} from 'react-native-paper';
 import {Dropdown} from 'react-native-element-dropdown';
 import {useDispatch, useSelector} from 'react-redux';
-import {isValidDescription, isValidNumber} from '../Contants/Utils';
+import {isValidDescription, isValidNumber, onLogout} from '../Contants/Utils';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import firestore from '@react-native-firebase/firestore';
 import {setUser} from '../Actions/userAction';
 import storage from '@react-native-firebase/storage';
-import CustomHeader from '../Components/header';
-import QB from 'quickblox-react-native-sdk';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import {clearUser, clearUserType} from '../Actions/userAction';
-import auth from '@react-native-firebase/auth';
-
-
+import {IconButton} from 'react-native-paper';
+import {useIsFocused} from '@react-navigation/native';
+import countries from '../Contants/countriesJSON';
 
 const width = Math.round(Dimensions.get('window').width);
 
-const ConsultantProfile = ({navigation}:any) => {
+const ConsultantProfile = ({navigation}: any) => {
   const user = useSelector((state: any) => state.user);
-  const [profilePicture, setProfilePicture] = useState<any>('');
-  const [rate, setRate] = useState(0);
-  const [age, setAge] = useState(0);
-  const [gender, setGender] = useState<string>('male');
-  const [description, setDescription] = useState<string>('');
-  const [category, setCategory] = useState<string>('');
-  const [experience, setExperience] = useState<number | null>(null);
-  const [city, setCity] = useState<string>(user?.city || '');
-  const [ageError, setAgeError] = useState('');
-  const [rateError, setRateError] = useState('');
-  const [experienceError, setExperienceError] = useState('');
-  const [descriptionError, setDescriptionError] = useState('');
-  const [categoryError, setCategoryError] = useState('');
-  const [cityError, setCityError] = useState('');
-  const [imageError, setImageError] = useState('');
-  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
+  const isFoucs = useIsFocused();
+
+  const [consultantProfile, setConsultantProfile] = useState({
+    age: 0,
+    gender: 'male',
+    country: user?.country || '',
+    category: user?.category || '',
+    experience: 0,
+    profilePicture:
+      user?.profilePicture ||
+      'https://srcwap.com/wp-content/uploads/2022/08/abstract-user-flat-4.png',
+    rate: 0,
+    description: user?.description || '',
+  });
+  const [validationErrors, setValidationErrors] = useState({
+    ageError: '',
+    rateError: '',
+    experienceError: '',
+    descriptionError: '',
+    categoryError: '',
+    countryError: '',
+    imageError: '',
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      setRate(user?.rate || 0);
-      setAge(user?.age || 0);
-      setGender(user?.gender || 'male');
-      setDescription(user?.description || '');
-      setCategory(user?.category || '');
-      setExperience(user?.experience || 0);
-      setCity(user?.city || '');
-      setProfilePicture(user?.profilePicture || '');
+    if (user && isFoucs) {
+      setConsultantProfile({
+        age: user?.age || 0,
+        gender: user?.gender || 'male',
+        country: user?.country || '',
+        category: user?.category || '',
+        experience: user?.experience || 0,
+        profilePicture: user?.profilePicture || '',
+        rate: user?.rate || 0,
+        description: user?.description || '',
+      });
     }
-  }, [user]);
+  }, [user, isFoucs]);
 
   const handleImageUpload = async () => {
     const result: any = await launchImageLibrary({mediaType: 'photo'});
@@ -84,7 +88,7 @@ const ConsultantProfile = ({navigation}:any) => {
           .ref(`images/${name}`)
           .getDownloadURL()
           .then(async (url: any) => {
-            setProfilePicture(url);
+            handleInputChange('profilePicture', url);
           })
           .catch(e => console.error(e));
       });
@@ -96,21 +100,28 @@ const ConsultantProfile = ({navigation}:any) => {
     value: category.name,
   }));
 
-  const handleUpdate = () => {
-    const ageError = isValidNumber(age, 'age');
-    const rateError = isValidNumber(rate, 'rate');
-    const experienceError = isValidNumber(experience, 'experience');
-    const descriptionError = isValidDescription(description);
+  const handleInputChange = (field: string, value: any) => {
+    setConsultantProfile({...consultantProfile, [field]: value});
+  };
+
+  const checkValidationsErrors = () => {
+    const ageError = isValidNumber(consultantProfile.age, 'age');
+    const rateError = isValidNumber(consultantProfile.rate, 'rate');
+    const experienceError = isValidNumber(
+      consultantProfile.experience,
+      'experience',
+    );
+    const descriptionError = isValidDescription(consultantProfile.description);
     let categoryError = '';
-    let cityError = '';
+    let countryError = '';
     let imageError = '';
-    if (!category) {
+    if (!consultantProfile.category) {
       categoryError = 'Category is required';
     }
-    if (!city) {
-      cityError = 'City is required';
+    if (!consultantProfile.country) {
+      countryError = 'country is required';
     }
-    if (!profilePicture) {
+    if (!consultantProfile.profilePicture) {
       imageError = 'Profile Pic is required';
     }
     if (
@@ -118,42 +129,48 @@ const ConsultantProfile = ({navigation}:any) => {
       rateError ||
       experienceError ||
       categoryError ||
-      cityError ||
+      countryError ||
       descriptionError
     ) {
-      setAgeError(ageError);
-      setRateError(rateError);
-      setExperienceError(experienceError);
-      setDescriptionError(descriptionError);
-      setCategoryError(categoryError);
-      setCityError(cityError);
-      setImageError(imageError);
-      return;
-    } else {
-      setLoading(true);
-      setAgeError('');
-      setRateError('');
-      setExperienceError('');
-      setDescriptionError('');
-      setCategoryError('');
-      setCityError('');
-      setImageError('');
-      const updatedObject = {
+      setValidationErrors({
+        ageError,
+        rateError,
+        experienceError,
+        descriptionError,
+        categoryError,
+        countryError,
+        imageError,
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const clearErrors = () => {
+    setLoading(true);
+    setValidationErrors({
+      ageError: '',
+      rateError: '',
+      experienceError: '',
+      descriptionError: '',
+      categoryError: '',
+      countryError: '',
+      imageError: '',
+    });
+  };
+
+  const handleUpdate = () => {
+    if (checkValidationsErrors()) {
+      clearErrors();
+      const updatedConsultantProfile = {
         ...user,
-        age,
-        gender,
-        profilePicture,
-        experience,
-        rate,
-        category,
-        city,
-        description,
+        ...consultantProfile,
         isProfileComplete: true,
       };
       firestore()
         .collection('Users')
         .doc(`${user?.id}`)
-        .update(updatedObject)
+        .update(updatedConsultantProfile)
         .then(async () => {
           const documentSnapshotAfter = await firestore()
             .collection('Users')
@@ -169,46 +186,6 @@ const ConsultantProfile = ({navigation}:any) => {
     }
   };
 
-
-  const onLogout = async () => {
-    try {
-      setLoading(true);
-      await AsyncStorage.clear();
-      if (user?.socialType == 'google') {
-        GoogleSignin?.revokeAccess();
-        await auth().signOut();
-      } else {
-
-        QB.chat.disconnect();
-        QB.auth
-          .logout()
-          .then(() => {
-            setLoading(false);
-            dispatch(clearUser());
-            dispatch(clearUserType());
-            firestore()
-              .collection('Users')
-              .doc(`${user?.id}`)
-              .update({
-                is_online: false,
-                deviceToken: '',
-              })
-              .then(async () => {
-                navigation.replace('Login');
-              })
-              .catch(error => {
-                setLoading(false);
-              });
-          })
-          .catch(e => {});
-      }
-      setLoading(false);
-      navigation.replace('Login');
-    } catch (error) {
-      setLoading(false);
-    }
-  };
-
   const handleLogoutPress = () => {
     Alert.alert(
       'Logout',
@@ -221,7 +198,7 @@ const ConsultantProfile = ({navigation}:any) => {
         },
         {
           text: 'OK',
-          onPress: async () => onLogout(),
+          onPress: async () => onLogout(user, dispatch, navigation),
         },
       ],
       {cancelable: false},
@@ -230,13 +207,26 @@ const ConsultantProfile = ({navigation}:any) => {
 
   return (
     <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false}>
-      <CustomHeader logout={true} onLogoutPress={handleLogoutPress}/>
+      <View style={styles.logoutContainer}>
+        <IconButton
+          icon="logout"
+          size={28}
+          iconColor="#ffffff"
+          style={styles.logoutIcon}
+          onPress={handleLogoutPress}
+        />
+      </View>
       <View style={styles.rootContainer}>
         <View>
           <View style={styles.picture}>
-            {profilePicture && (
-              <Image source={{uri: profilePicture}} style={styles.image} />
-            )}
+            <Image
+              source={{
+                uri: consultantProfile?.profilePicture
+                  ? consultantProfile?.profilePicture
+                  : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png',
+              }}
+              style={styles.image}
+            />
           </View>
           <Icons
             name="camera"
@@ -247,36 +237,40 @@ const ConsultantProfile = ({navigation}:any) => {
           />
         </View>
         <View style={[styles.errorContainer, {alignSelf: 'center'}]}>
-          {imageError && (
+          {validationErrors?.imageError && (
             <Icon name="error" size={mvs(16)} color={Colors.errorColor} />
           )}
-          {imageError && <Text style={styles.errors}>{imageError}</Text>}
+          {validationErrors?.imageError && (
+            <Text style={styles.errors}>{validationErrors?.imageError}</Text>
+          )}
         </View>
         <Text style={styles.username}>{user?.fullName}</Text>
         <CustomInput
           mt={mvs(10)}
           label="Age"
           placeholder="Enter your Age in years"
-          value={age.toString()}
-          error={ageError}
-          showNumericKeyboard={true}
-          onChangeText={(text: any) => setAge(text)}
+          value={consultantProfile?.age.toString()}
+          error={validationErrors?.ageError}
+          keyboradType="numeric"
+          onChangeText={(age: any) => handleInputChange('age', age)}
         />
         <CustomInput
           label="Experience"
           placeholder="Enter your experience in years like 10"
-          value={experience?.toString()}
-          error={experienceError}
-          showNumericKeyboard={true}
-          onChangeText={(text: any) => setExperience(text)}
+          value={consultantProfile?.experience?.toString()}
+          error={validationErrors?.experienceError}
+          keyboradType="numeric"
+          onChangeText={(experience: any) =>
+            handleInputChange('experience', experience)
+          }
         />
         <CustomInput
           label="Rate"
           placeholder="Enter your rate per hour"
-          value={rate.toString()}
-          error={rateError}
-          showNumericKeyboard={true}
-          onChangeText={(text: any) => setRate(text)}
+          value={consultantProfile?.rate.toString()}
+          error={validationErrors?.rateError}
+          keyboradType="numeric"
+          onChangeText={(rate: any) => handleInputChange('rate', rate)}
         />
 
         <View style={styles.dropdownContainer}>
@@ -286,53 +280,61 @@ const ConsultantProfile = ({navigation}:any) => {
             labelField="label"
             valueField="value"
             placeholder="Select category"
-            value={category}
-            onChange={item => setCategory(item.value)}
+            value={consultantProfile?.category}
+            onChange={(item: any) => handleInputChange('category', item.value)}
             style={styles.dropdownValue}
             containerStyle={styles.dropdownMenu}
           />
         </View>
         <View style={styles.errorContainer}>
-          {categoryError && (
+          {validationErrors?.categoryError && (
             <Icon name="error" size={mvs(16)} color={Colors.errorColor} />
           )}
-          {categoryError && <Text style={styles.errors}>{categoryError}</Text>}
+          {validationErrors?.categoryError && (
+            <Text style={styles.errors}>{validationErrors?.categoryError}</Text>
+          )}
         </View>
         <View style={styles.dropdownContainer}>
           <Dropdown
-            data={citiesList}
+            data={countries}
             mode="modal"
             labelField="label"
             valueField="value"
-            placeholder="Select city"
-            value={city}
-            onChange={item => setCity(item.value)}
+            placeholder="Select country"
+            value={consultantProfile?.country}
+            onChange={(item: any) => handleInputChange('country', item.value)}
             style={styles.dropdownValue}
             containerStyle={styles.dropdownMenu}
           />
         </View>
         <View style={styles.errorContainer}>
-          {cityError && (
+          {validationErrors?.countryError && (
             <Icon name="error" size={mvs(16)} color={Colors.errorColor} />
           )}
-          {cityError && <Text style={styles.errors}>{cityError}</Text>}
+          {validationErrors?.countryError && (
+            <Text style={styles.errors}>{validationErrors?.countryError}</Text>
+          )}
         </View>
         <View style={styles.radioButtonContainer}>
           <View style={styles.radioButtonContent}>
             <RadioButton
-              value={gender}
+              value={consultantProfile?.gender}
               color={Colors.firstColor}
-              status={gender === 'male' ? 'checked' : 'unchecked'}
-              onPress={() => setGender('male')}
+              status={
+                consultantProfile?.gender === 'male' ? 'checked' : 'unchecked'
+              }
+              onPress={() => handleInputChange('gender', 'male')}
             />
             <Text style={styles.genderText}>Male</Text>
           </View>
           <View style={styles.radioButtonContent}>
             <RadioButton
-              value={gender}
+              value={consultantProfile?.gender}
               color={Colors.firstColor}
-              status={gender === 'female' ? 'checked' : 'unchecked'}
-              onPress={() => setGender('female')}
+              status={
+                consultantProfile?.gender === 'female' ? 'checked' : 'unchecked'
+              }
+              onPress={() => handleInputChange('gender', 'female')}
             />
             <Text style={styles.genderText}>Female</Text>
           </View>
@@ -340,11 +342,13 @@ const ConsultantProfile = ({navigation}:any) => {
         <CustomInput
           label="Description"
           placeholder="Enter your description"
-          value={description}
-          error={descriptionError}
+          value={consultantProfile?.description}
+          error={validationErrors?.descriptionError}
           multiline={true}
           shownumericKeyboard={true}
-          onChangeText={(text: any) => setDescription(text)}
+          onChangeText={(description: any) =>
+            handleInputChange('description', description)
+          }
         />
         <CustomButton
           mt={mvs(20)}
@@ -430,9 +434,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     marginLeft: mvs(5),
   },
-  dropdownMenu:{
-    marginBottom:mvs(20)
-  }
+  dropdownMenu: {
+    marginBottom: mvs(20),
+  },
+  logoutContainer: {
+    backgroundColor: Colors.firstColor,
+  },
+  logoutIcon: {
+    alignSelf: 'flex-end',
+    marginRight: mvs(30),
+    marginTop: mvs(5),
+  },
 });
 
 export default ConsultantProfile;

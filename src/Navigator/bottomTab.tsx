@@ -25,17 +25,19 @@ const BottomTab = () => {
     <Tab.Navigator
       initialRouteName="HomeScreen"
       screenOptions={{headerShown: false}}>
-      <Tab.Screen
-        name="Category"
-        component={Categories}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarActiveTintColor: Colors.firstColor,
-          tabBarIcon: ({color, size}) => (
-            <Icons name="home" color={color} size={size} />
-          ),
-        }}
-      />
+      {user.userType === 'user' && (
+        <Tab.Screen
+          name="Category"
+          component={Categories}
+          options={{
+            tabBarLabel: 'Home',
+            tabBarActiveTintColor: Colors.firstColor,
+            tabBarIcon: ({color, size}) => (
+              <Icons name="home" color={color} size={size} />
+            ),
+          }}
+        />
+      )}
       <Tab.Screen
         name="HomeScreen"
         component={HomeScreen}

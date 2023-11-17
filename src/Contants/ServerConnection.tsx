@@ -101,17 +101,15 @@ const ServerConnection = ({navigation}: any) => {
 
   useEffect(() => {
     if (!connecting) {
-      if (
-        (success && user?.userType === 'user') ||
-        (success && user?.userType === 'consultant' && user?.isProfileComplete)
-      ) {
-        navigation.replace('Home');
-      } else if (
-        success &&
-        user?.userType === 'consultant' &&
-        !user?.isProfileComplete
-      ) {
-        navigation.navigate('Home', {screen: 'Profile'});
+      if (success && user) {
+        if (user.userType === 'consultant' && !user.isProfileComplete) {
+          navigation.replace('Home', {screen: 'Profile'});
+        } else {
+          navigation.replace('Home');
+        }
+      }
+      else{
+        console.error("Quickblock connection failed")
       }
     }
   }, [connecting]);
