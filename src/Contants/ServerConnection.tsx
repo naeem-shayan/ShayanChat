@@ -101,11 +101,17 @@ const ServerConnection = ({navigation}: any) => {
 
   useEffect(() => {
     if (!connecting) {
-      if (success && user.userType === 'user') {
+      if (
+        (success && user?.userType === 'user') ||
+        (success && user?.userType === 'consultant' && user?.isProfileComplete)
+      ) {
         navigation.replace('Home');
-      } else {
-        Alert.alert('consultant part comming soon');
-        navigation.replace('Welcome');
+      } else if (
+        success &&
+        user?.userType === 'consultant' &&
+        !user?.isProfileComplete
+      ) {
+        navigation.navigate('Home', {screen: 'Profile'});
       }
     }
   }, [connecting]);

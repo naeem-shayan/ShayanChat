@@ -32,6 +32,22 @@ export const validateEmail = (email: string) => {
   }
 };
 
+export const isValidNumber = (age: any, name:string) => {
+  const ageNumber: number = parseInt(age, 10);
+  if (isNaN(ageNumber) || ageNumber <= 0) {
+    return `Enter valid ${name}`;
+  }
+  return '';
+};
+
+export const isValidDescription = (description: string) => {
+  const words = description.split(/\s+/);
+  if (words.length < 10) {
+    return 'Description must contain at least 10 words';
+  }
+  return '';
+};
+
 export const replaceObjectById = (
   id: any,
   newObject: any,

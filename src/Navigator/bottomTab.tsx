@@ -14,10 +14,13 @@ import {Alert, Text, View} from 'react-native';
 import Profile from '../Screens/Profile';
 import Colors from '../Contants/Colors';
 import Categories from '../Screens/Categories';
+import ConsultantProfile from '../Screens/ConsultantProfile';
+import {useSelector} from 'react-redux';
 
 const Tab = createBottomTabNavigator();
 
 const BottomTab = () => {
+  const user = useSelector((state: any) => state.user);
   return (
     <Tab.Navigator
       initialRouteName="HomeScreen"
@@ -46,7 +49,7 @@ const BottomTab = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={Profile}
+        component={user.userType === 'consultant' ? ConsultantProfile : Profile}
         options={{
           tabBarLabel: 'Profile',
           tabBarActiveTintColor: Colors.firstColor,

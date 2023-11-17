@@ -10,6 +10,7 @@ const CustomHeader = ({
   userStatus,
   status,
   showBack = false,
+  logout=false,
   loading,
   navigation,
   onAddPress,
@@ -27,6 +28,16 @@ const CustomHeader = ({
             onPress={onBackPress}
           />
         )}
+        {
+          logout && (
+            <IconButton
+            icon="logout"
+            size={28}
+            iconColor="#ffffff"
+            onPress={onLogoutPress}
+            />
+          )
+        }
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{title}</Text>
           {userStatus && <Text style={styles.status}>{status}</Text>}

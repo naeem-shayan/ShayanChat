@@ -20,9 +20,12 @@ const CustomInput = ({
   onChangeText,
   password = false,
   error,
+  multiline = false,
+  showNumericKeyboard = false,
   ...props
 }: any) => {
   const [eye, setEye] = useState(false);
+  let type: any = showNumericKeyboard ? 'numeric' : 'default';
   return (
     <View
       style={{
@@ -39,19 +42,24 @@ const CustomInput = ({
       <Shadow
         inner // <- enable inner shadow
         useArt // <- set this prop to use non-native shadow on ios
-        style={styles?.shadow}>
+        //@ts-ignore
+        style={[styles?.shadow, multiline && {height: mvs(120)}]}>
         <View style={styles.inputContainer}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, multiline && {paddingHorizontal: mvs(20)}]}
             placeholder={placeholder}
             placeholderTextColor={Colors.placeholderColor}
             selectionColor={Colors.selectionColor}
             value={value}
             onChangeText={onChangeText}
             secureTextEntry={password && !eye}
+            multiline={multiline}
+            keyboardType={type}
           />
           {password && (
-            <TouchableOpacity onPress={() => setEye(!eye)} style={styles.eyeContainer}>
+            <TouchableOpacity
+              onPress={() => setEye(!eye)}
+              style={styles.eyeContainer}>
               <IconMI
                 name={eye ? 'eye' : 'eye-outline'}
                 size={mvs(22)}
@@ -139,6 +147,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: mvs(20),
+  },
+  multilineTextInput: {
+    minHeight: mvs(100),
   },
 });
 
