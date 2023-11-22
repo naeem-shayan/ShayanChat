@@ -10,10 +10,7 @@ const CustomHeader = ({
   userStatus,
   status,
   showBack = false,
-  loading,
-  navigation,
-  onAddPress,
-  onLogoutPress,
+  onCall,
   onBackPress,
 }: any) => {
   return (
@@ -35,23 +32,11 @@ const CustomHeader = ({
       {displayActions && (
         <View style={styles.rightContainer}>
           <IconButton
-            icon="plus"
+            icon="video"
             size={28}
             iconColor="#ffffff"
-            onPress={onAddPress}
+            onPress={onCall}
           />
-          <View style={styles.loaderContainer}>
-            {loading ? (
-              <ActivityIndicator size={'small'} color={Colors.white} />
-            ) : (
-              <IconButton
-                icon="logout"
-                size={28}
-                iconColor="#ffffff"
-                onPress={onLogoutPress}
-              />
-            )}
-          </View>
         </View>
       )}
     </View>
