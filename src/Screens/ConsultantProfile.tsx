@@ -26,6 +26,7 @@ import storage from '@react-native-firebase/storage';
 import {IconButton} from 'react-native-paper';
 import {useIsFocused} from '@react-navigation/native';
 import countries from '../Contants/countriesJSON';
+import defaultProfilePicture from '../Contants/defaultPicture';
 
 const width = Math.round(Dimensions.get('window').width);
 
@@ -40,9 +41,7 @@ const ConsultantProfile = ({navigation}: any) => {
     country: user?.country || '',
     category: user?.category || '',
     experience: 0,
-    profilePicture:
-      user?.profilePicture ||
-      'https://srcwap.com/wp-content/uploads/2022/08/abstract-user-flat-4.png',
+    profilePicture: user?.profilePicture || defaultProfilePicture,
     rate: 0,
     description: user?.description || '',
   });
@@ -221,9 +220,9 @@ const ConsultantProfile = ({navigation}: any) => {
           <View style={styles.picture}>
             <Image
               source={{
-                uri: consultantProfile?.profilePicture
-                  ? consultantProfile?.profilePicture
-                  : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png',
+                uri: consultantProfile.profilePicture
+                  ? consultantProfile.profilePicture
+                  : defaultProfilePicture,
               }}
               style={styles.image}
             />
