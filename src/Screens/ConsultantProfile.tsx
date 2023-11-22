@@ -77,11 +77,7 @@ const ConsultantProfile = ({navigation}: any) => {
       let name = JSON.stringify(new Date().getTime());
       const reference = storage().ref(`images/${name}`);
       const task = reference.putFile(result?.assets[0]?.uri);
-      task.on('state_changed', taskSnapshot => {
-        console.log(
-          `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
-        );
-      });
+      task.on('state_changed', taskSnapshot => {});
       task.then(async () => {
         await storage()
           .ref(`images/${name}`)
@@ -220,9 +216,7 @@ const ConsultantProfile = ({navigation}: any) => {
           <View style={styles.picture}>
             <Image
               source={{
-                uri: consultantProfile.profilePicture
-                  ? consultantProfile.profilePicture
-                  : defaultProfilePicture,
+                uri: consultantProfile.profilePicture || defaultProfilePicture,
               }}
               style={styles.image}
             />

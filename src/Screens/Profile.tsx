@@ -14,11 +14,9 @@ import {mvs} from '../Config/metrices';
 import CustomButton from '../Components/button';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {launchImageLibrary} from 'react-native-image-picker';
-import categoriesList from '../Contants/catergoriesJSON';
 import {RadioButton} from 'react-native-paper';
 import {useDispatch, useSelector} from 'react-redux';
-import {onLogout} from '../Contants/Utils';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {onLogout, updateQuickBlockUser} from '../Contants/Utils';
 import firestore from '@react-native-firebase/firestore';
 import {setUser} from '../Actions/userAction';
 import storage from '@react-native-firebase/storage';
@@ -26,7 +24,6 @@ import {IconButton} from 'react-native-paper';
 import {useIsFocused} from '@react-navigation/native';
 import defaultProfilePicture from '../Contants/defaultPicture';
 import {validateName} from '../Contants/dist/Utils';
-import QB from 'quickblox-react-native-sdk';
 
 const width = Math.round(Dimensions.get('window').width);
 
@@ -35,7 +32,7 @@ const Profile = ({navigation}: any) => {
   const dispatch = useDispatch();
   const isFoucs = useIsFocused();
 
-  const [consultantProfile, setConsultantProfile] = useState({
+  const [userProfile, setUserProfile] = useState({
     profilePicture: user?.profilePicture || defaultProfilePicture,
     fullName: '',
     gender: 'male',
@@ -47,7 +44,7 @@ const Profile = ({navigation}: any) => {
 
   useEffect(() => {
     if (user && isFoucs) {
-      setConsultantProfile({
+      setUserProfile({
         fullName: user?.fullName || '',
         gender: user?.gender || 'male',
         profilePicture: user?.profilePicture || defaultProfilePicture,
@@ -79,11 +76,11 @@ const Profile = ({navigation}: any) => {
   };
 
   const handleInputChange = (field: string, value: any) => {
-    setConsultantProfile({...consultantProfile, [field]: value});
+    setUserProfile({...userProfile, [field]: value});
   };
 
   const checkValidationsErrors = () => {
-    const fullNameError = validateName(consultantProfile.fullName);
+    const fullNameError = validateName(userProfile.fullName);
     if (fullNameError) {
       setValidationErrors({
         fullNameError,
@@ -103,15 +100,19 @@ const Profile = ({navigation}: any) => {
   const handleUpdate = () => {
     if (checkValidationsErrors()) {
       clearErrors();
-      const updatedConsultantProfile = {
+      const updateduserProfile = {
         ...user,
-        ...consultantProfile,
+        ...userProfile,
         isProfileComplete: true,
       };
+      const updatedQuickbloxUserProfile = {
+        fullName: userProfile.fullName,
+      };
+      updateQuickBlockUser(updatedQuickbloxUserProfile);
       firestore()
         .collection('Users')
         .doc(`${user?.id}`)
-        .update(updatedConsultantProfile)
+        .update(updateduserProfile)
         .then(async () => {
           const documentSnapshotAfter = await firestore()
             .collection('Users')
@@ -165,9 +166,7 @@ const Profile = ({navigation}: any) => {
           <View style={styles.picture}>
             <Image
               source={{
-                uri: consultantProfile.profilePicture
-                  ? consultantProfile.profilePicture
-                  : defaultProfilePicture,
+                uri: userProfile.profilePicture || defaultProfilePicture,
               }}
               style={styles.image}
             />
@@ -185,7 +184,7 @@ const Profile = ({navigation}: any) => {
           mt={mvs(10)}
           label="Name"
           placeholder="Enter your Name"
-          value={consultantProfile?.fullName}
+          value={userProfile?.fullName}
           error={validationErrors?.fullNameError}
           onChangeText={(fullName: any) =>
             handleInputChange('fullName', fullName)
@@ -194,21 +193,19 @@ const Profile = ({navigation}: any) => {
         <View style={styles.radioButtonContainer}>
           <View style={styles.radioButtonContent}>
             <RadioButton
-              value={consultantProfile?.gender}
+              value={userProfile?.gender}
               color={Colors.firstColor}
-              status={
-                consultantProfile?.gender === 'male' ? 'checked' : 'unchecked'
-              }
+              status={userProfile?.gender === 'male' ? 'checked' : 'unchecked'}
               onPress={() => handleInputChange('gender', 'male')}
             />
             <Text style={styles.genderText}>Male</Text>
           </View>
           <View style={styles.radioButtonContent}>
             <RadioButton
-              value={consultantProfile?.gender}
+              value={userProfile?.gender}
               color={Colors.firstColor}
               status={
-                consultantProfile?.gender === 'female' ? 'checked' : 'unchecked'
+                userProfile?.gender === 'female' ? 'checked' : 'unchecked'
               }
               onPress={() => handleInputChange('gender', 'female')}
             />
