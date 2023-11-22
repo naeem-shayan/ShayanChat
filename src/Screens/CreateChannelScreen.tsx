@@ -47,7 +47,7 @@ export default function CreateChannelScreen(props: any) {
     const filteredUsers = userData.filter(
       (consultant: any) =>
         consultant.category === props.route.params.params.categoryName &&
-        consultant?.id !== user?.id,
+        consultant?.id !== user?.id && consultant?.isProfileComplete
     );
     const statusOrder = [true, false];
     const updatedUsers = filteredUsers.sort(
