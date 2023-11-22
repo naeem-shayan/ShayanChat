@@ -32,7 +32,7 @@ const CustomModal = ({navigation}: any) => {
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
               <Text style={styles.modalText}>
-                Incomplete Profile, To use the CustomModal, please complete your
+                Incomplete Profile, To use the app, please complete your
                 profile first
               </Text>
               <CustomButton
