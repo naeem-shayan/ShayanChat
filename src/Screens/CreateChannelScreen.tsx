@@ -47,7 +47,7 @@ export default function CreateChannelScreen(props: any) {
     const filteredUsers = userData.filter(
       (consultant: any) =>
         consultant.category === props.route.params.params.categoryName &&
-        consultant?.id !== user?.id && consultant?.isProfileComplete
+        consultant?.id !== user?.id,
     );
     const statusOrder = [true, false];
     const updatedUsers = filteredUsers.sort(
@@ -134,7 +134,7 @@ export default function CreateChannelScreen(props: any) {
       <CustomHeader
         title={'Users'}
         showBack
-        onBackPress={() => props.navigation.goBack()}
+        onBackPress={() => props.navigation.replace('Home')}
       />
       <CustomSearch
         placeholder="Search Users"

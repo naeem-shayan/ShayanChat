@@ -26,7 +26,6 @@ import storage from '@react-native-firebase/storage';
 import {IconButton} from 'react-native-paper';
 import {useIsFocused} from '@react-navigation/native';
 import countries from '../Contants/countriesJSON';
-import defaultProfilePicture from '../Contants/defaultPicture';
 
 const width = Math.round(Dimensions.get('window').width);
 
@@ -41,7 +40,9 @@ const ConsultantProfile = ({navigation}: any) => {
     country: user?.country || '',
     category: user?.category || '',
     experience: 0,
-    profilePicture: user?.profilePicture || defaultProfilePicture,
+    profilePicture:
+      user?.profilePicture ||
+      'https://srcwap.com/wp-content/uploads/2022/08/abstract-user-flat-4.png',
     rate: 0,
     description: user?.description || '',
   });
@@ -77,7 +78,11 @@ const ConsultantProfile = ({navigation}: any) => {
       let name = JSON.stringify(new Date().getTime());
       const reference = storage().ref(`images/${name}`);
       const task = reference.putFile(result?.assets[0]?.uri);
-      task.on('state_changed', taskSnapshot => {});
+      task.on('state_changed', taskSnapshot => {
+        console.log(
+          `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
+        );
+      });
       task.then(async () => {
         await storage()
           .ref(`images/${name}`)
@@ -216,7 +221,9 @@ const ConsultantProfile = ({navigation}: any) => {
           <View style={styles.picture}>
             <Image
               source={{
-                uri: consultantProfile.profilePicture || defaultProfilePicture,
+                uri: consultantProfile?.profilePicture
+                  ? consultantProfile?.profilePicture
+                  : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png',
               }}
               style={styles.image}
             />
