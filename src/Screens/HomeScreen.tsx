@@ -17,8 +17,7 @@ import Colors from '../Contants/Colors';
 import CustomHeader from '../Components/header';
 import messaging from '@react-native-firebase/messaging';
 import QB from 'quickblox-react-native-sdk';
-import {useSelector} from 'react-redux';
-import CustomModal from '../Components/modal';
+import { useSelector } from 'react-redux';
 
 export default function HomeScreen({navigation}: any) {
   const [channels, setChannels] = useState([]);
@@ -129,7 +128,6 @@ export default function HomeScreen({navigation}: any) {
             )}
           />
         )}
-        <CustomModal navigation={navigation} />
       </View>
     </>
   );

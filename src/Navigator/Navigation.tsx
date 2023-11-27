@@ -17,8 +17,17 @@ import WelcomeScreen from '../Screens/WelcomeScreen';
 import OnboardingScreen from '../Screens/OnboardingScreen';
 import Categories from '../Screens/Categories';
 import CreateChannelScreen from '../Screens/CreateChannelScreen';
+import CallScreen from '../Screens/CallScreen';
+import { useSelector } from 'react-redux';
 
 const Stack = createStackNavigator();
+
+const appSettings = {
+  accountKey: 'ack_AkZzGjiD-eLYc4QsoaWy',
+  appId: '101977',
+  authKey: 'ak_Hb9zWK2A92OdLp6',
+  authSecret: 'as_8PYdf5ON9SQsD8t',
+};
 
 const Navigation = () => {
   const [loading, setLoading] = useState(true);
@@ -27,6 +36,22 @@ const Navigation = () => {
   const appState = useRef(AppState.currentState);
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
   const [deviceState, setDeviceState] = useState('');
+  const callSession = useSelector((state: any) => state.callSession);
+
+  useEffect(() => {
+    QB.settings
+      .init(appSettings)
+      .then(function () {
+        // SDK initialized successfully
+        console.log('SDK initialized successfully');
+      })
+      .catch(function (e) {
+        // Some error occurred, look at the exception message for more details
+        console.log(
+          'Some error occurred, look at the exception message for more details',
+        );
+      });
+  }, []);
 
   useEffect(() => {
     QB.auth
@@ -89,6 +114,7 @@ const Navigation = () => {
         />
         <Stack.Screen name="Home" component={BottomTab} />
         <Stack.Screen name="Chat" component={ChatScreen} />
+        <Stack.Screen name="Call" component={CallScreen} />
         <Stack.Screen name="Connect" component={ServerConnection} />
       </Stack.Navigator>
     </NavigationContainer>

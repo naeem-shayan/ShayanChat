@@ -1,6 +1,8 @@
 const initialState = {
   user: null,
   userType: null,
+  callSession: null,
+  onCall: false,
 };
 
 const userReducer = (state = initialState, action) => {
@@ -28,6 +30,16 @@ const userReducer = (state = initialState, action) => {
       return {
         ...state,
         userType: null,
+      };
+    case 'CALL_SESSION':
+      return {
+        ...state,
+        callSession: state.callSession,
+      };
+    case 'ON_CALL':
+      return {
+        ...state,
+        onCall: state.onCall,
       };
     default:
       return state;

@@ -1,21 +1,16 @@
 import React, {useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import Colors from '../Contants/Colors';
+//@ts-ignore
+import UserAvatar from 'react-native-user-avatar';
 import {mvs} from '../Config/metrices';
-import defaultProfilePicture from '../Contants/defaultPicture';
 
 const User = ({item, category, onPress, ...props}: any) => {
   return (
     <TouchableOpacity onPress={onPress} style={styles.container}>
       <View>
-        <Image
-          source={{
-            uri: item?.profilePicture
-              ? item?.profilePicture
-              : defaultProfilePicture,
-          }}
-          style={styles.image}
-        />
+        {/* <Image source={{uri: item?.displayPictureUrl}} style={styles.image} /> */}
+        <UserAvatar size={50} name={item.fullName} />
         {item?.is_online && <View style={styles.online} />}
       </View>
       <View style={styles.contentContainer}>
@@ -50,8 +45,8 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.userStatusColor,
   },
   image: {
-    height: mvs(60),
-    width: mvs(60),
+    height: mvs(50),
+    width: mvs(50),
     borderRadius: mvs(50),
   },
   contentContainer: {

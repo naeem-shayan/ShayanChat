@@ -16,9 +16,7 @@ import _ from 'lodash';
 import CategoryCard from '../Components/category';
 
 const Categories = ({navigation}: any) => {
-  const [categories, setCategories] = useState(
-    [...categoriesList].sort((a, b) => a.name.localeCompare(b.name)),
-  );
+  const [categories, setCategories] = useState(categoriesList);
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
 
