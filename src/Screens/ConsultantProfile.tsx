@@ -26,6 +26,7 @@ import storage from '@react-native-firebase/storage';
 import {IconButton} from 'react-native-paper';
 import {useIsFocused} from '@react-navigation/native';
 import countries from '../Contants/countriesJSON';
+import defaultProfilePicture from '../Contants/defaultPicture';
 
 const width = Math.round(Dimensions.get('window').width);
 
