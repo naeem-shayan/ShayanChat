@@ -9,7 +9,7 @@ import {OnBoardingUers} from '../../assests/svgs';
 const OnboardingScreen = ({navigation}:any) => {
   
   const handleStart=async ()=>{
-    navigation.navigate("Login")
+    navigation.replace("Login")
   }
 
   return (

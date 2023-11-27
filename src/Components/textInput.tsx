@@ -42,10 +42,13 @@ const CustomInput = ({
         inner // <- enable inner shadow
         useArt // <- set this prop to use non-native shadow on ios
         //@ts-ignore
-        style={[styles?.shadow, multiline && {height: mvs(120)}]}>
+        style={[
+          styles?.shadow,
+          multiline && {height: mvs(120), borderRadius: 30},
+        ]}>
         <View style={styles.inputContainer}>
           <TextInput
-            style={[styles.input, multiline && {paddingHorizontal: mvs(20)}]}
+            style={[styles.input]}
             placeholder={placeholder}
             placeholderTextColor={Colors.placeholderColor}
             selectionColor={Colors.selectionColor}

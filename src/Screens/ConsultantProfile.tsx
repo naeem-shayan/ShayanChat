@@ -36,13 +36,13 @@ const ConsultantProfile = ({navigation}: any) => {
   const isFoucs = useIsFocused();
 
   const [consultantProfile, setConsultantProfile] = useState({
-    age: 0,
+    age: null,
     gender: 'male',
     country: user?.country || '',
     category: user?.category || '',
-    experience: 0,
+    experience: null,
     profilePicture: user?.profilePicture || defaultProfilePicture,
-    rate: 0,
+    rate: null,
     description: user?.description || '',
   });
   const [validationErrors, setValidationErrors] = useState({
@@ -90,11 +90,12 @@ const ConsultantProfile = ({navigation}: any) => {
     }
   };
 
-  const categoryOptions = categoriesList.map(category => ({
-    label: category.name,
-    value: category.name,
-  }));
-
+  const categoryOptions = categoriesList
+    .map(category => ({
+      label: category?.name,
+      value: category?.name,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
   const handleInputChange = (field: string, value: any) => {
     setConsultantProfile({...consultantProfile, [field]: value});
   };
@@ -221,13 +222,14 @@ const ConsultantProfile = ({navigation}: any) => {
               style={styles.image}
             />
           </View>
-          <Icons
-            name="camera"
-            color={Colors.firstColor}
-            size={35}
-            style={styles.uploadCamera}
-            onPress={handleImageUpload}
-          />
+          <View style={styles.cameraWrapper}>
+            <Icons
+              name="camera"
+              color={'black'}
+              size={mvs(30)}
+              onPress={handleImageUpload}
+            />
+          </View>
         </View>
         <View style={[styles.errorContainer, {alignSelf: 'center'}]}>
           {validationErrors?.imageError && (
@@ -242,7 +244,7 @@ const ConsultantProfile = ({navigation}: any) => {
           mt={mvs(10)}
           label="Age"
           placeholder="Enter your Age in years"
-          value={consultantProfile?.age.toString()}
+          value={consultantProfile?.age}
           error={validationErrors?.ageError}
           keyboradType="numeric"
           onChangeText={(age: any) => handleInputChange('age', age)}
@@ -250,7 +252,7 @@ const ConsultantProfile = ({navigation}: any) => {
         <CustomInput
           label="Experience"
           placeholder="Enter your experience in years like 10"
-          value={consultantProfile?.experience?.toString()}
+          value={consultantProfile?.experience}
           error={validationErrors?.experienceError}
           keyboradType="numeric"
           onChangeText={(experience: any) =>
@@ -260,7 +262,7 @@ const ConsultantProfile = ({navigation}: any) => {
         <CustomInput
           label="Rate"
           placeholder="Enter your rate per hour"
-          value={consultantProfile?.rate.toString()}
+          value={consultantProfile?.rate}
           error={validationErrors?.rateError}
           keyboradType="numeric"
           onChangeText={(rate: any) => handleInputChange('rate', rate)}
@@ -375,16 +377,21 @@ const styles = StyleSheet.create({
     borderColor: Colors.firstColor,
     borderWidth: mvs(1.5),
   },
-  uploadCamera: {
+  cameraWrapper: {
+    height: mvs(45),
+    width: mvs(45),
+    backgroundColor: Colors.firstColor,
     position: 'absolute',
     bottom: 0,
-    left: mvs(70),
-    borderRadius: mvs(50),
+    left: mvs(60),
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: mvs(50),
+    borderRadius: 50,
   },
   radioButtonContainer: {
     flexDirection: 'row',
