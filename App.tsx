@@ -63,11 +63,10 @@ function App(): JSX.Element {
   function eventHandler(event: any) {
     const {type, payload} = event;
     const {userId, session} = payload;
-    console.log('TYPE:', type);
     if (type == '@QB/CALL') {
       setIncomingCall(session);
-    } else if (type == '@QB/CALL_END') {
-      setTimer(0);
+    } else if (type == '@QB/CALL_END' || type == '@QB/HANG_UP') {
+      //setTimer(0);
       setCall(null);
       setIncomingCall(null);
     }

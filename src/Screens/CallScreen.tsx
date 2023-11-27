@@ -13,8 +13,10 @@ import {useDispatch, useSelector} from 'react-redux';
 import {callSession} from '../Actions/userAction';
 import Colors from '../Contants/Colors';
 import WebRTCView from 'quickblox-react-native-sdk/RTCView';
+import {useIsFocused} from '@react-navigation/native';
 
 const CallScreen = ({route, navigation}: any) => {
+  const isFocused = useIsFocused();
   const dispatch = useDispatch();
   const {opponentId, incomming, session} = route?.params;
   const [isAudioMuted, setAudioMuted] = useState(false);
@@ -31,18 +33,20 @@ const CallScreen = ({route, navigation}: any) => {
   const user = useSelector((state: any) => state.user);
 
   useEffect(() => {
-    const params = {
-      opponentsIds: [opponentId],
-      type: QB.webrtc.RTC_SESSION_TYPE.VIDEO,
-    };
-    QB.webrtc
-      .call(params)
-      .then(function (session) {
-        setSessionId(session?.id);
-        dispatch(callSession(session));
-      })
-      .catch(function (e) {});
-  }, []);
+    if (isFocused) {
+      const params = {
+        opponentsIds: [opponentId],
+        type: QB.webrtc.RTC_SESSION_TYPE.VIDEO,
+      };
+      QB.webrtc
+        .call(params)
+        .then(function (session) {
+          setSessionId(session?.id);
+          dispatch(callSession(session));
+        })
+        .catch(function (e) {});
+    }
+  }, [isFocused]);
 
   function eventHandler(event: any) {
     const {
@@ -53,25 +57,20 @@ const CallScreen = ({route, navigation}: any) => {
       userId, // id of QuickBlox user who initiated this event (if any)
       session, // current or new session
     } = payload;
-    if (type == '@QB/CALL_END') {
+    if (type == '@QB/CALL_END' || type == '@QB/HANG_UP') {
       navigation.goBack();
     } else if (type == '@QB/ACCEPT') {
       setCall(session);
-      startTimer();
+      //startTimer();
     }
   }
 
   useEffect(() => {
-    Object.keys(QB.webrtc.EVENT_TYPE).forEach(key => {
-      //@ts-ignore
-      emitter.addListener(QB.webrtc.EVENT_TYPE[key], eventHandler);
-    });
-
+    emitter.addListener(QB.webrtc.EVENT_TYPE.CALL_END, eventHandler);
+    emitter.addListener(QB.webrtc.EVENT_TYPE.ACCEPT, eventHandler);
     return () => {
-      Object.keys(QB.webrtc.EVENT_TYPE).forEach(key => {
-        //@ts-ignore
-        emitter.removeAllListeners(QB.webrtc.EVENT_TYPE[key]);
-      });
+      emitter.removeAllListeners(QB.webrtc.EVENT_TYPE.CALL_END);
+      emitter.removeAllListeners(QB.webrtc.EVENT_TYPE.ACCEPT);
     };
   }, []);
 
@@ -136,7 +135,7 @@ const CallScreen = ({route, navigation}: any) => {
       .hangUp(hangUpParams)
       .then(function (session) {
         /* handle session */
-        stopTimer();
+        //stopTimer();
         setCall(null);
       })
       .catch(function (e) {
