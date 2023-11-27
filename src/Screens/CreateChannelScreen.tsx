@@ -140,7 +140,7 @@ export default function CreateChannelScreen(props: any) {
       <CustomHeader
         title={'Users'}
         showBack
-        onBackPress={() => props.navigation.replace('Home')}
+        onBackPress={() => props.navigation.navigate('Category')}
       />
       <CustomSearch
         placeholder="Search Users"

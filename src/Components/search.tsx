@@ -38,16 +38,18 @@ const CustomSearch = ({
             onChangeText={onChangeText}
             value={props.value}
           />
-          <TouchableOpacity
-            style={styles.eyeContainer}
-            onPress={handleClearSearch}>
-            <IconMI
-              name="close"
-              size={mvs(22)}
-              color={Colors.placeholderColor}
-              onPress={handleClearSearch}
-            />
-          </TouchableOpacity>
+          {props.value.length > 0 && (
+            <TouchableOpacity
+              style={styles.eyeContainer}
+              onPress={handleClearSearch}>
+              <IconMI
+                name="close"
+                size={mvs(22)}
+                color={Colors.placeholderColor}
+                onPress={handleClearSearch}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </Shadow>
     </View>
