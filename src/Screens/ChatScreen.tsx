@@ -342,6 +342,14 @@ export default function ChatScreen({route, navigation}: any) {
       {loading && <LoadingOver />}
       <CustomHeader
         title={friend?.fullName}
+        displayActions
+        onCall={() =>
+          navigation.navigate('Call', {
+            opponentId: friend?.id,
+            incomming: false,
+            session: {},
+          })
+        }
         showBack
         status={friend?.is_online ? 'online' : 'offline'}
         userStatus

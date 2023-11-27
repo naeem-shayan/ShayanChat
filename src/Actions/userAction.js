@@ -23,3 +23,13 @@ export const getUserType = userType => ({
 export const clearUserType = () => ({
   type: 'CLEAR_USER_TYPE',
 });
+
+export const callSession = call_Session => ({
+  type: 'CALL_SESSION',
+  payload: call_Session,
+});
+
+export const onCall = on_Call => ({
+  type: 'ON_CALL',
+  payload: on_Call,
+});

@@ -1,19 +1,32 @@
 //import liraries
 import React, {Component, useEffect, useState} from 'react';
-import {View, Text, StyleSheet, Alert} from 'react-native';
+import {View, Text, StyleSheet, Alert, NativeEventEmitter} from 'react-native';
 import {ActivityIndicator} from 'react-native-paper';
 import Colors from './Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {chatkitty} from '../ChatKitty';
 import firestore from '@react-native-firebase/firestore';
 import QB from 'quickblox-react-native-sdk';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import { callSession } from '../Actions/userAction';
 
 // create a component
 const ServerConnection = ({navigation}: any) => {
+  const dispatch = useDispatch();
   const [connecting, setConnecting] = useState(true);
   const [success, setSuccess] = useState(false);
   const user = useSelector((state: any) => state.user);
+  //@ts-ignore
+  const emitter = new NativeEventEmitter(QB.webrtc);
+
+  QB.webrtc
+    .init()
+    .then(function () {
+      console.log(`/* module is ready for calls processing */`);
+    })
+    .catch(function (e) {
+      console.log(/* handle error */ e);
+    });
 
   useEffect(() => {
     if (user) {
@@ -52,6 +65,23 @@ const ServerConnection = ({navigation}: any) => {
         .catch(error => {});
     }
   }, [user]);
+
+  // function eventHandler (event) {
+  //   const {
+  //     type, // type of the event (i.e. `@QB/CALL` or `@QB/REJECT`)
+  //     payload
+  //   } = event
+  //   const {
+  //     userId, // id of QuickBlox user who initiated this event (if any)
+  //     session // current or new session
+  //   } = payload
+  //   dispatch(callSession(session))
+  //   Alert.alert('incomming.')
+  // }
+ 
+  // Object.keys(QB.webrtc.EVENT_TYPE).forEach(key => {
+  //   emitter.addListener(QB.webrtc.EVENT_TYPE[key], eventHandler)
+  // })
 
   // useEffect(() => {
   //   (async () => {
