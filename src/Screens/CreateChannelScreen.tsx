@@ -33,6 +33,7 @@ export default function CreateChannelScreen(props: any) {
   const [channelError, setChannelError] = useState('');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any>();
+  const [originalUsers, setOriginalUsers] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingNextPage, setIsLoadingNextPage] = useState(false);
   const [value, setValue] = useState('');
@@ -66,6 +67,7 @@ export default function CreateChannelScreen(props: any) {
             statusOrder.indexOf(userB.is_online),
         );
         setUsers(updatedUsers);
+        setOriginalUsers(updatedUsers);
         setLoading(false);
       });
 
@@ -163,7 +165,7 @@ export default function CreateChannelScreen(props: any) {
     if (value) {
       debouncedSearch(value?.trim());
     } else {
-      // fetchUsers();
+      setUsers(originalUsers);
     }
   };
 
