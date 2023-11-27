@@ -387,3 +387,14 @@ export const onLogout = async (user: any, dispatch: any, navigation: any) => {
     console.error(error);
   }
 };
+
+
+export const updateQuickBlockUser = (updateduserProfile: any) => {
+  QB.users
+    .update(updateduserProfile)
+    .then(function (updatedUser) {
+    })
+    .catch(function (e) {
+      console.error('Error in updating user====', e);
+    });
+};

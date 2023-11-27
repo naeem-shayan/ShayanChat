@@ -25,7 +25,7 @@ const BottomTab = () => {
     <Tab.Navigator
       initialRouteName="HomeScreen"
       screenOptions={{headerShown: false}}>
-      {user.userType === 'user' && (
+      {user?.userType === 'user' && (
         <Tab.Screen
           name="Category"
           component={Categories}
@@ -51,7 +51,7 @@ const BottomTab = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={user.userType === 'consultant' ? ConsultantProfile : Profile}
+        component={user?.userType === 'consultant' ? ConsultantProfile : Profile}
         options={{
           tabBarLabel: 'Profile',
           tabBarActiveTintColor: Colors.firstColor,

@@ -23,8 +23,11 @@ import _ from 'lodash';
 import {useRoute} from '@react-navigation/native';
 import {mvs} from '../Config/metrices';
 import {useSelector} from 'react-redux';
+import LoadingOver from '../Components/loadingOver';
 
 export default function CreateChannelScreen(props: any) {
+  const user = useSelector((state: any) => state.user);
+
   const {params}: any = useRoute();
   const [channelName, setChannelName] = useState('');
   const [channelError, setChannelError] = useState('');
@@ -33,7 +36,7 @@ export default function CreateChannelScreen(props: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingNextPage, setIsLoadingNextPage] = useState(false);
   const [value, setValue] = useState('');
-  const user = useSelector((state: any) => state.user);
+  const [overLoader, setOverLoader]=useState(false);
 
   useEffect(() => {
     if (user) {
@@ -46,8 +49,9 @@ export default function CreateChannelScreen(props: any) {
     const userData = data.docs.map(doc => doc.data());
     const filteredUsers = userData.filter(
       (consultant: any) =>
-        consultant.category === props.route.params.params.categoryName &&
-        consultant?.id !== user?.id,
+        consultant?.category === props.route.params.params.categoryName &&
+        consultant?.id !== user?.id &&
+        consultant?.isProfileComplete,
     );
     const statusOrder = [true, false];
     const updatedUsers = filteredUsers.sort(
@@ -60,6 +64,7 @@ export default function CreateChannelScreen(props: any) {
   };
 
   function handleButtonPress(item: any) {
+    setOverLoader(true);
     const createDialogParam: any = {
       type: QB.chat.DIALOG_TYPE.CHAT,
       occupantsIds: [item?.id],
@@ -68,6 +73,7 @@ export default function CreateChannelScreen(props: any) {
     QB.chat
       .createDialog(createDialogParam)
       .then(function (dialog) {
+        setOverLoader(false);
         // handle as neccessary, i.e.
         // subscribe to chat events, typing events, etc.
         props.navigation.navigate('Chat', {dialog, user});
@@ -181,6 +187,9 @@ export default function CreateChannelScreen(props: any) {
           />
         )}
       </View>
+      {
+        overLoader && <LoadingOver/>
+      }
     </>
   );
 }
