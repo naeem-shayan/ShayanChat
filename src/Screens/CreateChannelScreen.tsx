@@ -37,7 +37,7 @@ export default function CreateChannelScreen(props: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingNextPage, setIsLoadingNextPage] = useState(false);
   const [value, setValue] = useState('');
-  const [overLoader, setOverLoader]=useState(false);
+  const [overLoader, setOverLoader] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -152,18 +152,15 @@ export default function CreateChannelScreen(props: any) {
     ) : null;
   };
 
-  const debouncedSearch = _.debounce((value: string) => {
-    setLoading(true);
-    const filteredUsers = users.filter((user: any) =>
-      user?.fullName.toLowerCase().includes(value.toLowerCase()),
-    );
-    setUsers(filteredUsers);
-    setLoading(false);
-  }, 500);
   const handleSearchChange = (value: string) => {
     setValue(value);
     if (value) {
-      debouncedSearch(value?.trim());
+      setLoading(true);
+      const filteredUsers = users.filter((user: any) =>
+        user?.fullName.toLowerCase().includes(value.toLowerCase()),
+      );
+      setUsers(filteredUsers);
+      setLoading(false);
     } else {
       setUsers(originalUsers);
     }

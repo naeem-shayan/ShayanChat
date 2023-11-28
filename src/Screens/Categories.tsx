@@ -23,28 +23,27 @@ const Categories = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);
 
   const gotoUsersScreen = (categoryName: string) => {
-    navigation.navigate('CreateChannelScreen', {params: { categoryName }})
+    navigation.navigate('CreateChannelScreen', {params: {categoryName}});
   };
 
-  const debouncedSearch = _.debounce((value: string) => {
-    setLoading(true);
-    const filtered = categoriesList.filter(category =>
-      category.name.toLowerCase().includes(value.toLowerCase()),
-    );
-    setCategories(filtered);
-    setLoading(false);
-  }, 500);
   const handleSearchChange = (value: string) => {
-    setValue(value)
+    setValue(value);
     if (value?.trim()) {
-      debouncedSearch(value);
+      setLoading(true);
+      const filtered = categoriesList.filter(category =>
+        category.name.toLowerCase().includes(value.toLowerCase()),
+      );
+      setCategories(filtered);
+      setLoading(false);
     } else {
-      setCategories([...categoriesList].sort((a, b) => a.name.localeCompare(b.name)),);
+      setCategories(
+        [...categoriesList].sort((a, b) => a.name.localeCompare(b.name)),
+      );
     }
   };
   const handleClearSearch = () => {
-    setValue('')
-    handleSearchChange('')
+    setValue('');
+    handleSearchChange('');
   };
   return (
     <View style={styles.rootContainer}>
