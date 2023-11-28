@@ -39,7 +39,7 @@ const Categories = ({navigation}: any) => {
     if (value?.trim()) {
       debouncedSearch(value);
     } else {
-      setCategories(categoriesList);
+      setCategories([...categoriesList].sort((a, b) => a.name.localeCompare(b.name)),);
     }
   };
   const handleClearSearch = () => {
