@@ -10,6 +10,7 @@ import {
   Image,
   LogBox,
   Modal,
+  PermissionsAndroid,
   Pressable,
   StyleSheet,
   Text,
@@ -35,6 +36,17 @@ import ChatVideo from '../Components/chatVideo';
 import LoadingOver from '../Components/loadingOver';
 import {replaceObjectById, updateObjectById} from '../Contants/Utils';
 import ChatImage from '../Components/chatImage';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import {PERMISSIONS, RESULTS, request} from 'react-native-permissions';
+import AudioRecording from '../Components/recording';
+import AudioPlayer from '../Components/player';
+import TrackPlayer, {
+  usePlaybackState,
+  useProgress,
+} from 'react-native-track-player';
+
+const audioRecorderPlayer = new AudioRecorderPlayer();
+audioRecorderPlayer.setSubscriptionDuration(0.1);
 
 export default function ChatScreen({route, navigation}: any) {
   const {dialog, user, name} = route.params;
@@ -56,6 +68,57 @@ export default function ChatScreen({route, navigation}: any) {
 
   const [newMessage, setNewMessage] = useState('');
   const [mediaUri, setMediaUri] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedFilePath, setRecordedFilePath] = useState<any>(null);
+
+  useEffect(() => {
+    TrackPlayer?.setupPlayer();
+  }, []);
+
+  const toggleRecording = () => {
+    setIsRecording(!isRecording);
+    stopRecording();
+  };
+
+  const startRecording = async () => {
+    try {
+      try {
+        const audioPermission = await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
+        const writeStoragePermission = await request(
+          PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
+        );
+        if (
+          audioPermission === RESULTS.GRANTED &&
+          writeStoragePermission === RESULTS.GRANTED
+        ) {
+        } else {
+          console.error('Some permissions are still not granted');
+        }
+      } catch (error) {
+        console.error('Error requesting permissions:', error);
+      }
+      if (isRecording) {
+        stopRecording();
+        handleSendAudio();
+        setIsRecording(false);
+        return;
+      }
+      await audioRecorderPlayer?.startRecorder();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      const result = await audioRecorderPlayer.stopRecorder();
+      setIsRecording(false);
+      setRecordedFilePath(result);
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+    }
+  };
 
   const renderItem = ({item}: any) => {
     if (item?.properties?.type == 'photo') {
@@ -276,6 +339,53 @@ export default function ChatScreen({route, navigation}: any) {
     });
   }
 
+  async function handleSendAudio() {
+    const newMsg = {
+      id: Date.now(),
+      body: 'loading',
+      properties: {
+        type: 'audio',
+        url: '',
+      },
+      senderId: user?.id, // Assuming the new message is sent by the user
+    };
+    setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
+    setNewMessage('');
+    const contentUploadParams = {
+      url: recordedFilePath, // path to file in local file system
+      public: false,
+    };
+    QB.content
+      .upload(contentUploadParams)
+      .then(async (file: any) => {
+        const {uid} = file;
+        const contentGetFileUrlParams = {uid};
+        const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
+        // create a message
+        const message = {
+          dialogId: dialog?.id,
+          body: 'Attachment',
+          saveToHistory: true,
+          properties: {
+            type: 'audio',
+            url: url,
+            id: `${newMsg?.id}`,
+          },
+        };
+        //send a message
+        QB.chat.sendMessage(message);
+        setSending(false);
+        sendPushNotification(friend?.deviceToken, {
+          title: user?.fullName,
+          body: 'Attachment',
+        });
+      })
+      .catch(function (e) {
+        setSending(false);
+        /* handle file upload error */
+      });
+  }
+
   async function handleSendFile(type: any) {
     const result: any = await launchImageLibrary({mediaType: type});
     if (!result?.didCancel) {
@@ -372,15 +482,32 @@ export default function ChatScreen({route, navigation}: any) {
               resizeMode="cover"
             />
           )}
-          <TextInput
-            style={styles.input}
-            placeholder="Type your message..."
-            value={newMessage}
-            onChangeText={text => setNewMessage(text)}
-          />
-          <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+          <View style={styles.inputMainContainer}>
+            {isRecording ? (
+              <AudioRecording toggleRecording={toggleRecording} />
+            ) : (
+              <TextInput
+                style={styles.input}
+                placeholder="Type your message..."
+                value={newMessage}
+                onChangeText={text => setNewMessage(text)}
+              />
+            )}
+            <TouchableOpacity
+              onPress={newMessage.length > 0 ? handleSend : startRecording}>
+              <Icon
+                name={
+                  isRecording || newMessage.length > 0 ? 'send' : 'microphone'
+                }
+                size={30}
+                color={Colors.firstColor}
+                style={styles.microphone}
+              />
+            </TouchableOpacity>
+          </View>
+          {/* <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
             <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
         <View style={styles.mediaButtonsContainer}>
           <TouchableOpacity
@@ -560,6 +687,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
   },
+  microphone: {
+    marginLeft: mvs(10),
+  },
   sendButton: {
     marginLeft: 10,
     padding: 10,
@@ -585,4 +715,9 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   status: {alignSelf: 'flex-end', marginHorizontal: mvs(5)},
+  inputMainContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
 });
