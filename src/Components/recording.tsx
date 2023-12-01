@@ -24,7 +24,7 @@ const AudioRecording = ({toggleRecording}: any) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Icon name="microphone" size={30} color="red" />
+        <Icon name="microphone" size={30} color="white" />
         <Text style={styles.timer}>{`${
           minutes < 10 ? `0${minutes}` : minutes
         } : ${seconds < 10 ? `0${seconds}` : seconds}`}</Text>
