@@ -306,12 +306,12 @@ export const styles = StyleSheet.create({
   localCam: {
     height: '50%',
     width: '100%',
-    backgroundColor: 'red',
+    backgroundColor: '#000',
   },
   remoteCam: {
     height: '50%',
     width: '100%',
-    backgroundColor: 'blue',
+    backgroundColor: '#000',
   },
 });
 

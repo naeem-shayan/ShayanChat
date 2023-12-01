@@ -19,14 +19,16 @@ const ServerConnection = ({navigation}: any) => {
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.webrtc);
 
-  QB.webrtc
-    .init()
-    .then(function () {
-      console.log(`/* module is ready for calls processing */`);
-    })
-    .catch(function (e) {
-      console.log(/* handle error */ e);
-    });
+  useEffect(() => {
+    QB.webrtc
+      .init()
+      .then(function () {
+        console.log(`/* module is ready for calls processing */`);
+      })
+      .catch(function (e) {
+        console.log(/* handle error */ e);
+      });
+  }, []);
 
   useEffect(() => {
     if (user) {
