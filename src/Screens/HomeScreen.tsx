@@ -50,8 +50,18 @@ export default function HomeScreen({navigation}: any) {
   }, []);
 
   function processDialogs(result: any) {
-    // dialogs found matching filter and sort
-    setChannels(result?.dialogs);
+    const sortedDialogs = result?.dialogs.sort((a:any, b:any) => {
+      if (a.lastMessageDateSent && b.lastMessageDateSent) {
+        return b.lastMessageDateSent - a.lastMessageDateSent;
+      } else if (a.lastMessageDateSent) {
+        return -1; // Put object with lastMessageDateSent at the beginning
+      } else if (b.lastMessageDateSent) {
+        return 1; // Put object with lastMessageDateSent at the end
+      } else {
+        return 0;
+      }
+    });
+    setChannels(sortedDialogs);
     setLoading(false);
   }
 

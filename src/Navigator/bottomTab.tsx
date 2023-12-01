@@ -24,7 +24,7 @@ const BottomTab = () => {
   return (
     <Tab.Navigator
       initialRouteName="HomeScreen"
-      screenOptions={{headerShown: false}}>
+      screenOptions={{headerShown: false, tabBarHideOnKeyboard: true}}>
       {user?.userType === 'user' && (
         <Tab.Screen
           name="Category"

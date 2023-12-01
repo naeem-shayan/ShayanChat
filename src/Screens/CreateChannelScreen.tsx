@@ -20,7 +20,7 @@ import QB from 'quickblox-react-native-sdk';
 import CustomSearch from '../Components/search';
 //@ts-ignore
 import _ from 'lodash';
-import {useRoute} from '@react-navigation/native';
+import {useIsFocused, useRoute} from '@react-navigation/native';
 import {mvs} from '../Config/metrices';
 import {useSelector} from 'react-redux';
 import LoadingOver from '../Components/loadingOver';
@@ -33,35 +33,74 @@ export default function CreateChannelScreen(props: any) {
   const [channelError, setChannelError] = useState('');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any>();
+  const [originalUsers, setOriginalUsers] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingNextPage, setIsLoadingNextPage] = useState(false);
   const [value, setValue] = useState('');
-  const [overLoader, setOverLoader]=useState(false);
+  const [overLoader, setOverLoader] = useState(false);
 
   useEffect(() => {
     if (user) {
-      fetchUsers();
+      const collectionRef = firestore()
+        .collection('Users')
+        .where('id', '!=', user?.id);
+      // .where('category', '==', props.route.params.params.categoryName)
+      // .where('isProfileComplete', '==', true)
+      const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
+        const newData: any = [];
+        querySnapshot?.forEach(doc => {
+          newData.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+        const filteredUsers = newData.filter(
+          (consultant: any) =>
+            consultant?.category === props.route.params.params.categoryName &&
+            consultant?.id !== user?.id &&
+            consultant?.isProfileComplete,
+        );
+        const statusOrder = [true, false];
+        const updatedUsers = filteredUsers.sort(
+          (userA: any, userB: any) =>
+            statusOrder.indexOf(userA.is_online) -
+            statusOrder.indexOf(userB.is_online),
+        );
+        setUsers(updatedUsers);
+        setOriginalUsers(updatedUsers);
+        setLoading(false);
+      });
+
+      return () => {
+        unsubscribe();
+      };
     }
   }, [user]);
 
-  const fetchUsers = async () => {
-    let data = await firestore().collection('Users').get();
-    const userData = data.docs.map(doc => doc.data());
-    const filteredUsers = userData.filter(
-      (consultant: any) =>
-        consultant?.category === props.route.params.params.categoryName &&
-        consultant?.id !== user?.id &&
-        consultant?.isProfileComplete,
-    );
-    const statusOrder = [true, false];
-    const updatedUsers = filteredUsers.sort(
-      (userA: any, userB: any) =>
-        statusOrder.indexOf(userA.is_online) -
-        statusOrder.indexOf(userB.is_online),
-    );
-    setUsers(updatedUsers);
-    setLoading(false);
-  };
+  // useEffect(() => {
+  //   if (user) {
+  //     fetchUsers();
+  //   }
+  // }, [user]);
+
+  // const fetchUsers = async () => {
+  //   let data = await firestore().collection('Users').get();
+  //   const userData = data.docs.map(doc => doc.data());
+  //   const filteredUsers = userData.filter(
+  //     (consultant: any) =>
+  //       consultant?.category === props.route.params.params.categoryName &&
+  //       consultant?.id !== user?.id &&
+  //       consultant?.isProfileComplete,
+  //   );
+  //   const statusOrder = [true, false];
+  //   const updatedUsers = filteredUsers.sort(
+  //     (userA: any, userB: any) =>
+  //       statusOrder.indexOf(userA.is_online) -
+  //       statusOrder.indexOf(userB.is_online),
+  //   );
+  //   setUsers(updatedUsers);
+  //   setLoading(false);
+  // };
 
   function handleButtonPress(item: any) {
     setOverLoader(true);
@@ -113,20 +152,17 @@ export default function CreateChannelScreen(props: any) {
     ) : null;
   };
 
-  const debouncedSearch = _.debounce((value: string) => {
-    setLoading(true);
-    const filteredUsers = users.filter((user: any) =>
-      user?.fullName.toLowerCase().includes(value.toLowerCase()),
-    );
-    setUsers(filteredUsers);
-    setLoading(false);
-  }, 500);
   const handleSearchChange = (value: string) => {
     setValue(value);
     if (value) {
-      debouncedSearch(value?.trim());
+      setLoading(true);
+      const filteredUsers = users.filter((user: any) =>
+        user?.fullName.toLowerCase().includes(value.toLowerCase()),
+      );
+      setUsers(filteredUsers);
+      setLoading(false);
     } else {
-      fetchUsers();
+      setUsers(originalUsers);
     }
   };
 
@@ -187,9 +223,7 @@ export default function CreateChannelScreen(props: any) {
           />
         )}
       </View>
-      {
-        overLoader && <LoadingOver/>
-      }
+      {overLoader && <LoadingOver />}
     </>
   );
 }

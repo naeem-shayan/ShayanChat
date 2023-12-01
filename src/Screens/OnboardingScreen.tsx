@@ -6,11 +6,10 @@ import PageTitleAndDes from '../Components/pageTitleAndDes';
 import CustomButton from '../Components/button';
 import {OnBoardingUers} from '../../assests/svgs';
 
-const OnboardingScreen = ({navigation}:any) => {
-  
-  const handleStart=async ()=>{
-    navigation.replace("Login")
-  }
+const OnboardingScreen = ({navigation}: any) => {
+  const handleStart = async () => {
+    navigation.navigate('Login');
+  };
 
   return (
     <View style={styles.rootContainer}>
@@ -43,8 +42,8 @@ const styles = StyleSheet.create({
     fontSize: mvs(15),
     color: Colors.textColor,
     fontFamily: 'Poppins-Regular',
-    fontWeight:"400",
-    marginTop:mvs(9)
+    fontWeight: '400',
+    marginTop: mvs(9),
   },
   image: {
     marginVertical: mvs(56),

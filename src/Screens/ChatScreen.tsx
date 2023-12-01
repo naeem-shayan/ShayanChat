@@ -272,7 +272,7 @@ export default function ChatScreen({route, navigation}: any) {
     QB.chat.sendMessage(message);
     sendPushNotification(friend?.deviceToken, {
       title: user?.fullName,
-      body: pendingMessages[0].text,
+      body: message?.body,
     });
   }
 
