@@ -33,7 +33,9 @@ const AudioRecording = ({toggleRecording}: any) => {
         style={styles.canceTtext}
         onPress={() => {
           clearInterval(timerRef.current ? timerRef.current : '');
-          toggleRecording();
+          toggleRecording(
+            false,
+          );
         }}>
         Cancel
       </Text>

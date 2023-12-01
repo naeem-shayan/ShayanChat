@@ -62,6 +62,7 @@ export default function ChatScreen({route, navigation}: any) {
   const insets = useSafeAreaInsets();
   const [video, setVideo] = useState('');
   const [videoLoading, setVideoLoading] = useState(false);
+  const [start, setStart] = useState(null);
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
   LogBox.ignoreAllLogs();
@@ -75,31 +76,17 @@ export default function ChatScreen({route, navigation}: any) {
     TrackPlayer?.setupPlayer();
   }, []);
 
-  const toggleRecording = () => {
+  const toggleRecording = (sent: boolean) => {
     setIsRecording(!isRecording);
-    stopRecording();
+    stopRecording(sent);
   };
 
   const startRecording = async () => {
     try {
-      try {
-        const audioPermission = await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
-        const writeStoragePermission = await request(
-          PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
-        );
-        if (
-          audioPermission === RESULTS.GRANTED &&
-          writeStoragePermission === RESULTS.GRANTED
-        ) {
-        } else {
-          console.error('Some permissions are still not granted');
-        }
-      } catch (error) {
-        console.error('Error requesting permissions:', error);
-      }
+      await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
+      await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
       if (isRecording) {
-        stopRecording();
-        handleSendAudio();
+        await stopRecording(true);
         setIsRecording(false);
         return;
       }
@@ -110,11 +97,11 @@ export default function ChatScreen({route, navigation}: any) {
     }
   };
 
-  const stopRecording = async () => {
+  const stopRecording = async (sent: boolean) => {
     try {
       const result = await audioRecorderPlayer.stopRecorder();
+      sent && handleSendAudio(result);
       setIsRecording(false);
-      setRecordedFilePath(result);
     } catch (error) {
       console.error('Error stopping recording:', error);
     }
@@ -137,6 +124,16 @@ export default function ChatScreen({route, navigation}: any) {
           setVideo={setVideo}
           setModalVisible={setModalVisible}
           user={user}
+        />
+      );
+    } else if (item?.properties?.type == 'audio') {
+      return (
+        <AudioPlayer
+          msg={item}
+          recordedFilePath={`https://firebasestorage.googleapis.com/v0/b/shayanchat-f6fe7.appspot.com/o/images%2Fcountdown-27545.mp3?alt=media&token=3f1d30b8-2f85-4de6-aa30-b4cd5c66ef77`}
+          user={user}
+          start={start}
+          setStart={setStart}
         />
       );
     } else {
@@ -339,7 +336,7 @@ export default function ChatScreen({route, navigation}: any) {
     });
   }
 
-  async function handleSendAudio() {
+  async function handleSendAudio(uri: string) {
     const newMsg = {
       id: Date.now(),
       body: 'loading',
@@ -352,7 +349,7 @@ export default function ChatScreen({route, navigation}: any) {
     setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
     setNewMessage('');
     const contentUploadParams = {
-      url: recordedFilePath, // path to file in local file system
+      url: uri, // path to file in local file system
       public: false,
     };
     QB.content
