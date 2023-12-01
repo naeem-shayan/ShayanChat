@@ -40,15 +40,13 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import {PERMISSIONS, RESULTS, request} from 'react-native-permissions';
 import AudioRecording from '../Components/recording';
 import AudioPlayer from '../Components/player';
-import VoiceMessagePlayer from '../Components/dummy';
-import Slider from '@react-native-community/slider';
 import TrackPlayer, {
   usePlaybackState,
   useProgress,
 } from 'react-native-track-player';
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
-
+audioRecorderPlayer.setSubscriptionDuration(0.1);
 
 export default function ChatScreen({route, navigation}: any) {
   const {dialog, user, name} = route.params;
@@ -93,9 +91,8 @@ export default function ChatScreen({route, navigation}: any) {
           audioPermission === RESULTS.GRANTED &&
           writeStoragePermission === RESULTS.GRANTED
         ) {
-          console.log('All permissions granted');
         } else {
-          console.log('Some permissions are still not granted');
+          console.error('Some permissions are still not granted');
         }
       } catch (error) {
         console.error('Error requesting permissions:', error);
@@ -106,8 +103,7 @@ export default function ChatScreen({route, navigation}: any) {
         setIsRecording(false);
         return;
       }
-      const result = await audioRecorderPlayer?.startRecorder();
-      console.log('result of recording.................', result);
+      await audioRecorderPlayer?.startRecorder();
       setIsRecording(true);
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -486,32 +482,29 @@ export default function ChatScreen({route, navigation}: any) {
               resizeMode="cover"
             />
           )}
-          <View style={{width: '100%'}}>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              {isRecording ? (
-                <AudioRecording toggleRecording={toggleRecording} />
-              ) : (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Type your message..."
-                  value={newMessage}
-                  onChangeText={text => setNewMessage(text)}
-                />
-              )}
-              <TouchableOpacity
-                onPress={newMessage.length > 0 ? handleSend : startRecording}>
-                <Icon
-                  name={
-                    isRecording || newMessage.length > 0 ? 'send' : 'microphone'
-                  }
-                  size={30}
-                  color={Colors.firstColor}
-                  style={styles.microphone}
-                />
-              </TouchableOpacity>
-            </View>
+          <View style={styles.inputMainContainer}>
+            {isRecording ? (
+              <AudioRecording toggleRecording={toggleRecording} />
+            ) : (
+              <TextInput
+                style={styles.input}
+                placeholder="Type your message..."
+                value={newMessage}
+                onChangeText={text => setNewMessage(text)}
+              />
+            )}
+            <TouchableOpacity
+              onPress={newMessage.length > 0 ? handleSend : startRecording}>
+              <Icon
+                name={
+                  isRecording || newMessage.length > 0 ? 'send' : 'microphone'
+                }
+                size={30}
+                color={Colors.firstColor}
+                style={styles.microphone}
+              />
+            </TouchableOpacity>
           </View>
-
           {/* <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
             <Text style={styles.sendButtonText}>Send</Text>
           </TouchableOpacity> */}
@@ -722,4 +715,9 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   status: {alignSelf: 'flex-end', marginHorizontal: mvs(5)},
+  inputMainContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
 });
