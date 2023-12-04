@@ -15,7 +15,7 @@ import TrackPlayer, {
   useProgress,
 } from 'react-native-track-player';
 
-const AudioPlayer = ({recordedFilePath, msg, user, start, setStart}: any) => {
+const AudioPlayer = ({msg, user, start, setStart}: any) => {
   const progress = useProgress();
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);

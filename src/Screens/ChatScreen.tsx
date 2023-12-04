@@ -1,56 +1,45 @@
-import React, {useContext, useEffect, useRef, useState} from 'react';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Loading from '../Components/loading';
-import Colors from '../Contants/Colors';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import React, {useEffect, useRef, useState} from 'react';
 import {
-  ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   LogBox,
-  Modal,
-  PermissionsAndroid,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import moment from 'moment';
+import {launchImageLibrary} from 'react-native-image-picker';
 import ImageView from 'react-native-image-viewing';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import CustomHeader from '../Components/header';
+import Loading from '../Components/loading';
+import Colors from '../Contants/Colors';
 import {sendPushNotification} from '../Contants/SendPush';
-//@ts-ignore
-import UserAvatar from 'react-native-user-avatar';
+import firestore from '@react-native-firebase/firestore';
 import {useIsFocused} from '@react-navigation/native';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import QB from 'quickblox-react-native-sdk';
 import {NativeEventEmitter} from 'react-native';
-import firestore from '@react-native-firebase/firestore';
-import {mvs} from '../Config/metrices';
-import Video from 'react-native-video';
-import {createThumbnail} from 'react-native-create-thumbnail';
-import ChatVideo from '../Components/chatVideo';
-import LoadingOver from '../Components/loadingOver';
-import {replaceObjectById, updateObjectById} from '../Contants/Utils';
-import ChatImage from '../Components/chatImage';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
-import {PERMISSIONS, RESULTS, request} from 'react-native-permissions';
-import AudioRecording from '../Components/recording';
+import {PERMISSIONS, request} from 'react-native-permissions';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import TrackPlayer from 'react-native-track-player';
+import ChatImage from '../Components/chatImage';
+import ChatText from '../Components/chatText';
+import ChatVideo from '../Components/chatVideo';
+import ChatWrap from '../Components/chatWrap';
+import LoadingOver from '../Components/loadingOver';
 import AudioPlayer from '../Components/player';
-import TrackPlayer, {
-  usePlaybackState,
-  useProgress,
-} from 'react-native-track-player';
+import AudioRecording from '../Components/recording';
+import VideoPlayer from '../Components/videoPlayer';
+import {mvs} from '../Config/metrices';
+import {replaceObjectById, updateObjectById} from '../Contants/Utils';
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
 audioRecorderPlayer.setSubscriptionDuration(0.1);
 
 export default function ChatScreen({route, navigation}: any) {
   const {dialog, user, name} = route.params;
-  const player = useRef(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [messages, setMessages] = useState<any>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +52,7 @@ export default function ChatScreen({route, navigation}: any) {
   const [video, setVideo] = useState('');
   const [videoLoading, setVideoLoading] = useState(false);
   const [start, setStart] = useState(null);
+
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
   LogBox.ignoreAllLogs();
@@ -70,199 +60,14 @@ export default function ChatScreen({route, navigation}: any) {
   const [newMessage, setNewMessage] = useState('');
   const [mediaUri, setMediaUri] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordedFilePath, setRecordedFilePath] = useState<any>(null);
 
   useEffect(() => {
     TrackPlayer?.setupPlayer();
   }, []);
 
-  const toggleRecording = (sent: boolean) => {
-    setIsRecording(!isRecording);
-    stopRecording(sent);
-  };
-
-  const startRecording = async () => {
-    try {
-      await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
-      await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
-      if (isRecording) {
-        await stopRecording(true);
-        setIsRecording(false);
-        return;
-      }
-      await audioRecorderPlayer?.startRecorder();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-    }
-  };
-
-  const stopRecording = async (sent: boolean) => {
-    try {
-      const result = await audioRecorderPlayer.stopRecorder();
-      sent && handleSendAudio(result);
-      setIsRecording(false);
-    } catch (error) {
-      console.error('Error stopping recording:', error);
-    }
-  };
-
-  const renderItem = ({item}: any) => {
-    if (item?.properties?.type == 'photo') {
-      return (
-        <ChatImage
-          msg={item}
-          setImage={setCurrentImage}
-          setIsVisible={setIsVisible}
-          user={user}
-        />
-      );
-    } else if (item?.properties?.type == 'video') {
-      return (
-        <ChatVideo
-          msg={item}
-          setVideo={setVideo}
-          setModalVisible={setModalVisible}
-          user={user}
-        />
-      );
-    } else if (item?.properties?.type == 'audio') {
-      return (
-        <AudioPlayer
-          msg={item}
-          recordedFilePath={`https://firebasestorage.googleapis.com/v0/b/shayanchat-f6fe7.appspot.com/o/images%2Fcountdown-27545.mp3?alt=media&token=3f1d30b8-2f85-4de6-aa30-b4cd5c66ef77`}
-          user={user}
-          start={start}
-          setStart={setStart}
-        />
-      );
-    } else {
-      return (
-        <View
-          style={
-            item.senderId === user?.id
-              ? styles.userMessage
-              : styles.otherMessage
-          }>
-          {user?.id == item?.senderId && (
-            <Icon
-              size={mvs(20)}
-              name={
-                item?.properties?.status == 'sending'
-                  ? 'clock-time-nine-outline'
-                  : item?.deliveredIds?.length > 1
-                  ? 'check-all'
-                  : 'check'
-              }
-              color={item?.readIds?.length > 1 ? 'blue' : 'gray'}
-              style={styles.status}
-            />
-          )}
-          <Text
-            style={{
-              ...styles.messageText,
-              color:
-                item.senderId === user?.id ? Colors.white : Colors.textColor,
-            }}>
-            {item.body}
-          </Text>
-        </View>
-      );
-    }
-  };
-
-  const fetchChat = () => {
-    const getDialogMessagesParams: any = {
-      dialogId: dialog?.id,
-      sort: {
-        ascending: false,
-        field: QB.chat.MESSAGES_SORT.FIELD.DATE_SENT,
-      },
-      markAsRead: true,
-    };
-    QB.chat
-      .getDialogMessages(getDialogMessagesParams)
-      .then(async result => {
-        setMessages(result?.messages);
-        result?.messages?.forEach((element: any) => {
-          if (element?.readIds?.length < 2) {
-            const markMessageReadParams: any = {
-              message: {
-                id: element.id,
-                dialogId: element.dialogId,
-                senderId: element.senderId,
-              },
-            };
-            QB.chat.markMessageRead(markMessageReadParams);
-          }
-        });
-        setLoading(false);
-      })
-      .catch(function (e) {
-        // handle error
-      });
-  };
-
   useEffect(() => {
     fetchChat();
   }, []);
-
-  useEffect(() => {
-    if (user) {
-      let id =
-        dialog?.occupantsIds[0] === user.id
-          ? dialog?.occupantsIds[1]
-          : dialog?.occupantsIds[0];
-      const collectionRef = firestore().collection('Users').doc(`${id}`);
-      const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
-        setFriend(querySnapshot.data());
-        setLoading(false);
-      });
-
-      return () => {
-        unsubscribe();
-      };
-    }
-  }, [user]);
-
-  async function receivedNewMessage(event: any) {
-    const {type, payload} = event;
-    setMessages(async (currentMessages: any) => {
-      const newMsges = await replaceObjectById(
-        payload?.properties?.id,
-        payload,
-        currentMessages,
-      );
-      setMessages([...newMsges]);
-    });
-    QB.chat.markMessageRead({message: payload});
-  }
-
-  function messageStatusHandler(event: any) {
-    const {type, payload} = event;
-    // handle message status change
-    if (payload?.userId !== user?.id) {
-      setMessages(async (currentMessages: any) => {
-        const newMsges = await updateObjectById(
-          payload?.messageId,
-          payload?.userId,
-          type,
-          currentMessages,
-        );
-        setMessages([...newMsges]);
-      });
-    }
-  }
-
-  function systemMessageHandler(event: any) {
-    // handle system message
-    // console.log('MSG_Handler:', JSON.stringify(event, null, 8));
-  }
-
-  function userTypingHandler(event: any) {
-    // handle user typing / stopped typing event
-    //console.log('MSG_Typing:', JSON.stringify(event, null, 8));
-  }
 
   useEffect(() => {
     if (isFocused) {
@@ -303,6 +108,169 @@ export default function ChatScreen({route, navigation}: any) {
       };
     }
   }, [isFocused]);
+
+  useEffect(() => {
+    if (user) {
+      let id =
+        dialog?.occupantsIds[0] === user.id
+          ? dialog?.occupantsIds[1]
+          : dialog?.occupantsIds[0];
+      const collectionRef = firestore().collection('Users').doc(`${id}`);
+      const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
+        setFriend(querySnapshot.data());
+        setLoading(false);
+      });
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [user]);
+
+  const toggleRecording = (sent: boolean) => {
+    setIsRecording(!isRecording);
+    stopRecording(sent);
+  };
+
+  const startRecording = async () => {
+    try {
+      await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
+      await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
+      if (isRecording) {
+        await stopRecording(true);
+        setIsRecording(false);
+        return;
+      }
+      await audioRecorderPlayer?.startRecorder();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+    }
+  };
+
+  const stopRecording = async (sent: boolean) => {
+    try {
+      const result = await audioRecorderPlayer.stopRecorder();
+      sent && handleSendAudio(result);
+      setIsRecording(false);
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+    }
+  };
+
+  const renderItem = ({item}: any) => {
+    if (item?.properties?.type == 'photo') {
+      return (
+        <ChatWrap item={item} user={user}>
+          <ChatImage
+            msg={item}
+            setImage={setCurrentImage}
+            setIsVisible={setIsVisible}
+            user={user}
+          />
+        </ChatWrap>
+      );
+    } else if (item?.properties?.type == 'video') {
+      return (
+        <ChatWrap item={item} user={user}>
+          <ChatVideo
+            msg={item}
+            setVideo={setVideo}
+            setModalVisible={setModalVisible}
+            user={user}
+          />
+        </ChatWrap>
+      );
+    } else if (item?.properties?.type == 'audio') {
+      return (
+        <ChatWrap item={item} user={user}>
+          <AudioPlayer
+            msg={item}
+            user={user}
+            start={start}
+            setStart={setStart}
+          />
+        </ChatWrap>
+      );
+    } else {
+      return (
+        <ChatWrap item={item} user={user}>
+          <ChatText item={item} user={user} />
+        </ChatWrap>
+      );
+    }
+  };
+
+  const fetchChat = () => {
+    const getDialogMessagesParams: any = {
+      dialogId: dialog?.id,
+      sort: {
+        ascending: false,
+        field: QB.chat.MESSAGES_SORT.FIELD.DATE_SENT,
+      },
+      markAsRead: true,
+    };
+    QB.chat
+      .getDialogMessages(getDialogMessagesParams)
+      .then(async result => {
+        setMessages(result?.messages);
+        result?.messages?.forEach((element: any) => {
+          if (element?.readIds?.length < 2) {
+            const markMessageReadParams: any = {
+              message: {
+                id: element.id,
+                dialogId: element.dialogId,
+                senderId: element.senderId,
+              },
+            };
+            QB.chat.markMessageRead(markMessageReadParams);
+          }
+        });
+        setLoading(false);
+      })
+      .catch(function (e) {
+        // handle error
+      });
+  };
+
+  async function receivedNewMessage(event: any) {
+    const {type, payload} = event;
+    setMessages(async (currentMessages: any) => {
+      const newMsges = await replaceObjectById(
+        payload?.properties?.id,
+        payload,
+        currentMessages,
+      );
+      setMessages([...newMsges]);
+    });
+    QB.chat.markMessageRead({message: payload});
+  }
+
+  function messageStatusHandler(event: any) {
+    const {type, payload} = event;
+    // handle message status change
+    if (payload?.userId !== user?.id) {
+      setMessages(async (currentMessages: any) => {
+        const newMsges = await updateObjectById(
+          payload?.messageId,
+          payload?.userId,
+          type,
+          currentMessages,
+        );
+        setMessages([...newMsges]);
+      });
+    }
+  }
+
+  function systemMessageHandler(event: any) {
+    // handle system message
+    // console.log('MSG_Handler:', JSON.stringify(event, null, 8));
+  }
+
+  function userTypingHandler(event: any) {
+    // handle user typing / stopped typing event
+    //console.log('MSG_Typing:', JSON.stringify(event, null, 8));
+  }
 
   async function handleSend(pendingMessages: any) {
     if (newMessage.trim() === '') {
@@ -527,43 +495,12 @@ export default function ChatScreen({route, navigation}: any) {
         swipeToCloseEnabled
         doubleTapToZoomEnabled
       />
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          Alert.alert('Modal has been closed.');
-          setModalVisible(!modalVisible);
-        }}>
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Pressable
-              style={[styles.buttonClose]}
-              onPress={() => setModalVisible(!modalVisible)}>
-              <Icon name="close" color={Colors.white} size={mvs(30)} />
-            </Pressable>
-            <Video
-              source={{uri: video}}
-              style={{flex: 1}}
-              resizeMode="contain" // You can adjust this as needed
-              //controls={true} // Display video controls
-              paused={false} // Start the video playing
-              controls={true}
-              onLoadStart={() => setVideoLoading(true)}
-              onLoad={() => setVideoLoading(false)} // Callback when remote video is buffering
-              onError={() => setModalVisible(false)}
-            />
-            {videoLoading && (
-              <ActivityIndicator
-                style={styles.videoLoader}
-                size={'large'}
-                color={Colors.white}
-              />
-            )}
-          </View>
-        </View>
-      </Modal>
-      {/* {sending && <LoadingOver />} */}
+      <VideoPlayer
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        video={video}
+        onClose={() => setModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
