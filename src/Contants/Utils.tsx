@@ -13,6 +13,8 @@ import {
   setUser,
   setUserType,
 } from '../Actions/userAction';
+import {sendPushNotification} from './SendPush';
+import {launchImageLibrary} from 'react-native-image-picker';
 
 export const validateName = (name: string) => {
   if (!name) {
@@ -30,7 +32,7 @@ export const validateEmail = (email: string) => {
     return 'Enter Your Email';
   }
   const validEmailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-  if (!validEmailPattern.test(email.trim())) {
+  if (!validEmailPattern.test(email)) {
     return 'Invalid email';
   } else {
     return '';
@@ -151,7 +153,7 @@ const handleSignup = async (user: any, dispatch: any) => {
     .doc(`${user?.id}`)
     .set(updatedUser)
     .then(async () => {
-      dispatch(setUser(user))
+      dispatch(setUser(user));
       return true;
     })
     .catch(error => {
@@ -388,13 +390,113 @@ export const onLogout = async (user: any, dispatch: any, navigation: any) => {
   }
 };
 
-
 export const updateQuickBlockUser = (updateduserProfile: any) => {
   QB.users
     .update(updateduserProfile)
-    .then(function (updatedUser) {
-    })
+    .then(function (updatedUser) {})
     .catch(function (e) {
       console.error('Error in updating user====', e);
     });
+};
+
+export const sendMessage = async ({
+  messageType,
+  content,
+  user,
+  setMessages,
+  dialog,
+  setNewMessage,
+  friend,
+  setSending,
+  minutes,
+  seconds,
+}: any) => {
+  if (messageType === 'text' && content.trim() === '') {
+    return;
+  }
+  // Create a new message object based on the message type
+  const newMsg = {
+    id: Date.now(),
+    body: messageType === 'text' ? `${content}` : 'loading',
+    properties: {
+      type: messageType,
+      ...(messageType === 'text' && {status: 'sending'}),
+      ...(messageType === 'audio' && {duration: `${minutes} : ${seconds}`}),
+      ...(messageType !== 'text' && {url: ''}),
+     
+    },
+    senderId: user?.id,
+  };
+
+
+  setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
+  setNewMessage('');
+
+  try {
+    // Handle different message types
+    if (messageType === 'text') {
+      const message = {
+        dialogId: dialog?.id,
+        body: content,
+        properties: {
+          type: 'text',
+          id: `${newMsg?.id}`,
+          status: 'sent',
+        },
+        saveToHistory: true,
+      };
+      await QB.chat.sendMessage(message);
+      sendPushNotification(friend?.deviceToken, {
+        title: user?.fullName,
+        body: message?.body,
+      });
+    } else {
+      const result: any = await launchImageLibrary({mediaType: messageType});
+
+      if (!result?.didCancel) {
+        setSending(true);
+
+        const contentUploadParams = {
+          url: messageType === 'audio' ? content : result?.assets[0]?.uri,
+          public: false,
+        };
+
+        const file: any = await QB.content.upload(contentUploadParams);
+        const {uid} = file;
+        const contentGetFileUrlParams = {uid};
+        const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
+
+        const message = {
+          dialogId: dialog?.id,
+          body: 'Attachment',
+          saveToHistory: true,
+          properties: {
+            type:
+              messageType === 'audio'
+                ? 'audio'
+                : file?.contentType.includes('image')
+                ? 'photo'
+                : file?.contentType.includes('video')
+                ? 'video'
+                : 'file',
+            url,
+            id: `${newMsg?.id}`,
+            ...(messageType === 'audio' && {
+              duration: `${minutes} : ${seconds}`,
+            }),
+          },
+        };
+
+        await QB.chat.sendMessage(message);
+        setSending(false);
+        sendPushNotification(friend?.deviceToken, {
+          title: user?.fullName,
+          body: 'Attachment',
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error in sendMessage:', error);
+    setSending(false);
+  }
 };

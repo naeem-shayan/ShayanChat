@@ -3,6 +3,8 @@ import {
   FlatList,
   Image,
   LogBox,
+  Modal,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -12,6 +14,8 @@ import {
 import {launchImageLibrary} from 'react-native-image-picker';
 import ImageView from 'react-native-image-viewing';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import CustomHeader from '../Components/header';
 import Loading from '../Components/loading';
 import Colors from '../Contants/Colors';
@@ -24,6 +28,8 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import {PERMISSIONS, request} from 'react-native-permissions';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import TrackPlayer from 'react-native-track-player';
+import RBSheet from 'react-native-raw-bottom-sheet';
+import Video from 'react-native-video';
 import ChatImage from '../Components/chatImage';
 import ChatText from '../Components/chatText';
 import ChatVideo from '../Components/chatVideo';
@@ -31,15 +37,21 @@ import ChatWrap from '../Components/chatWrap';
 import LoadingOver from '../Components/loadingOver';
 import AudioPlayer from '../Components/player';
 import AudioRecording from '../Components/recording';
-import VideoPlayer from '../Components/videoPlayer';
 import {mvs} from '../Config/metrices';
-import {replaceObjectById, updateObjectById} from '../Contants/Utils';
+import {
+  replaceObjectById,
+  sendMessage,
+  updateObjectById,
+} from '../Contants/Utils';
+import VideoPlayer from '../Components/videoPlayer';
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
 audioRecorderPlayer.setSubscriptionDuration(0.1);
 
 export default function ChatScreen({route, navigation}: any) {
   const {dialog, user, name} = route.params;
+  const player = useRef(null);
+  const refRBSheet = useRef<RBSheet>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [messages, setMessages] = useState<any>([]);
   const [loading, setLoading] = useState(true);
@@ -60,11 +72,14 @@ export default function ChatScreen({route, navigation}: any) {
   const [newMessage, setNewMessage] = useState('');
   const [mediaUri, setMediaUri] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordedFilePath, setRecordedFilePath] = useState<any>(null);
+  const [seconds, setSeconds] = useState<any>(0);
+  const [minutes, setMinutes] = useState<any>(0);
 
   useEffect(() => {
     TrackPlayer?.setupPlayer();
   }, []);
-
+  
   useEffect(() => {
     fetchChat();
   }, []);
@@ -127,9 +142,12 @@ export default function ChatScreen({route, navigation}: any) {
     }
   }, [user]);
 
-  const toggleRecording = (sent: boolean) => {
+
+  const toggleRecording = (sent: boolean, seconds: string, minutes: string) => {
     setIsRecording(!isRecording);
     stopRecording(sent);
+    setSeconds(seconds);
+    setMinutes(minutes);
   };
 
   const startRecording = async () => {
@@ -151,7 +169,19 @@ export default function ChatScreen({route, navigation}: any) {
   const stopRecording = async (sent: boolean) => {
     try {
       const result = await audioRecorderPlayer.stopRecorder();
-      sent && handleSendAudio(result);
+      sent &&
+        sendMessage({
+          messageType: 'audio',
+          newMessage: result,
+          user,
+          setMessages,
+          dialog,
+          setNewMessage,
+          friend,
+          setSending,
+          minutes,
+          seconds,
+        });
       setIsRecording(false);
     } catch (error) {
       console.error('Error stopping recording:', error);
@@ -272,139 +302,52 @@ export default function ChatScreen({route, navigation}: any) {
     //console.log('MSG_Typing:', JSON.stringify(event, null, 8));
   }
 
-  async function handleSend(pendingMessages: any) {
-    if (newMessage.trim() === '') {
-      return;
-    }
-    const newMsg = {
-      id: Date.now(),
-      body: `${newMessage}`,
-      properties: {
-        type: 'text',
-        status: 'sending',
-      },
-      senderId: user?.id, // Assuming the new message is sent by the user
-    };
-    setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
-    const message = {
-      dialogId: dialog?.id,
-      body: newMessage,
-      properties: {
-        type: 'text',
-        id: `${newMsg?.id}`,
-        status: 'sent',
-      },
-      saveToHistory: true,
-    };
-    setNewMessage('');
-    QB.chat.sendMessage(message);
-    sendPushNotification(friend?.deviceToken, {
-      title: user?.fullName,
-      body: message?.body,
-    });
-  }
-
-  async function handleSendAudio(uri: string) {
-    const newMsg = {
-      id: Date.now(),
-      body: 'loading',
-      properties: {
-        type: 'audio',
-        url: '',
-      },
-      senderId: user?.id, // Assuming the new message is sent by the user
-    };
-    setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
-    setNewMessage('');
-    const contentUploadParams = {
-      url: uri, // path to file in local file system
-      public: false,
-    };
-    QB.content
-      .upload(contentUploadParams)
-      .then(async (file: any) => {
-        const {uid} = file;
-        const contentGetFileUrlParams = {uid};
-        const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
-        // create a message
-        const message = {
-          dialogId: dialog?.id,
-          body: 'Attachment',
-          saveToHistory: true,
-          properties: {
-            type: 'audio',
-            url: url,
-            id: `${newMsg?.id}`,
-          },
-        };
-        //send a message
-        QB.chat.sendMessage(message);
-        setSending(false);
-        sendPushNotification(friend?.deviceToken, {
-          title: user?.fullName,
-          body: 'Attachment',
-        });
-      })
-      .catch(function (e) {
-        setSending(false);
-        /* handle file upload error */
+  const handleSendMessage = (type: string) => {
+    if (type == 'text') {
+      sendMessage({
+        messageType: 'text',
+        newMessage,
+        user,
+        setMessages,
+        dialog,
+        setNewMessage,
+        friend,
+        setSending,
+        minutes: 0,
+        seconds: 0,
       });
-  }
-
-  async function handleSendFile(type: any) {
-    const result: any = await launchImageLibrary({mediaType: type});
-    if (!result?.didCancel) {
-      setSending(true);
-      const newMsg = {
-        id: Date.now(),
-        body: 'loading',
-        properties: {
-          type: type,
-          url: '',
-        },
-        senderId: user?.id, // Assuming the new message is sent by the user
-      };
-      setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
-      setNewMessage('');
-      const contentUploadParams = {
-        url: result?.assets[0]?.uri, // path to file in local file system
-        public: false,
-      };
-      QB.content
-        .upload(contentUploadParams)
-        .then(async (file: any) => {
-          const {uid} = file;
-          const contentGetFileUrlParams = {uid};
-          const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
-          // create a message
-          const message = {
-            dialogId: dialog?.id,
-            body: 'Attachment',
-            saveToHistory: true,
-            properties: {
-              type: file?.contentType.includes('image')
-                ? 'photo'
-                : file?.contentType.includes('video')
-                ? 'video'
-                : 'file',
-              url: url,
-              id: `${newMsg?.id}`,
-            },
-          };
-          //send a message
-          QB.chat.sendMessage(message);
-          setSending(false);
-          sendPushNotification(friend?.deviceToken, {
-            title: user?.fullName,
-            body: 'Attachment',
-          });
-        })
-        .catch(function (e) {
-          setSending(false);
-          /* handle file upload error */
-        });
     }
-  }
+    if (type == 'photo') {
+      refRBSheet?.current?.close();
+      sendMessage({
+        messageType: 'photo',
+        newMessage: 'Attachment',
+        user,
+        setMessages,
+        dialog,
+        setNewMessage,
+        friend,
+        setSending,
+        minutes: 0,
+        seconds: 0,
+      });
+    }
+    if (type == 'video') {
+      refRBSheet?.current?.close();
+      sendMessage({
+        messageType: 'poto',
+        newMessage: 'Attachment',
+        user,
+        setMessages,
+        dialog,
+        setNewMessage,
+        friend,
+        setSending,
+        minutes: 0,
+        seconds: 0,
+      });
+    }
+  };
 
   if (loading) {
     return <Loading />;
@@ -447,44 +390,40 @@ export default function ChatScreen({route, navigation}: any) {
               resizeMode="cover"
             />
           )}
-          <View style={styles.inputMainContainer}>
-            {isRecording ? (
-              <AudioRecording toggleRecording={toggleRecording} />
-            ) : (
-              <TextInput
-                style={styles.input}
-                placeholder="Type your message..."
-                value={newMessage}
-                onChangeText={text => setNewMessage(text)}
-              />
-            )}
-            <TouchableOpacity
-              onPress={newMessage.length > 0 ? handleSend : startRecording}>
-              <Icon
-                name={
-                  isRecording || newMessage.length > 0 ? 'send' : 'microphone'
-                }
-                size={30}
-                color={Colors.firstColor}
-                style={styles.microphone}
-              />
-            </TouchableOpacity>
-          </View>
-          {/* <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity> */}
-        </View>
-        <View style={styles.mediaButtonsContainer}>
-          <TouchableOpacity
-            style={styles.mediaButton}
-            onPress={() => handleSendFile('photo')}>
-            <Text style={styles.mediaButtonText}>Send Photo</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.mediaButton}
-            onPress={() => handleSendFile('video')}>
-            <Text style={styles.mediaButtonText}>Send Video</Text>
-          </TouchableOpacity>
+          <RBSheet
+            ref={refRBSheet}
+            closeOnDragDown={true}
+            closeOnPressMask={true}
+            customStyles={{
+              container: {
+                borderTopLeftRadius: 15,
+                borderTopRightRadius: 15,
+                height: 'auto',
+                marginTop: mvs(20),
+              },
+            }}>
+            <Text style={styles.actionIconText}>Choose file to send</Text>
+            <View style={styles.actionIconContainer}>
+              <Pressable
+                style={styles.actionIconWrapper}
+                onPress={() => handleSendMessage('photo')}>
+                <FontAwesomeIcon
+                  name="image"
+                  color={Colors.white}
+                  size={mvs(30)}
+                />
+              </Pressable>
+              <Pressable
+                style={styles.actionIconWrapper}
+                onPress={() => handleSendMessage('video')}>
+                <FontAwesomeIcon
+                  name="file-video-o"
+                  color={Colors.white}
+                  size={mvs(30)}
+                />
+              </Pressable>
+            </View>
+          </RBSheet>
         </View>
       </View>
       <ImageView
@@ -495,6 +434,41 @@ export default function ChatScreen({route, navigation}: any) {
         swipeToCloseEnabled
         doubleTapToZoomEnabled
       />
+
+      <View style={styles.inputMainContainer}>
+        {isRecording ? (
+          <AudioRecording toggleRecording={toggleRecording} />
+        ) : (
+          <>
+            <Ionicons
+              name="attach"
+              color={Colors.firstColor}
+              size={mvs(30)}
+              style={{marginRight: mvs(5)}}
+              onPress={() => refRBSheet?.current?.open()}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Type your message..."
+              value={newMessage}
+              onChangeText={text => setNewMessage(text)}
+            />
+          </>
+        )}
+        <TouchableOpacity
+          onPress={() => {
+            newMessage.length > 0
+              ? handleSendMessage('text')
+              : startRecording();
+          }}>
+          <Icon
+            name={isRecording || newMessage.length > 0 ? 'send' : 'microphone'}
+            size={30}
+            color={Colors.firstColor}
+            style={styles.microphone}
+          />
+        </TouchableOpacity>
+      </View>
       <VideoPlayer
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
@@ -624,28 +598,7 @@ const styles = StyleSheet.create({
   microphone: {
     marginLeft: mvs(10),
   },
-  sendButton: {
-    marginLeft: 10,
-    padding: 10,
-    backgroundColor: Colors.firstColor,
-    borderRadius: 8,
-  },
   sendButtonText: {
-    color: '#ffffff',
-  },
-  mediaButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  mediaButton: {
-    flex: 1,
-    marginHorizontal: 5,
-    padding: 10,
-    backgroundColor: Colors.firstColor,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  mediaButtonText: {
     color: '#ffffff',
   },
   status: {alignSelf: 'flex-end', marginHorizontal: mvs(5)},
@@ -653,5 +606,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
+    paddingHorizontal: mvs(10),
+  },
+  actionIconText: {
+    textAlign: 'center',
+    marginTop: mvs(10),
+    fontSize: mvs(15),
+    fontFamily: 'Poppins-Regular',
+    color: Colors.textColor,
+  },
+  actionIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  actionIconWrapper: {
+    backgroundColor: Colors.firstColor,
+    height: mvs(70),
+    width: mvs(70),
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: mvs(20),
+    margin: mvs(15),
   },
 });

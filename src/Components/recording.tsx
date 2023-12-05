@@ -35,6 +35,8 @@ const AudioRecording = ({toggleRecording}: any) => {
           clearInterval(timerRef.current ? timerRef.current : '');
           toggleRecording(
             false,
+            seconds,
+            minutes
           );
         }}>
         Cancel

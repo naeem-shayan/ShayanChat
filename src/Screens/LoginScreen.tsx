@@ -1,37 +1,25 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
   StyleSheet,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  SafeAreaView,
-  ActivityIndicator,
+  Text,
+  View
 } from 'react-native';
-import Colors from '../Contants/Colors';
-import {
-  signin,
-  validateEmail,
-  validatePassword,
-  handleGoogleLogin,
-  handleFacebookLogin,
-} from '../Contants/Utils';
-import {chatkitty} from '../ChatKitty';
-import {Divider, IconButton} from 'react-native-paper';
-import {mvs} from '../Config/metrices';
-import CustomHeader from '../Components/header';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { IconButton } from 'react-native-paper';
+import { useDispatch, useSelector } from 'react-redux';
+import { chatkitty } from '../ChatKitty';
+import CustomButton from '../Components/button';
 import CustomHeader1 from '../Components/header1';
 import PageTitleAndDes from '../Components/pageTitleAndDes';
 import CustomInput from '../Components/textInput';
-import CustomButton from '../Components/button';
-import {FaceBook} from '../../assests/svgs';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useDispatch, useSelector } from 'react-redux';
+import { mvs } from '../Config/metrices';
+import Colors from '../Contants/Colors';
+import {
+  handleFacebookLogin,
+  signin,
+  validateEmail,
+  validatePassword
+} from '../Contants/Utils';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
@@ -65,7 +53,7 @@ const LoginScreen = (props: any) => {
     }
     setEmailError('');
     setPasswordError('');
-    signin(email.trim(), password.trim(), setLoading, navigation, dispatch, null);
+    signin(email, password.trim(), setLoading, navigation, dispatch, null);
   };
 
   return (
@@ -208,6 +196,7 @@ const styles = StyleSheet.create({
   signUp: {
     color: Colors.firstColor,
     fontFamily: 'Poppins-Medium',
+    textDecorationLine:"underline"
   },
   socialButtons: {
     flexDirection: 'row',

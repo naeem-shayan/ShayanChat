@@ -4,6 +4,7 @@ import Colors from '../Contants/Colors';
 import moment from 'moment';
 //@ts-ignore
 import UserAvatar from 'react-native-user-avatar';
+import { mvs } from '../Config/metrices';
 
 const ChatThread = ({item, name, onPress, user, ...props}: any) => {
   return (
@@ -79,10 +80,11 @@ const styles = StyleSheet.create({
   },
   userName: {
     color: Colors.textColor,
-    fontSize: 18,
+    fontSize: mvs(18),
     fontWeight: '700',
     lineHeight: 31.5,
-    width: 180,
+    width: mvs(180),
+    fontFamily: 'Poppins-Regular',
   },
   time: {
     fontSize: 12,

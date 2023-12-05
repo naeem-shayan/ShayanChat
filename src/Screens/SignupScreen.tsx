@@ -1,35 +1,28 @@
-import React, {useContext, useState} from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  SafeAreaView,
-  ActivityIndicator,
-} from 'react-native';
-import {
-  validateName,
-  validateEmail,
-  validatePassword,
-  signup,
-  validateConfirmPassword,
-} from '../Contants/Utils';
-import Colors from '../Contants/Colors';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {mvs} from '../Config/metrices';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { RadioButton } from 'react-native-paper';
+import { useDispatch } from 'react-redux';
+import { setUserType } from '../Actions/userAction';
+import CustomButton from '../Components/button';
 import CustomHeader1 from '../Components/header1';
 import PageTitleAndDes from '../Components/pageTitleAndDes';
 import CustomInput from '../Components/textInput';
-import CustomButton from '../Components/button';
-import {useDispatch, useSelector} from 'react-redux';
+import { mvs } from '../Config/metrices';
+import Colors from '../Contants/Colors';
+import {
+  signup,
+  validateConfirmPassword,
+  validateEmail,
+  validateName,
+  validatePassword,
+} from '../Contants/Utils';
 
 const SignupScreen = (props: any) => {
   const {navigation} = props;
+  const dispatch = useDispatch();
+
+  const [selected, setSelected] = useState<any>(0);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,12 +31,10 @@ const SignupScreen = (props: any) => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
-  const [credientalError, setCredientalError] = useState('');
   const [loading, setLoading] = useState(false);
-  const userType = useSelector((state: any) => state.userType);
-  const dispatch = useDispatch();
 
   const handleSignup = () => {
+    dispatch(setUserType(!selected ? 'user' : 'consultant'));
     const nameErrorMessage = validateName(name);
     const emailErrorMessage = validateEmail(email);
     const passwordErrorMessage = validatePassword(password);
@@ -68,12 +59,12 @@ const SignupScreen = (props: any) => {
     setPasswordError('');
     signup(
       name.trim(),
-      email.trim(),
+      email,
       password.trim(),
       setLoading,
       navigation,
       dispatch,
-      userType,
+      !selected ? 'user' : 'consultant',
     );
   };
 
@@ -87,11 +78,33 @@ const SignupScreen = (props: any) => {
       }}>
       <CustomHeader1 onBack={() => navigation.goBack()} />
       <PageTitleAndDes
-        title="Sign up with Email"
+        title="Create an account"
         des="Get chatting with everyone today by signing up for chat"
+        center={true}
       />
+      <Text style={styles.userTitle}>Who are you</Text>
+      <View style={styles.radioButtonContainer}>
+        <View style={styles.radioButtonContent}>
+          <RadioButton
+            value="user"
+            color={Colors.firstColor}
+            status={!selected ? 'checked' : 'unchecked'}
+            onPress={() => setSelected(!selected)}
+          />
+          <Text style={styles.genderText}>User</Text>
+        </View>
+        <View style={styles.radioButtonContent}>
+          <RadioButton
+            value="consultant"
+            color={Colors.firstColor}
+            status={selected ? 'checked' : 'unchecked'}
+            onPress={() => setSelected(!selected)}
+          />
+          <Text style={styles.genderText}>Consultant</Text>
+        </View>
+      </View>
       <CustomInput
-        mt={mvs(35)}
+        mt={mvs(20)}
         label="Your name"
         placeholder="Enter your name"
         value={name}
@@ -126,7 +139,7 @@ const SignupScreen = (props: any) => {
           mt={mvs(50)}
           mb={mvs(50)}
           loading={loading}
-          title={'Create an account'}
+          title={'Singnup'}
           onPress={handleSignup}
         />
       </View>
@@ -164,6 +177,29 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: 'center',
   },
+  userTypeContainer: {alignItems: 'center'},
+  labelsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: mvs(213),
+    alignSelf: 'center',
+    marginTop: mvs(10),
+    paddingHorizontal: mvs(10),
+    marginBottom: mvs(114),
+  },
+  tabUser: {
+    fontSize: mvs(18),
+    color: Colors.textColor,
+    fontFamily: 'Poppins-Regular',
+    fontWeight: '400',
+    marginLeft: 15,
+  },
+  tabConsultantText: {
+    fontSize: mvs(18),
+    color: Colors.textColor,
+    fontFamily: 'Poppins-Regular',
+    fontWeight: '400',
+  },
   input: {
     width: '90%',
     height: 50,
@@ -196,8 +232,40 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   buttonContainer: {
-    paddingHorizontal : mvs(8)
-  }
+    paddingHorizontal: mvs(8),
+  },
+  radioButtonContainer: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+  },
+  radioButtonContent: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userTitle: {
+    alignSelf: 'flex-start',
+    marginLeft: mvs(10),
+    color: Colors.textColor,
+    fontSize: mvs(15),
+    marginTop: mvs(20),
+    fontFamily: 'Poppins-Regular',
+  },
+  genderText: {
+    color: Colors.textColor,
+    fontSize: mvs(15),
+    fontFamily: 'Poppins-Regular',
+  },
+  user: {
+    width: mvs(34),
+    height: mvs(32),
+    alignSelf: 'center',
+  },
+  consultant: {
+    width: mvs(40),
+    height: mvs(40),
+    alignSelf: 'center',
+  },
 });
 
 export default SignupScreen;

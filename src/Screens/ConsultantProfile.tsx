@@ -64,7 +64,7 @@ const ConsultantProfile = ({navigation}: any) => {
         country: user?.country || '',
         category: user?.category || '',
         experience: user?.experience || 0,
-        profilePicture: user?.profilePicture || '',
+        profilePicture: user?.profilePicture || defaultProfilePicture,
         rate: user?.rate || 0,
         description: user?.description || '',
       });
@@ -119,7 +119,7 @@ const ConsultantProfile = ({navigation}: any) => {
       categoryError = 'Category is required';
     }
     if (!consultantProfile.country) {
-      countryError = 'country is required';
+      countryError = 'Country is required';
     }
     if (!consultantProfile.profilePicture) {
       imageError = 'Profile Pic is required';
@@ -179,6 +179,7 @@ const ConsultantProfile = ({navigation}: any) => {
           const currentUserDataAfter = documentSnapshotAfter.data();
           dispatch(setUser(currentUserDataAfter));
           setLoading(false);
+          Alert.alert("Your profile has been updated successfully")
         })
         .catch(error => {
           console.error(error);
@@ -222,8 +223,6 @@ const ConsultantProfile = ({navigation}: any) => {
             <Image
               source={{
                 uri: consultantProfile?.profilePicture
-                  ? consultantProfile?.profilePicture
-                  : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png',
               }}
               style={styles.image}
             />
@@ -249,7 +248,7 @@ const ConsultantProfile = ({navigation}: any) => {
         <CustomInput
           mt={mvs(10)}
           label="Age"
-          placeholder="Enter your Age in years"
+          placeholder="Enter your Age in years, e.g 40"
           value={consultantProfile?.age}
           error={validationErrors?.ageError}
           keyboradType="numeric"
@@ -257,7 +256,7 @@ const ConsultantProfile = ({navigation}: any) => {
         />
         <CustomInput
           label="Experience"
-          placeholder="Enter your experience in years like 10"
+          placeholder="Enter your experience in years, e.g 5"
           value={consultantProfile?.experience}
           error={validationErrors?.experienceError}
           keyboradType="numeric"
@@ -267,7 +266,7 @@ const ConsultantProfile = ({navigation}: any) => {
         />
         <CustomInput
           label="Rate"
-          placeholder="Enter your rate per hour"
+          placeholder="Enter your rate per hour, e.g 500"
           value={consultantProfile?.rate}
           error={validationErrors?.rateError}
           keyboradType="numeric"
@@ -316,6 +315,7 @@ const ConsultantProfile = ({navigation}: any) => {
             <Text style={styles.errors}>{validationErrors?.countryError}</Text>
           )}
         </View>
+        <Text style={styles.genderTitle}>Gender</Text>
         <View style={styles.radioButtonContainer}>
           <View style={styles.radioButtonContent}>
             <RadioButton
@@ -353,7 +353,7 @@ const ConsultantProfile = ({navigation}: any) => {
         />
         <CustomButton
           mt={mvs(20)}
-          title={'Update'}
+          title={user?.isProfileComplete ? 'Update Profile' :'Complete Profile'}
           onPress={handleUpdate}
           loading={loading}
         />
@@ -408,6 +408,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  genderTitle:{
+    alignSelf:"flex-start",
+    marginLeft:mvs(10),
+    color:Colors.textColor,
+    fontSize:mvs(15),
+    marginBottom:mvs(20),
+    fontFamily: 'Poppins-Regular',
   },
   genderText: {
     color: Colors.textColor,

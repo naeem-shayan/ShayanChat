@@ -1,30 +1,20 @@
 //import liraries
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {Component, useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import auth from '@react-native-firebase/auth';
+import React, {useState} from 'react';
+import {Alert, StyleSheet, Text, View} from 'react-native';
 import {Button} from 'react-native-paper';
-import Colors from '../Contants/Colors';
 import CustomHeader from '../Components/header';
+import Colors from '../Contants/Colors';
 //@ts-ignore
 import UserAvatar from 'react-native-user-avatar';
 import {useDispatch, useSelector} from 'react-redux';
-import { onLogout } from '../Contants/Utils';
-
+import {onLogout} from '../Contants/Utils';
+import {mvs} from '../Config/metrices';
 
 // create a component
 const Profile = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);
   const user = useSelector((state: any) => state.user);
   const dispatch = useDispatch();
-
 
   const handleLogoutPress = () => {
     Alert.alert(
@@ -49,7 +39,9 @@ const Profile = ({navigation}: any) => {
       <CustomHeader title={'Profile'} />
       <View style={styles.container}>
         <UserAvatar size={100} name={user?.fullName} />
-        <Text style={styles.userName}>{user?.fullName}</Text>
+        <Text style={styles.userName} ellipsizeMode="tail" numberOfLines={1}>
+          {user?.fullName}
+        </Text>
         <Button
           icon="logout"
           mode="contained"
@@ -73,9 +65,10 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins-Regular',
     color: Colors.firstColor,
     marginVertical: 20,
+    width: mvs(300),
   },
 });
 

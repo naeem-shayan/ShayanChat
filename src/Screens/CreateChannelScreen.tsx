@@ -183,6 +183,7 @@ export default function CreateChannelScreen(props: any) {
         value={value}
         onChangeText={(text: any) => handleSearchChange(text)}
         mb={10}
+        mt={20}
         handleClearSearch={handleClearSearch}
       />
       <View style={styles.rootContainer}>
@@ -192,10 +193,7 @@ export default function CreateChannelScreen(props: any) {
           </View>
         ) : users.length === 0 ? (
           <View style={styles.messageContainer}>
-            <Text style={styles.messageText}>
-              No users found for {props.route.params.params.categoryName}{' '}
-              category
-            </Text>
+            <Text style={styles.messageText}>No users found</Text>
           </View>
         ) : (
           <FlatList

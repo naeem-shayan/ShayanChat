@@ -1,14 +1,11 @@
 //import liraries
-import React, {Component, useEffect, useState} from 'react';
-import {View, Text, StyleSheet, Alert, NativeEventEmitter} from 'react-native';
-import {ActivityIndicator} from 'react-native-paper';
-import Colors from './Colors';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {chatkitty} from '../ChatKitty';
 import firestore from '@react-native-firebase/firestore';
 import QB from 'quickblox-react-native-sdk';
-import {useDispatch, useSelector} from 'react-redux';
-import { callSession } from '../Actions/userAction';
+import React, { useEffect, useState } from 'react';
+import { NativeEventEmitter, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
+import { useDispatch, useSelector } from 'react-redux';
+import Colors from './Colors';
 
 // create a component
 const ServerConnection = ({navigation}: any) => {
