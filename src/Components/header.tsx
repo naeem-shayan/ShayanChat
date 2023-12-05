@@ -1,8 +1,8 @@
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import {IconButton} from 'react-native-paper';
+import { StyleSheet, Text, View } from 'react-native';
+import { IconButton } from 'react-native-paper';
+import { mvs } from '../Config/metrices';
 import Colors from '../Contants/Colors';
-import {ActivityIndicator} from 'react-native';
 
 const CustomHeader = ({
   title,
@@ -25,7 +25,9 @@ const CustomHeader = ({
           />
         )}
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title} ellipsizeMode="tail" numberOfLines={1}>
+            {title}
+          </Text>
           {userStatus && <Text style={styles.status}>{status}</Text>}
         </View>
       </View>
@@ -61,12 +63,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   title: {
-    fontSize: 22,
+    fontSize: mvs(20),
     color: Colors.white,
     fontWeight: '600',
+    width: mvs(180),
+    fontFamily: 'Poppins-Regular',
   },
   status: {
-    color : Colors.white
+    color: Colors.white,
+    fontFamily: 'Poppins-Regular',
   },
   loaderContainer: {
     height: 60,

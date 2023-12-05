@@ -5,11 +5,24 @@ import {mvs} from '../Config/metrices';
 import Colors from '../Contants/Colors';
 
 // create a component
-const PageTitleAndDes = ({title = 'Title', des = 'Description', ...props}) => {
+const PageTitleAndDes = ({
+  title = 'Title',
+  des = 'Description',
+  center = false,
+  ...props
+}) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.des}>{des}</Text>
+    <View
+      style={[
+        styles.container,
+        center && {
+          alignItems: 'center',
+          paddingHorizontal: mvs(50),
+          alignSelf: 'center',
+        },
+      ]}>
+      <Text style={[styles.title, center && {textAlign:"center"}]}>{title}</Text>
+      <Text style={[styles.des, center && { textAlign: 'center',}]}>{des}</Text>
     </View>
   );
 };

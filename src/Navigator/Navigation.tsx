@@ -1,24 +1,20 @@
-import React, {useContext, useEffect, useRef, useState} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
-import {chatkitty} from '../ChatKitty';
-import Loading from '../Components/loading';
-import auth from '@react-native-firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import LoginScreen from '../Screens/LoginScreen';
-import SignupScreen from '../Screens/SignupScreen';
-import BottomTab from './bottomTab';
-import ChatScreen from '../Screens/ChatScreen';
-import ServerConnection from '../Contants/ServerConnection';
-import QB from 'quickblox-react-native-sdk';
 import firestore from '@react-native-firebase/firestore';
-import {AppState} from 'react-native';
-import WelcomeScreen from '../Screens/WelcomeScreen';
-import OnboardingScreen from '../Screens/OnboardingScreen';
-import Categories from '../Screens/Categories';
-import CreateChannelScreen from '../Screens/CreateChannelScreen';
-import CallScreen from '../Screens/CallScreen';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import QB from 'quickblox-react-native-sdk';
+import React, { useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { useSelector } from 'react-redux';
+import Loading from '../Components/loading';
+import ServerConnection from '../Contants/ServerConnection';
+import CallScreen from '../Screens/CallScreen';
+import ChatScreen from '../Screens/ChatScreen';
+import CreateChannelScreen from '../Screens/CreateChannelScreen';
+import LoginScreen from '../Screens/LoginScreen';
+import OnboardingScreen from '../Screens/OnboardingScreen';
+import SignupScreen from '../Screens/SignupScreen';
+import WelcomeScreen from '../Screens/WelcomeScreen';
+import BottomTab from './bottomTab';
 
 const Stack = createStackNavigator();
 
@@ -100,7 +96,7 @@ const Navigation = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={session?.applicationId ? 'Connect' : 'Welcome'}
+        initialRouteName={session?.applicationId ? 'Connect' : 'Onboarding'}
         screenOptions={{
           headerShown: false,
         }}>

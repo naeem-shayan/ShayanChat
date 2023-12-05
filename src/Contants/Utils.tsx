@@ -13,6 +13,8 @@ import {
   setUser,
   setUserType,
 } from '../Actions/userAction';
+import {sendPushNotification} from './SendPush';
+import {launchImageLibrary} from 'react-native-image-picker';
 
 export const validateName = (name: string) => {
   if (!name) {
@@ -26,6 +28,9 @@ export const validateName = (name: string) => {
 };
 
 export const validateEmail = (email: string) => {
+  if (email.includes(' ')) {
+    return 'Invalid Email';
+  }
   if (!email) {
     return 'Enter Your Email';
   }
@@ -151,7 +156,7 @@ const handleSignup = async (user: any, dispatch: any) => {
     .doc(`${user?.id}`)
     .set(updatedUser)
     .then(async () => {
-      dispatch(setUser(user))
+      dispatch(setUser(user));
       return true;
     })
     .catch(error => {
@@ -388,7 +393,6 @@ export const onLogout = async (user: any, dispatch: any, navigation: any) => {
   }
 };
 
-
 export const updateQuickBlockUser = (updateduserProfile: any) => {
   QB.users
     .update(updateduserProfile)
@@ -397,4 +401,154 @@ export const updateQuickBlockUser = (updateduserProfile: any) => {
     .catch(function (e) {
       console.error('Error in updating user====', e);
     });
+};
+
+export const sendMessage = async (
+  messageType: any,
+  content: any,
+  user: any,
+  setMessages: any,
+  dialog: any,
+  setNewMessage: any,
+  friend: any,
+  setSending: any,
+  minutes?: any,
+  seconds?: any,
+) => {
+  let newMsg: any = {};
+
+  if (messageType === 'text') {
+    if (content.trim() === '') {
+      return;
+    }
+
+    newMsg = {
+      id: Date.now(),
+      body: `${content}`,
+      properties: {
+        type: 'text',
+        status: 'sending',
+      },
+      senderId: user?.id,
+    };
+  } else if (messageType === 'audio') {
+    newMsg = {
+      id: Date.now(),
+      body: 'loading',
+      properties: {
+        type: 'audio',
+        url: '',
+      },
+      senderId: user?.id,
+    };
+  } else {
+    newMsg = {
+      id: Date.now(),
+      body: 'loading',
+      properties: {
+        type: messageType,
+        url: '',
+      },
+      senderId: user?.id,
+    };
+  }
+
+  setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
+  setNewMessage('');
+
+  if (messageType === 'text') {
+    const message = {
+      dialogId: dialog?.id,
+      body: content,
+      properties: {
+        type: 'text',
+        id: `${newMsg?.id}`,
+        status: 'sent',
+      },
+      saveToHistory: true,
+    };
+    QB.chat.sendMessage(message);
+    sendPushNotification(friend?.deviceToken, {
+      title: user?.fullName,
+      body: message?.body,
+    });
+  } else if (messageType === 'audio') {
+    const contentUploadParams = {
+      url: content,
+      public: false,
+    };
+
+
+    QB.content
+      .upload(contentUploadParams)
+      .then(async (file: any) => {
+        const {uid} = file;
+        const contentGetFileUrlParams = {uid};
+        const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
+        const message = {
+          dialogId: dialog?.id,
+          body: 'Attachment',
+          saveToHistory: true,
+          properties: {
+            type: 'audio',
+            url: url,
+            id: `${newMsg?.id}`,
+            duration: `${minutes} : ${seconds}`,
+          },
+        };
+        QB.chat.sendMessage(message);
+        setSending(false);
+        sendPushNotification(friend?.deviceToken, {
+          title: user?.fullName,
+          body: 'Attachment',
+        });
+      })
+      .catch(function (e) {
+        console.log('incatch=========', e);
+        setSending(false);
+      });
+  } else {
+    const result: any = await launchImageLibrary({mediaType: messageType});
+    if (!result?.didCancel) {
+      setSending(true);
+
+      const contentUploadParams = {
+        url: result?.assets[0]?.uri,
+        public: false,
+      };
+
+      QB.content
+        .upload(contentUploadParams)
+        .then(async (file: any) => {
+          const {uid} = file;
+          const contentGetFileUrlParams = {uid};
+          const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
+
+          const message = {
+            dialogId: dialog?.id,
+            body: 'Attachment',
+            saveToHistory: true,
+            properties: {
+              type: file?.contentType.includes('image')
+                ? 'photo'
+                : file?.contentType.includes('video')
+                ? 'video'
+                : 'file',
+              url: url,
+              id: `${newMsg?.id}`,
+            },
+          };
+
+          QB.chat.sendMessage(message);
+          setSending(false);
+          sendPushNotification(friend?.deviceToken, {
+            title: user?.fullName,
+            body: 'Attachment',
+          });
+        })
+        .catch(function (e) {
+          setSending(false);
+        });
+    }
+  }
 };

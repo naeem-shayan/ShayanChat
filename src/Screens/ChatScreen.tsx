@@ -1,8 +1,4 @@
-import React, {useContext, useEffect, useRef, useState} from 'react';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Loading from '../Components/loading';
-import Colors from '../Contants/Colors';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,7 +6,6 @@ import {
   Image,
   LogBox,
   Modal,
-  PermissionsAndroid,
   Pressable,
   StyleSheet,
   Text,
@@ -18,32 +13,37 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import moment from 'moment';
+import {launchImageLibrary} from 'react-native-image-picker';
 import ImageView from 'react-native-image-viewing';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import CustomHeader from '../Components/header';
+import Loading from '../Components/loading';
+import Colors from '../Contants/Colors';
 import {sendPushNotification} from '../Contants/SendPush';
 //@ts-ignore
-import UserAvatar from 'react-native-user-avatar';
+import firestore from '@react-native-firebase/firestore';
 import {useIsFocused} from '@react-navigation/native';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import QB from 'quickblox-react-native-sdk';
 import {NativeEventEmitter} from 'react-native';
-import firestore from '@react-native-firebase/firestore';
-import {mvs} from '../Config/metrices';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import {PERMISSIONS, request} from 'react-native-permissions';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import TrackPlayer from 'react-native-track-player';
+import RBSheet from 'react-native-raw-bottom-sheet';
 import Video from 'react-native-video';
-import {createThumbnail} from 'react-native-create-thumbnail';
+import ChatImage from '../Components/chatImage';
 import ChatVideo from '../Components/chatVideo';
 import LoadingOver from '../Components/loadingOver';
-import {replaceObjectById, updateObjectById} from '../Contants/Utils';
-import ChatImage from '../Components/chatImage';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
-import {PERMISSIONS, RESULTS, request} from 'react-native-permissions';
-import AudioRecording from '../Components/recording';
 import AudioPlayer from '../Components/player';
-import TrackPlayer, {
-  usePlaybackState,
-  useProgress,
-} from 'react-native-track-player';
+import AudioRecording from '../Components/recording';
+import {mvs} from '../Config/metrices';
+import {
+  replaceObjectById,
+  sendMessage,
+  updateObjectById,
+} from '../Contants/Utils';
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
 audioRecorderPlayer.setSubscriptionDuration(0.1);
@@ -51,6 +51,7 @@ audioRecorderPlayer.setSubscriptionDuration(0.1);
 export default function ChatScreen({route, navigation}: any) {
   const {dialog, user, name} = route.params;
   const player = useRef(null);
+  const refRBSheet = useRef<RBSheet>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [messages, setMessages] = useState<any>([]);
   const [loading, setLoading] = useState(true);
@@ -71,14 +72,18 @@ export default function ChatScreen({route, navigation}: any) {
   const [mediaUri, setMediaUri] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedFilePath, setRecordedFilePath] = useState<any>(null);
+  const [seconds, setSeconds] = useState<any>(0);
+  const [minutes, setMinutes] = useState<any>(0);
 
   useEffect(() => {
     TrackPlayer?.setupPlayer();
   }, []);
 
-  const toggleRecording = (sent: boolean) => {
+  const toggleRecording = (sent: boolean, seconds: string, minutes: string) => {
     setIsRecording(!isRecording);
     stopRecording(sent);
+    setSeconds(seconds);
+    setMinutes(minutes);
   };
 
   const startRecording = async () => {
@@ -100,7 +105,19 @@ export default function ChatScreen({route, navigation}: any) {
   const stopRecording = async (sent: boolean) => {
     try {
       const result = await audioRecorderPlayer.stopRecorder();
-      sent && handleSendAudio(result);
+      sent &&
+        sendMessage(
+          'audio',
+          result,
+          user,
+          setMessages,
+          dialog,
+          setNewMessage,
+          friend,
+          setSending,
+          minutes,
+          seconds,
+        );
       setIsRecording(false);
     } catch (error) {
       console.error('Error stopping recording:', error);
@@ -130,7 +147,6 @@ export default function ChatScreen({route, navigation}: any) {
       return (
         <AudioPlayer
           msg={item}
-          recordedFilePath={`https://firebasestorage.googleapis.com/v0/b/shayanchat-f6fe7.appspot.com/o/images%2Fcountdown-27545.mp3?alt=media&token=3f1d30b8-2f85-4de6-aa30-b4cd5c66ef77`}
           user={user}
           start={start}
           setStart={setStart}
@@ -304,139 +320,52 @@ export default function ChatScreen({route, navigation}: any) {
     }
   }, [isFocused]);
 
-  async function handleSend(pendingMessages: any) {
-    if (newMessage.trim() === '') {
-      return;
+  const handleSendMessage = (type: string) => {
+    if (type == 'text') {
+      sendMessage(
+        'text',
+        newMessage,
+        user,
+        setMessages,
+        dialog,
+        setNewMessage,
+        friend,
+        setSending,
+        0,
+        0,
+      );
     }
-    const newMsg = {
-      id: Date.now(),
-      body: `${newMessage}`,
-      properties: {
-        type: 'text',
-        status: 'sending',
-      },
-      senderId: user?.id, // Assuming the new message is sent by the user
-    };
-    setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
-    const message = {
-      dialogId: dialog?.id,
-      body: newMessage,
-      properties: {
-        type: 'text',
-        id: `${newMsg?.id}`,
-        status: 'sent',
-      },
-      saveToHistory: true,
-    };
-    setNewMessage('');
-    QB.chat.sendMessage(message);
-    sendPushNotification(friend?.deviceToken, {
-      title: user?.fullName,
-      body: message?.body,
-    });
-  }
-
-  async function handleSendAudio(uri: string) {
-    const newMsg = {
-      id: Date.now(),
-      body: 'loading',
-      properties: {
-        type: 'audio',
-        url: '',
-      },
-      senderId: user?.id, // Assuming the new message is sent by the user
-    };
-    setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
-    setNewMessage('');
-    const contentUploadParams = {
-      url: uri, // path to file in local file system
-      public: false,
-    };
-    QB.content
-      .upload(contentUploadParams)
-      .then(async (file: any) => {
-        const {uid} = file;
-        const contentGetFileUrlParams = {uid};
-        const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
-        // create a message
-        const message = {
-          dialogId: dialog?.id,
-          body: 'Attachment',
-          saveToHistory: true,
-          properties: {
-            type: 'audio',
-            url: url,
-            id: `${newMsg?.id}`,
-          },
-        };
-        //send a message
-        QB.chat.sendMessage(message);
-        setSending(false);
-        sendPushNotification(friend?.deviceToken, {
-          title: user?.fullName,
-          body: 'Attachment',
-        });
-      })
-      .catch(function (e) {
-        setSending(false);
-        /* handle file upload error */
-      });
-  }
-
-  async function handleSendFile(type: any) {
-    const result: any = await launchImageLibrary({mediaType: type});
-    if (!result?.didCancel) {
-      setSending(true);
-      const newMsg = {
-        id: Date.now(),
-        body: 'loading',
-        properties: {
-          type: type,
-          url: '',
-        },
-        senderId: user?.id, // Assuming the new message is sent by the user
-      };
-      setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
-      setNewMessage('');
-      const contentUploadParams = {
-        url: result?.assets[0]?.uri, // path to file in local file system
-        public: false,
-      };
-      QB.content
-        .upload(contentUploadParams)
-        .then(async (file: any) => {
-          const {uid} = file;
-          const contentGetFileUrlParams = {uid};
-          const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
-          // create a message
-          const message = {
-            dialogId: dialog?.id,
-            body: 'Attachment',
-            saveToHistory: true,
-            properties: {
-              type: file?.contentType.includes('image')
-                ? 'photo'
-                : file?.contentType.includes('video')
-                ? 'video'
-                : 'file',
-              url: url,
-              id: `${newMsg?.id}`,
-            },
-          };
-          //send a message
-          QB.chat.sendMessage(message);
-          setSending(false);
-          sendPushNotification(friend?.deviceToken, {
-            title: user?.fullName,
-            body: 'Attachment',
-          });
-        })
-        .catch(function (e) {
-          setSending(false);
-          /* handle file upload error */
-        });
+    if (type == 'photo') {
+      refRBSheet?.current?.close();
+      sendMessage(
+        'photo',
+        'attachment',
+        user,
+        setMessages,
+        dialog,
+        setNewMessage,
+        friend,
+        setSending,
+        0,
+        0,
+      );
     }
-  }
+    if (type == 'video') {
+      refRBSheet?.current?.close();
+      sendMessage(
+        'video',
+        'attachement',
+        user,
+        setMessages,
+        dialog,
+        setNewMessage,
+        friend,
+        setSending,
+        0,
+        0,
+      );
+    }
+  };
 
   if (loading) {
     return <Loading />;
@@ -479,44 +408,40 @@ export default function ChatScreen({route, navigation}: any) {
               resizeMode="cover"
             />
           )}
-          <View style={styles.inputMainContainer}>
-            {isRecording ? (
-              <AudioRecording toggleRecording={toggleRecording} />
-            ) : (
-              <TextInput
-                style={styles.input}
-                placeholder="Type your message..."
-                value={newMessage}
-                onChangeText={text => setNewMessage(text)}
-              />
-            )}
-            <TouchableOpacity
-              onPress={newMessage.length > 0 ? handleSend : startRecording}>
-              <Icon
-                name={
-                  isRecording || newMessage.length > 0 ? 'send' : 'microphone'
-                }
-                size={30}
-                color={Colors.firstColor}
-                style={styles.microphone}
-              />
-            </TouchableOpacity>
-          </View>
-          {/* <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity> */}
-        </View>
-        <View style={styles.mediaButtonsContainer}>
-          <TouchableOpacity
-            style={styles.mediaButton}
-            onPress={() => handleSendFile('photo')}>
-            <Text style={styles.mediaButtonText}>Send Photo</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.mediaButton}
-            onPress={() => handleSendFile('video')}>
-            <Text style={styles.mediaButtonText}>Send Video</Text>
-          </TouchableOpacity>
+          <RBSheet
+            ref={refRBSheet}
+            closeOnDragDown={true}
+            closeOnPressMask={true}
+            customStyles={{
+              container: {
+                borderTopLeftRadius: 15,
+                borderTopRightRadius: 15,
+                height: 'auto',
+                marginTop: mvs(20),
+              },
+            }}>
+            <Text style={styles.actionIconText}>Choose file to send</Text>
+            <View style={styles.actionIconContainer}>
+              <Pressable
+                style={styles.actionIconWrapper}
+                onPress={() => handleSendMessage('photo')}>
+                <FontAwesomeIcon
+                  name="image"
+                  color={Colors.white}
+                  size={mvs(30)}
+                />
+              </Pressable>
+              <Pressable
+                style={styles.actionIconWrapper}
+                onPress={() => handleSendMessage('video')}>
+                <FontAwesomeIcon
+                  name="file-video-o"
+                  color={Colors.white}
+                  size={mvs(30)}
+                />
+              </Pressable>
+            </View>
+          </RBSheet>
         </View>
       </View>
       <ImageView
@@ -563,7 +488,40 @@ export default function ChatScreen({route, navigation}: any) {
           </View>
         </View>
       </Modal>
-      {/* {sending && <LoadingOver />} */}
+      <View style={styles.inputMainContainer}>
+        {isRecording ? (
+          <AudioRecording toggleRecording={toggleRecording} />
+        ) : (
+          <>
+            <Ionicons
+              name="attach"
+              color={Colors.firstColor}
+              size={mvs(30)}
+              style={{marginRight: mvs(5)}}
+              onPress={() => refRBSheet?.current?.open()}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Type your message..."
+              value={newMessage}
+              onChangeText={text => setNewMessage(text)}
+            />
+          </>
+        )}
+        <TouchableOpacity
+          onPress={() => {
+            newMessage.length > 0
+              ? handleSendMessage('text')
+              : startRecording();
+          }}>
+          <Icon
+            name={isRecording || newMessage.length > 0 ? 'send' : 'microphone'}
+            size={30}
+            color={Colors.firstColor}
+            style={styles.microphone}
+          />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -687,28 +645,7 @@ const styles = StyleSheet.create({
   microphone: {
     marginLeft: mvs(10),
   },
-  sendButton: {
-    marginLeft: 10,
-    padding: 10,
-    backgroundColor: Colors.firstColor,
-    borderRadius: 8,
-  },
   sendButtonText: {
-    color: '#ffffff',
-  },
-  mediaButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  mediaButton: {
-    flex: 1,
-    marginHorizontal: 5,
-    padding: 10,
-    backgroundColor: Colors.firstColor,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  mediaButtonText: {
     color: '#ffffff',
   },
   status: {alignSelf: 'flex-end', marginHorizontal: mvs(5)},
@@ -716,5 +653,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
+    paddingHorizontal: mvs(10),
+  },
+  actionIconText: {
+    textAlign: 'center',
+    marginTop: mvs(10),
+    fontSize: mvs(15),
+    fontFamily: 'Poppins-Regular',
+    color: Colors.textColor,
+  },
+  actionIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  actionIconWrapper: {
+    backgroundColor: Colors.firstColor,
+    height: mvs(70),
+    width: mvs(70),
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: mvs(20),
+    margin: mvs(15),
   },
 });
