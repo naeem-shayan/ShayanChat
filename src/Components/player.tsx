@@ -1,24 +1,19 @@
-import React, {useEffect, useState} from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Text
-} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Slider from '@react-native-community/slider';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import TrackPlayer, {useProgress} from 'react-native-track-player';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {mvs} from '../Config/metrices';
 import Colors from '../Contants/Colors';
-import TrackPlayer, {
-  usePlaybackState,
-  useProgress,
-} from 'react-native-track-player';
 
 const AudioPlayer = ({msg, user, start, setStart}: any) => {
   const progress = useProgress();
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
+  const durationString = msg?.properties?.duration || '00:00';
+  const [minutesString, secondsString] = durationString.split(':');
+  const minutes = parseInt(minutesString, 10);
+  const seconds = parseInt(secondsString, 10);
 
   useEffect(() => {
     if (isPlaying && progress.position > 0) {
@@ -124,7 +119,9 @@ const AudioPlayer = ({msg, user, start, setStart}: any) => {
                 color:
                   msg.senderId === user?.id ? Colors.white : Colors.firstColor,
               }}>
-              {`- : -`}
+              {`${minutes < 10 ? `0${minutes}` : minutes} : ${
+                seconds < 10 ? `0${seconds}` : seconds
+              }`}
             </Text>
           )}
         </>

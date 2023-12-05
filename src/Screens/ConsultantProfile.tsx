@@ -244,7 +244,7 @@ const ConsultantProfile = ({navigation}: any) => {
             <Text style={styles.errors}>{validationErrors?.imageError}</Text>
           )}
         </View>
-        <Text style={styles.username}>{user?.fullName}</Text>
+        <Text style={styles.username} ellipsizeMode='tail' numberOfLines={1}>{user?.fullName}</Text>
         <CustomInput
           mt={mvs(10)}
           label="Age"
@@ -373,6 +373,8 @@ const styles = StyleSheet.create({
     color: Colors.firstColor,
     fontSize: mvs(22),
     fontFamily: 'Poppins-Regular',
+    width:mvs(250),
+    textAlign:"center",
   },
   picture: {
     backgroundColor: 'lightgrey',
