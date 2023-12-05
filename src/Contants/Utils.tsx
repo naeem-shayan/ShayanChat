@@ -411,9 +411,6 @@ export const sendMessage = async ({
   minutes,
   seconds,
 }: any) => {
-  if (messageType === 'text' && content.trim() === '') {
-    return;
-  }
   // Create a new message object based on the message type
   const newMsg = {
     id: Date.now(),
@@ -423,13 +420,13 @@ export const sendMessage = async ({
       ...(messageType === 'text' && {status: 'sending'}),
       ...(messageType === 'audio' && {duration: `${minutes} : ${seconds}`}),
       ...(messageType !== 'text' && {url: ''}),
-     
     },
     senderId: user?.id,
   };
 
-
-  setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
+  if (messageType == 'text' || messageType == 'audio') {
+    setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
+  }
   setNewMessage('');
 
   try {
@@ -451,49 +448,48 @@ export const sendMessage = async ({
         body: message?.body,
       });
     } else {
-      const result: any = await launchImageLibrary({mediaType: messageType});
+      let result: any = null;
 
-      if (!result?.didCancel) {
-        setSending(true);
-
-        const contentUploadParams = {
-          url: messageType === 'audio' ? content : result?.assets[0]?.uri,
-          public: false,
-        };
-
-        const file: any = await QB.content.upload(contentUploadParams);
-        const {uid} = file;
-        const contentGetFileUrlParams = {uid};
-        const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
-
-        const message = {
-          dialogId: dialog?.id,
-          body: 'Attachment',
-          saveToHistory: true,
-          properties: {
-            type:
-              messageType === 'audio'
-                ? 'audio'
-                : file?.contentType.includes('image')
-                ? 'photo'
-                : file?.contentType.includes('video')
-                ? 'video'
-                : 'file',
-            url,
-            id: `${newMsg?.id}`,
-            ...(messageType === 'audio' && {
-              duration: `${minutes} : ${seconds}`,
-            }),
-          },
-        };
-
-        await QB.chat.sendMessage(message);
-        setSending(false);
-        sendPushNotification(friend?.deviceToken, {
-          title: user?.fullName,
-          body: 'Attachment',
-        });
+      if (messageType !== 'audio') {
+        result = await launchImageLibrary({mediaType: messageType});
+        if (!result?.didCancel) {
+          setSending(true);
+          setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
+        }
       }
+
+      const contentUploadParams = {
+        url: messageType === 'audio' ? content : result?.assets[0]?.uri,
+        public: false,
+      };
+
+      console.log(contentUploadParams)
+
+      const file: any = await QB.content.upload(contentUploadParams);
+      const {uid} = file;
+      const contentGetFileUrlParams = {uid};
+      const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
+
+      const message = {
+        dialogId: dialog?.id,
+        body: 'Attachment',
+        saveToHistory: true,
+        properties: {
+          type: messageType,
+          url,
+          id: `${newMsg?.id}`,
+          ...(messageType === 'audio' && {
+            duration: `${minutes} : ${seconds}`,
+          }),
+        },
+      };
+
+      await QB.chat.sendMessage(message);
+      setSending(false);
+      sendPushNotification(friend?.deviceToken, {
+        title: user?.fullName,
+        body: 'Attachment',
+      });
     }
   } catch (error) {
     console.error('Error in sendMessage:', error);

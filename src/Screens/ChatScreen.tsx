@@ -79,7 +79,7 @@ export default function ChatScreen({route, navigation}: any) {
   useEffect(() => {
     TrackPlayer?.setupPlayer();
   }, []);
-  
+
   useEffect(() => {
     fetchChat();
   }, []);
@@ -142,7 +142,6 @@ export default function ChatScreen({route, navigation}: any) {
     }
   }, [user]);
 
-
   const toggleRecording = (sent: boolean, seconds: string, minutes: string) => {
     setIsRecording(!isRecording);
     stopRecording(sent);
@@ -169,19 +168,18 @@ export default function ChatScreen({route, navigation}: any) {
   const stopRecording = async (sent: boolean) => {
     try {
       const result = await audioRecorderPlayer.stopRecorder();
-      sent &&
-        sendMessage({
-          messageType: 'audio',
-          newMessage: result,
-          user,
-          setMessages,
-          dialog,
-          setNewMessage,
-          friend,
-          setSending,
-          minutes,
-          seconds,
-        });
+      sent && sendMessage({
+        messageType: 'audio',
+        content: result,
+        user,
+        setMessages,
+        dialog,
+        setNewMessage,
+        friend,
+        setSending,
+        minutes: 0,
+        seconds: 0,
+      });
       setIsRecording(false);
     } catch (error) {
       console.error('Error stopping recording:', error);
@@ -303,50 +301,19 @@ export default function ChatScreen({route, navigation}: any) {
   }
 
   const handleSendMessage = (type: string) => {
-    if (type == 'text') {
-      sendMessage({
-        messageType: 'text',
-        newMessage,
-        user,
-        setMessages,
-        dialog,
-        setNewMessage,
-        friend,
-        setSending,
-        minutes: 0,
-        seconds: 0,
-      });
-    }
-    if (type == 'photo') {
-      refRBSheet?.current?.close();
-      sendMessage({
-        messageType: 'photo',
-        newMessage: 'Attachment',
-        user,
-        setMessages,
-        dialog,
-        setNewMessage,
-        friend,
-        setSending,
-        minutes: 0,
-        seconds: 0,
-      });
-    }
-    if (type == 'video') {
-      refRBSheet?.current?.close();
-      sendMessage({
-        messageType: 'poto',
-        newMessage: 'Attachment',
-        user,
-        setMessages,
-        dialog,
-        setNewMessage,
-        friend,
-        setSending,
-        minutes: 0,
-        seconds: 0,
-      });
-    }
+    refRBSheet?.current?.close();
+    sendMessage({
+      messageType: type,
+      content: newMessage,
+      user,
+      setMessages,
+      dialog,
+      setNewMessage,
+      friend,
+      setSending,
+      minutes: 0,
+      seconds: 0,
+    });
   };
 
   if (loading) {
@@ -390,51 +357,45 @@ export default function ChatScreen({route, navigation}: any) {
               resizeMode="cover"
             />
           )}
-          <RBSheet
-            ref={refRBSheet}
-            closeOnDragDown={true}
-            closeOnPressMask={true}
-            customStyles={{
-              container: {
-                borderTopLeftRadius: 15,
-                borderTopRightRadius: 15,
-                height: 'auto',
-                marginTop: mvs(20),
-              },
-            }}>
-            <Text style={styles.actionIconText}>Choose file to send</Text>
-            <View style={styles.actionIconContainer}>
-              <Pressable
-                style={styles.actionIconWrapper}
-                onPress={() => handleSendMessage('photo')}>
-                <FontAwesomeIcon
-                  name="image"
-                  color={Colors.white}
-                  size={mvs(30)}
-                />
-              </Pressable>
-              <Pressable
-                style={styles.actionIconWrapper}
-                onPress={() => handleSendMessage('video')}>
-                <FontAwesomeIcon
-                  name="file-video-o"
-                  color={Colors.white}
-                  size={mvs(30)}
-                />
-              </Pressable>
-            </View>
-          </RBSheet>
+          {
+            //@ts-ignore
+            <RBSheet
+              ref={refRBSheet}
+              closeOnDragDown={true}
+              closeOnPressMask={true}
+              customStyles={{
+                container: {
+                  borderTopLeftRadius: 15,
+                  borderTopRightRadius: 15,
+                  height: 'auto',
+                  marginTop: mvs(20),
+                },
+              }}>
+              <Text style={styles.actionIconText}>Choose file to send</Text>
+              <View style={styles.actionIconContainer}>
+                <Pressable
+                  style={styles.actionIconWrapper}
+                  onPress={() => handleSendMessage('photo')}>
+                  <FontAwesomeIcon
+                    name="image"
+                    color={Colors.white}
+                    size={mvs(30)}
+                  />
+                </Pressable>
+                <Pressable
+                  style={styles.actionIconWrapper}
+                  onPress={() => handleSendMessage('video')}>
+                  <FontAwesomeIcon
+                    name="file-video-o"
+                    color={Colors.white}
+                    size={mvs(30)}
+                  />
+                </Pressable>
+              </View>
+            </RBSheet>
+          }
         </View>
       </View>
-      <ImageView
-        images={[{uri: currentImage}]}
-        imageIndex={0}
-        visible={visible}
-        onRequestClose={() => setIsVisible(false)}
-        swipeToCloseEnabled
-        doubleTapToZoomEnabled
-      />
-
       <View style={styles.inputMainContainer}>
         {isRecording ? (
           <AudioRecording toggleRecording={toggleRecording} />
@@ -469,6 +430,14 @@ export default function ChatScreen({route, navigation}: any) {
           />
         </TouchableOpacity>
       </View>
+      <ImageView
+        images={[{uri: currentImage}]}
+        imageIndex={0}
+        visible={visible}
+        onRequestClose={() => setIsVisible(false)}
+        swipeToCloseEnabled
+        doubleTapToZoomEnabled
+      />
       <VideoPlayer
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
@@ -607,6 +576,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: mvs(10),
+    paddingBottom: mvs(20)
   },
   actionIconText: {
     textAlign: 'center',
