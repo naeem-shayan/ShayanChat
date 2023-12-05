@@ -68,7 +68,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     color: Colors.firstColor,
     marginVertical: 20,
-    width: mvs(300),
+    width: mvs(250),
+    textAlign:"center"
   },
 });
 
