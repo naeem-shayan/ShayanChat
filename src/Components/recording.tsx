@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {mvs} from '../Config/metrices';
 import Colors from '../Contants/Colors';
 
-const AudioRecording = ({toggleRecording}: any) => {
+const AudioRecording = ({toggleRecording, handleAudioChange}: any) => {
   const [seconds, setSeconds] = useState(0);
   const [minutes, setMinutes] = useState(0);
 
@@ -17,6 +17,7 @@ const AudioRecording = ({toggleRecording}: any) => {
         setMinutes(prevMinutes => prevMinutes + 1);
         setSeconds(0);
       }
+      handleAudioChange(seconds, minutes)
     }, 1000);
     return () => clearInterval(timerRef.current ? timerRef.current : '');
   }, [seconds]);

@@ -463,8 +463,6 @@ export const sendMessage = async ({
         public: false,
       };
 
-      console.log(contentUploadParams)
-
       const file: any = await QB.content.upload(contentUploadParams);
       const {uid} = file;
       const contentGetFileUrlParams = {uid};

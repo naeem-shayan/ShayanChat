@@ -1,49 +1,43 @@
+import firestore from '@react-native-firebase/firestore';
+import {useIsFocused} from '@react-navigation/native';
+import QB from 'quickblox-react-native-sdk';
 import React, {useEffect, useRef, useState} from 'react';
 import {
   FlatList,
   Image,
   LogBox,
-  Modal,
-  Pressable,
+  NativeEventEmitter,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import {launchImageLibrary} from 'react-native-image-picker';
-import ImageView from 'react-native-image-viewing';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
-import CustomHeader from '../Components/header';
-import Loading from '../Components/loading';
-import Colors from '../Contants/Colors';
-import {sendPushNotification} from '../Contants/SendPush';
-import firestore from '@react-native-firebase/firestore';
-import {useIsFocused} from '@react-navigation/native';
-import QB from 'quickblox-react-native-sdk';
-import {NativeEventEmitter} from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import ImageView from 'react-native-image-viewing';
 import {PERMISSIONS, request} from 'react-native-permissions';
+import RBSheet from 'react-native-raw-bottom-sheet';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import TrackPlayer from 'react-native-track-player';
-import RBSheet from 'react-native-raw-bottom-sheet';
-import Video from 'react-native-video';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import SheetData from '../Components/bottomSheet';
 import ChatImage from '../Components/chatImage';
 import ChatText from '../Components/chatText';
 import ChatVideo from '../Components/chatVideo';
 import ChatWrap from '../Components/chatWrap';
+import CustomHeader from '../Components/header';
+import Loading from '../Components/loading';
 import LoadingOver from '../Components/loadingOver';
 import AudioPlayer from '../Components/player';
 import AudioRecording from '../Components/recording';
+import VideoPlayer from '../Components/videoPlayer';
 import {mvs} from '../Config/metrices';
+import Colors from '../Contants/Colors';
 import {
   replaceObjectById,
   sendMessage,
   updateObjectById,
 } from '../Contants/Utils';
-import VideoPlayer from '../Components/videoPlayer';
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
 audioRecorderPlayer.setSubscriptionDuration(0.1);
@@ -72,7 +66,6 @@ export default function ChatScreen({route, navigation}: any) {
   const [newMessage, setNewMessage] = useState('');
   const [mediaUri, setMediaUri] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordedFilePath, setRecordedFilePath] = useState<any>(null);
   const [seconds, setSeconds] = useState<any>(0);
   const [minutes, setMinutes] = useState<any>(0);
 
@@ -142,11 +135,22 @@ export default function ChatScreen({route, navigation}: any) {
     }
   }, [user]);
 
-  const toggleRecording = (sent: boolean, seconds: string, minutes: string) => {
+  const handleAudioChange = (seconds: any, minutes: any) => {
+    let newSeconds = seconds;
+    let newMinutes = minutes;
+    if (seconds === 59) {
+      newSeconds = 0;
+      newMinutes += 1;
+    } else {
+      newSeconds += 1;
+    }
+    setSeconds(newSeconds);
+    setMinutes(newMinutes);
+  };
+
+  const toggleRecording = (sent: boolean) => {
     setIsRecording(!isRecording);
     stopRecording(sent);
-    setSeconds(seconds);
-    setMinutes(minutes);
   };
 
   const startRecording = async () => {
@@ -168,18 +172,19 @@ export default function ChatScreen({route, navigation}: any) {
   const stopRecording = async (sent: boolean) => {
     try {
       const result = await audioRecorderPlayer.stopRecorder();
-      sent && sendMessage({
-        messageType: 'audio',
-        content: result,
-        user,
-        setMessages,
-        dialog,
-        setNewMessage,
-        friend,
-        setSending,
-        minutes: 0,
-        seconds: 0,
-      });
+      sent &&
+        sendMessage({
+          messageType: 'audio',
+          content: result,
+          user,
+          setMessages,
+          dialog,
+          setNewMessage,
+          friend,
+          setSending,
+          minutes,
+          seconds,
+        });
       setIsRecording(false);
     } catch (error) {
       console.error('Error stopping recording:', error);
@@ -371,34 +376,17 @@ export default function ChatScreen({route, navigation}: any) {
                   marginTop: mvs(20),
                 },
               }}>
-              <Text style={styles.actionIconText}>Choose file to send</Text>
-              <View style={styles.actionIconContainer}>
-                <Pressable
-                  style={styles.actionIconWrapper}
-                  onPress={() => handleSendMessage('photo')}>
-                  <FontAwesomeIcon
-                    name="image"
-                    color={Colors.white}
-                    size={mvs(30)}
-                  />
-                </Pressable>
-                <Pressable
-                  style={styles.actionIconWrapper}
-                  onPress={() => handleSendMessage('video')}>
-                  <FontAwesomeIcon
-                    name="file-video-o"
-                    color={Colors.white}
-                    size={mvs(30)}
-                  />
-                </Pressable>
-              </View>
+              <SheetData handleSendMessage={handleSendMessage} />
             </RBSheet>
           }
         </View>
       </View>
       <View style={styles.inputMainContainer}>
         {isRecording ? (
-          <AudioRecording toggleRecording={toggleRecording} />
+          <AudioRecording
+            toggleRecording={toggleRecording}
+            handleAudioChange={handleAudioChange}
+          />
         ) : (
           <>
             <Ionicons
@@ -574,9 +562,10 @@ const styles = StyleSheet.create({
   inputMainContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent:"space-evenly",
     width: '100%',
     paddingHorizontal: mvs(10),
-    paddingBottom: mvs(20)
+    paddingBottom: mvs(20),
   },
   actionIconText: {
     textAlign: 'center',
@@ -589,15 +578,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
+    paddingHorizontal: mvs(10),
   },
   actionIconWrapper: {
     backgroundColor: Colors.firstColor,
-    height: mvs(70),
-    width: mvs(70),
+    height: mvs(60),
+    width: mvs(60),
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: mvs(20),
-    margin: mvs(15),
+    marginHorizontal: mvs(5),
   },
 });
