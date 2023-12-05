@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     backgroundColor: Colors.textInput,
     width: width - mvs(44),
-    height: mvs(55),
+    height: mvs(50),
     justifyContent: 'center',
     overflow: 'hidden',
 

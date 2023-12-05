@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: mvs(100),
-    borderRadius: mvs(10),
+    //borderRadius: mvs(10),
   },
   text: {
     color: Colors.firstColor,
