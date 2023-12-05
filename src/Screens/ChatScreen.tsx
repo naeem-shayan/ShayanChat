@@ -106,9 +106,9 @@ export default function ChatScreen({route, navigation}: any) {
     try {
       const result = await audioRecorderPlayer.stopRecorder();
       sent &&
-        sendMessage(
-          'audio',
-          result,
+        sendMessage({
+          messageType: 'audio',
+          newMessage: result,
           user,
           setMessages,
           dialog,
@@ -117,7 +117,7 @@ export default function ChatScreen({route, navigation}: any) {
           setSending,
           minutes,
           seconds,
-        );
+        });
       setIsRecording(false);
     } catch (error) {
       console.error('Error stopping recording:', error);
@@ -322,8 +322,8 @@ export default function ChatScreen({route, navigation}: any) {
 
   const handleSendMessage = (type: string) => {
     if (type == 'text') {
-      sendMessage(
-        'text',
+      sendMessage({
+        messageType: 'text',
         newMessage,
         user,
         setMessages,
@@ -331,39 +331,39 @@ export default function ChatScreen({route, navigation}: any) {
         setNewMessage,
         friend,
         setSending,
-        0,
-        0,
-      );
+        minutes: 0,
+        seconds: 0,
+      });
     }
     if (type == 'photo') {
       refRBSheet?.current?.close();
-      sendMessage(
-        'photo',
-        'attachment',
+      sendMessage({
+        messageType: 'poto',
+        newMessage: 'Attachment',
         user,
         setMessages,
         dialog,
         setNewMessage,
         friend,
         setSending,
-        0,
-        0,
-      );
+        minutes: 0,
+        seconds: 0,
+      });
     }
     if (type == 'video') {
       refRBSheet?.current?.close();
-      sendMessage(
-        'video',
-        'attachement',
+      sendMessage({
+        messageType: 'poto',
+        newMessage: 'Attachment',
         user,
         setMessages,
         dialog,
         setNewMessage,
         friend,
         setSending,
-        0,
-        0,
-      );
+        minutes: 0,
+        seconds: 0,
+      });
     }
   };
 

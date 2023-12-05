@@ -28,14 +28,11 @@ export const validateName = (name: string) => {
 };
 
 export const validateEmail = (email: string) => {
-  if (email.includes(' ')) {
-    return 'Invalid Email';
-  }
   if (!email) {
     return 'Enter Your Email';
   }
   const validEmailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-  if (!validEmailPattern.test(email.trim())) {
+  if (!validEmailPattern.test(email)) {
     return 'Invalid email';
   } else {
     return '';
@@ -396,159 +393,110 @@ export const onLogout = async (user: any, dispatch: any, navigation: any) => {
 export const updateQuickBlockUser = (updateduserProfile: any) => {
   QB.users
     .update(updateduserProfile)
-    .then(function (updatedUser) {
-    })
+    .then(function (updatedUser) {})
     .catch(function (e) {
       console.error('Error in updating user====', e);
     });
 };
 
-export const sendMessage = async (
-  messageType: any,
-  content: any,
-  user: any,
-  setMessages: any,
-  dialog: any,
-  setNewMessage: any,
-  friend: any,
-  setSending: any,
-  minutes?: any,
-  seconds?: any,
-) => {
-  let newMsg: any = {};
-
-  if (messageType === 'text') {
-    if (content.trim() === '') {
-      return;
-    }
-
-    newMsg = {
-      id: Date.now(),
-      body: `${content}`,
-      properties: {
-        type: 'text',
-        status: 'sending',
-      },
-      senderId: user?.id,
-    };
-  } else if (messageType === 'audio') {
-    newMsg = {
-      id: Date.now(),
-      body: 'loading',
-      properties: {
-        type: 'audio',
-        url: '',
-      },
-      senderId: user?.id,
-    };
-  } else {
-    newMsg = {
-      id: Date.now(),
-      body: 'loading',
-      properties: {
-        type: messageType,
-        url: '',
-      },
-      senderId: user?.id,
-    };
+export const sendMessage = async ({
+  messageType,
+  content,
+  user,
+  setMessages,
+  dialog,
+  setNewMessage,
+  friend,
+  setSending,
+  minutes,
+  seconds,
+}: any) => {
+  if (messageType === 'text' && content.trim() === '') {
+    return;
   }
+  // Create a new message object based on the message type
+  const newMsg = {
+    id: Date.now(),
+    body: messageType === 'text' ? `${content}` : 'loading',
+    properties: {
+      type: messageType,
+      ...(messageType === 'text' && {status: 'sending'}),
+      ...(messageType === 'audio' && {duration: `${minutes} : ${seconds}`}),
+      ...(messageType !== 'text' && {url: ''}),
+     
+    },
+    senderId: user?.id,
+  };
+
 
   setMessages((prevMessages: any) => [newMsg, ...prevMessages]);
   setNewMessage('');
 
-  if (messageType === 'text') {
-    const message = {
-      dialogId: dialog?.id,
-      body: content,
-      properties: {
-        type: 'text',
-        id: `${newMsg?.id}`,
-        status: 'sent',
-      },
-      saveToHistory: true,
-    };
-    QB.chat.sendMessage(message);
-    sendPushNotification(friend?.deviceToken, {
-      title: user?.fullName,
-      body: message?.body,
-    });
-  } else if (messageType === 'audio') {
-    const contentUploadParams = {
-      url: content,
-      public: false,
-    };
+  try {
+    // Handle different message types
+    if (messageType === 'text') {
+      const message = {
+        dialogId: dialog?.id,
+        body: content,
+        properties: {
+          type: 'text',
+          id: `${newMsg?.id}`,
+          status: 'sent',
+        },
+        saveToHistory: true,
+      };
+      await QB.chat.sendMessage(message);
+      sendPushNotification(friend?.deviceToken, {
+        title: user?.fullName,
+        body: message?.body,
+      });
+    } else {
+      const result: any = await launchImageLibrary({mediaType: messageType});
 
+      if (!result?.didCancel) {
+        setSending(true);
 
-    QB.content
-      .upload(contentUploadParams)
-      .then(async (file: any) => {
+        const contentUploadParams = {
+          url: messageType === 'audio' ? content : result?.assets[0]?.uri,
+          public: false,
+        };
+
+        const file: any = await QB.content.upload(contentUploadParams);
         const {uid} = file;
         const contentGetFileUrlParams = {uid};
         const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
+
         const message = {
           dialogId: dialog?.id,
           body: 'Attachment',
           saveToHistory: true,
           properties: {
-            type: 'audio',
-            url: url,
+            type:
+              messageType === 'audio'
+                ? 'audio'
+                : file?.contentType.includes('image')
+                ? 'photo'
+                : file?.contentType.includes('video')
+                ? 'video'
+                : 'file',
+            url,
             id: `${newMsg?.id}`,
-            duration: `${minutes} : ${seconds}`,
+            ...(messageType === 'audio' && {
+              duration: `${minutes} : ${seconds}`,
+            }),
           },
         };
-        QB.chat.sendMessage(message);
+
+        await QB.chat.sendMessage(message);
         setSending(false);
         sendPushNotification(friend?.deviceToken, {
           title: user?.fullName,
           body: 'Attachment',
         });
-      })
-      .catch(function (e) {
-        console.log('incatch=========', e);
-        setSending(false);
-      });
-  } else {
-    const result: any = await launchImageLibrary({mediaType: messageType});
-    if (!result?.didCancel) {
-      setSending(true);
-
-      const contentUploadParams = {
-        url: result?.assets[0]?.uri,
-        public: false,
-      };
-
-      QB.content
-        .upload(contentUploadParams)
-        .then(async (file: any) => {
-          const {uid} = file;
-          const contentGetFileUrlParams = {uid};
-          const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
-
-          const message = {
-            dialogId: dialog?.id,
-            body: 'Attachment',
-            saveToHistory: true,
-            properties: {
-              type: file?.contentType.includes('image')
-                ? 'photo'
-                : file?.contentType.includes('video')
-                ? 'video'
-                : 'file',
-              url: url,
-              id: `${newMsg?.id}`,
-            },
-          };
-
-          QB.chat.sendMessage(message);
-          setSending(false);
-          sendPushNotification(friend?.deviceToken, {
-            title: user?.fullName,
-            body: 'Attachment',
-          });
-        })
-        .catch(function (e) {
-          setSending(false);
-        });
+      }
     }
+  } catch (error) {
+    console.error('Error in sendMessage:', error);
+    setSending(false);
   }
 };

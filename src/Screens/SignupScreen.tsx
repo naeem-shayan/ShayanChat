@@ -23,10 +23,10 @@ const SignupScreen = (props: any) => {
   const dispatch = useDispatch();
 
   const [selected, setSelected] = useState<any>(0);
-  const [name, setName] = useState('William White');
-  const [email, setEmail] = useState('william.white@example.com');
-  const [password, setPassword] = useState('12345678');
-  const [confirmPassword, setConfirmPassword] = useState('12345678');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -106,14 +106,14 @@ const SignupScreen = (props: any) => {
       <CustomInput
         mt={mvs(20)}
         label="Your name"
-        placeholder="Nazra Ul Mum"
+        placeholder="Enter your name"
         value={name}
         error={nameError}
         onChangeText={(text: any) => setName(text)}
       />
       <CustomInput
         label="Your email"
-        placeholder="nazrulmum1234@gmail.com"
+        placeholder="Enter your eamil address"
         value={email}
         error={emailError}
         onChangeText={(text: any) => setEmail(text)}
