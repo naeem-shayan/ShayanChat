@@ -16,6 +16,7 @@ import {
   validateEmail,
   validatePassword,
 } from '../Contants/Utils';
+import {IconButton} from 'react-native-paper';
 
 const LoginScreen = (props: any) => {
   const {navigation} = props;
@@ -48,7 +49,7 @@ const LoginScreen = (props: any) => {
     }
     setEmailError('');
     setPasswordError('');
-    signin(email, password.trim(), setLoading, navigation, dispatch, null);
+    signin(email, password, setLoading, navigation, dispatch, null);
   };
 
   return (
@@ -102,7 +103,15 @@ const LoginScreen = (props: any) => {
         <View style={styles.divider} />
       </View>
       <View style={styles.socialButtons}>
-        <FacebookLoginButton
+        {/* <FacebookLoginButton
+          onPress={() =>
+            handleFacebookLogin(setLoading, navigation, userType, dispatch)
+          }
+        /> */}
+        <IconButton
+          icon="facebook"
+          size={33}
+          iconColor="#4267B2"
           onPress={() =>
             handleFacebookLogin(setLoading, navigation, userType, dispatch)
           }

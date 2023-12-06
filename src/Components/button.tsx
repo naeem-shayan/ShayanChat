@@ -17,13 +17,18 @@ const CustomButton = ({
   mt,
   mb,
   onPress,
+  onAuth = false,
   ...props
 }: any) => {
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={loading}
-      style={{...styles.container, marginTop: mt, marginBottom: mb}}>
+      style={[
+        styles.container,
+        {marginTop: mt, marginBottom: mb},
+        onAuth && {width: '40%', alignSelf: 'center'},
+      ]}>
       {loading ? (
         <ActivityIndicator size={'small'} color={Colors.buttonText} />
       ) : (
@@ -41,14 +46,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.firstColor,
     borderRadius: mvs(15),
-    width:"100%",
-    minHeight:mvs(46)
+    width: '100%',
+    minHeight: mvs(46),
   },
   title: {
     fontSize: mvs(20),
     color: Colors.buttonText,
     fontFamily: 'Poppins-Medium',
-    lineHeight : mvs(28)
+    lineHeight: mvs(28),
   },
 });
 
