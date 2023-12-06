@@ -8,6 +8,7 @@ import {
   LogBox,
   NativeEventEmitter,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -38,6 +39,7 @@ import {
   sendMessage,
   updateObjectById,
 } from '../Contants/Utils';
+import moment from 'moment';
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
 audioRecorderPlayer.setSubscriptionDuration(0.1);
@@ -68,6 +70,7 @@ export default function ChatScreen({route, navigation}: any) {
   const [isRecording, setIsRecording] = useState(false);
   const [seconds, setSeconds] = useState<any>(0);
   const [minutes, setMinutes] = useState<any>(0);
+  const today = moment();
 
   useEffect(() => {
     TrackPlayer?.setupPlayer();
@@ -177,6 +180,7 @@ export default function ChatScreen({route, navigation}: any) {
           messageType: 'audio',
           content: result,
           user,
+          messages,
           setMessages,
           dialog,
           setNewMessage,
@@ -224,6 +228,21 @@ export default function ChatScreen({route, navigation}: any) {
             setStart={setStart}
           />
         </ChatWrap>
+      );
+    } else if (item?.properties?.type == 'date') {
+      return (
+        <View style={styles.showDay}>
+          <Text style={styles.showDayText}>
+            {moment(item?.dateSent)?.isSame(today, 'day')
+              ? 'Today'
+              : moment(item?.dateSent)?.isSame(
+                  today.clone().subtract(1, 'day'),
+                  'day',
+                )
+              ? 'Yesterday'
+              : moment(item?.dateSent)?.format('MMMM D, YYYY')}
+          </Text>
+        </View>
       );
     } else {
       return (
@@ -311,6 +330,7 @@ export default function ChatScreen({route, navigation}: any) {
       messageType: type,
       content: newMessage,
       user,
+      messages,
       setMessages,
       dialog,
       setNewMessage,
@@ -324,7 +344,6 @@ export default function ChatScreen({route, navigation}: any) {
   if (loading) {
     return <Loading />;
   }
-
   return (
     <SafeAreaView
       style={{flex: 1, backgroundColor: Colors.white}}
@@ -562,7 +581,7 @@ const styles = StyleSheet.create({
   inputMainContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:"space-evenly",
+    justifyContent: 'space-evenly',
     width: '100%',
     paddingHorizontal: mvs(10),
     paddingBottom: mvs(20),
@@ -589,5 +608,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: mvs(20),
     marginHorizontal: mvs(5),
+  },
+  showDay: {
+    height: mvs(60),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  showDayText: {
+    color: 'gray',
   },
 });

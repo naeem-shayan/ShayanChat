@@ -1,9 +1,9 @@
-import React, {useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Colors from '../Contants/Colors';
 //@ts-ignore
 import UserAvatar from 'react-native-user-avatar';
-import {mvs} from '../Config/metrices';
+import { mvs } from '../Config/metrices';
 
 const User = ({item, category, onPress, ...props}: any) => {
   return (
@@ -19,12 +19,7 @@ const User = ({item, category, onPress, ...props}: any) => {
             {item.fullName}
           </Text>
           <Text ellipsizeMode="tail" numberOfLines={1} style={styles.category}>
-            Category:<Text style={styles.categoryName}>{` ${category}`}</Text>
-          </Text>
-          <Text ellipsizeMode="tail" numberOfLines={1} style={styles.category}>
-            Stauts: <Text style={styles.userStatus}>
-            {item?.is_online ? 'online' : 'offline'}
-          </Text>
+            {category}
           </Text>
         </View>
       </View>

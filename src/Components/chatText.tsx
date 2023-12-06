@@ -1,10 +1,8 @@
 //import liraries
-import React, {Component} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { mvs } from '../Config/metrices';
 import Colors from '../Contants/Colors';
-import {mvs} from '../Config/metrices';
-import moment from 'moment';
 
 // create a component
 const ChatText = ({item, user}: any) => {
