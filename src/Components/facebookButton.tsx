@@ -7,11 +7,9 @@ import Colors from '../Contants/Colors';
 
 const FacebookLoginButton = ({ onPress }:any) => {
   return (
-    <TouchableOpacity onPress={onPress}>
-      <View style={styles.buttonContainer}>
+    <TouchableOpacity onPress={onPress} style={styles.buttonContainer}>
         <Icon name="facebook" size={24} color={Colors.white} style={styles.icon} />
         <Text style={styles.buttonText}>Continue with Facebook</Text>
-      </View>
     </TouchableOpacity>
   );
 };
