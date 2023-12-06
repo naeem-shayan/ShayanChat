@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { IconButton } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { chatkitty } from '../ChatKitty';
 import CustomButton from '../Components/button';
+import FacebookLoginButton from '../Components/facebookButton';
 import CustomHeader1 from '../Components/header1';
 import PageTitleAndDes from '../Components/pageTitleAndDes';
 import CustomInput from '../Components/textInput';
@@ -18,7 +14,7 @@ import {
   handleFacebookLogin,
   signin,
   validateEmail,
-  validatePassword
+  validatePassword,
 } from '../Contants/Utils';
 
 const LoginScreen = (props: any) => {
@@ -31,7 +27,6 @@ const LoginScreen = (props: any) => {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const userType = useSelector((state: any) => state.userType);
-
 
   const [switchValue, setSwitchValue] = useState(false);
 
@@ -103,21 +98,14 @@ const LoginScreen = (props: any) => {
 
       <View style={styles.dividerContainer}>
         <View style={styles.divider} />
-        <Text style={styles.dividerLabel}>Or Login with</Text>
+        <Text style={styles.dividerLabel}>OR</Text>
         <View style={styles.divider} />
       </View>
       <View style={styles.socialButtons}>
-        {/* <TouchableOpacity onPress={() => handleGoogleLogin(navigation)}>
-          <Image
-            source={require('../../assests/images/google.png')}
-            style={styles.socialIcons}
-          />
-        </TouchableOpacity> */}
-        <IconButton
-          icon="facebook"
-          size={33}
-          iconColor="#4267B2"
-          onPress={() => handleFacebookLogin(setLoading, navigation, userType, dispatch)}
+        <FacebookLoginButton
+          onPress={() =>
+            handleFacebookLogin(setLoading, navigation, userType, dispatch)
+          }
         />
       </View>
     </KeyboardAwareScrollView>
@@ -196,7 +184,7 @@ const styles = StyleSheet.create({
   signUp: {
     color: Colors.firstColor,
     fontFamily: 'Poppins-Medium',
-    textDecorationLine:"underline"
+    textDecorationLine: 'underline',
   },
   socialButtons: {
     flexDirection: 'row',
@@ -225,7 +213,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    width: mvs(100),
+    width: mvs(120),
     borderWidth: 0.5,
     borderColor: Colors.textColor,
   },

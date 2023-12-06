@@ -15,6 +15,7 @@ import {
 } from '../Actions/userAction';
 import {sendPushNotification} from './SendPush';
 import {launchImageLibrary} from 'react-native-image-picker';
+import moment from 'moment';
 
 export const validateName = (name: string) => {
   if (!name) {
@@ -403,6 +404,7 @@ export const sendMessage = async ({
   messageType,
   content,
   user,
+  messages,
   setMessages,
   dialog,
   setNewMessage,
@@ -412,6 +414,30 @@ export const sendMessage = async ({
   seconds,
 }: any) => {
   // Create a new message object based on the message type
+  if (
+    !moment(messages[0]?.dateSent).isSame(moment(), 'day') ||
+    messages.length == 0
+  ) {
+    const emptyMessage = {
+      id: Date.now(),
+      body: '',
+      properties: {
+        type: 'date',
+      },
+    };
+    setMessages((prevMessages: any) => [emptyMessage, ...prevMessages]);
+    const message = {
+      dialogId: dialog?.id,
+      body: '',
+      properties: {
+        type: 'date',
+        id: `${emptyMessage?.id}`,
+        status: 'sent',
+      },
+      saveToHistory: true,
+    };
+    await QB.chat.sendMessage(message);
+  }
   const newMsg = {
     id: Date.now(),
     body: messageType === 'text' ? `${content}` : 'loading',

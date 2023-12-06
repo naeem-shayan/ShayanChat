@@ -178,14 +178,16 @@ export default function CreateChannelScreen(props: any) {
         showBack
         onBackPress={() => props.navigation.navigate('Category')}
       />
-      <CustomSearch
-        placeholder="Search Users"
-        value={value}
-        onChangeText={(text: any) => handleSearchChange(text)}
-        mb={10}
-        mt={20}
-        handleClearSearch={handleClearSearch}
-      />
+      {users?.length > 1 ? (
+        <CustomSearch
+          placeholder="Search Users"
+          value={value}
+          onChangeText={(text: any) => handleSearchChange(text)}
+          mb={10}
+          mt={20}
+          handleClearSearch={handleClearSearch}
+        />
+      ) : null}
       <View style={styles.rootContainer}>
         {loading ? (
           <View style={styles.loader}>

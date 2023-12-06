@@ -179,7 +179,11 @@ const ConsultantProfile = ({navigation}: any) => {
           const currentUserDataAfter = documentSnapshotAfter.data();
           dispatch(setUser(currentUserDataAfter));
           setLoading(false);
-          Alert.alert("Your profile has been updated successfully")
+          Alert.alert(
+            user?.isProfileComplete
+              ? 'Your profile has been updated successfully'
+              : 'Your profile has been completed successfully',
+          );
         })
         .catch(error => {
           console.error(error);
@@ -222,7 +226,7 @@ const ConsultantProfile = ({navigation}: any) => {
           <View style={styles.picture}>
             <Image
               source={{
-                uri: consultantProfile?.profilePicture
+                uri: consultantProfile?.profilePicture,
               }}
               style={styles.image}
             />
@@ -373,8 +377,8 @@ const styles = StyleSheet.create({
     color: Colors.firstColor,
     fontSize: mvs(22),
     fontFamily: 'Poppins-Regular',
-    width:mvs(250),
-    textAlign:"center",
+    width: mvs(250),
+    textAlign: 'center',
   },
   picture: {
     backgroundColor: 'lightgrey',

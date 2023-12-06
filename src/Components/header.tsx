@@ -58,7 +58,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  titleContainer: {},
+  titleContainer: {
+    marginVertical:mvs(18)
+  },
   rightContainer: {
     flexDirection: 'row',
   },
