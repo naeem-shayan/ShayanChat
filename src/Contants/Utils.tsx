@@ -1,12 +1,14 @@
-import auth from '@react-native-firebase/auth';
-import {chatkitty} from '../ChatKitty';
-import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import {LoginManager, AccessToken} from 'react-native-fbsdk-next';
-import Toast from 'react-native-toast-message';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import messaging from '@react-native-firebase/messaging';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import moment from 'moment';
 import QB from 'quickblox-react-native-sdk';
+import {Alert} from 'react-native';
+import {AccessToken, LoginManager} from 'react-native-fbsdk-next';
+import {launchImageLibrary} from 'react-native-image-picker';
+import Toast from 'react-native-toast-message';
 import {
   clearUser,
   clearUserType,
@@ -14,8 +16,6 @@ import {
   setUserType,
 } from '../Actions/userAction';
 import {sendPushNotification} from './SendPush';
-import {launchImageLibrary} from 'react-native-image-picker';
-import moment from 'moment';
 
 export const validateName = (name: string) => {
   if (!name) {
@@ -23,6 +23,9 @@ export const validateName = (name: string) => {
   }
   if (name.length < 5) {
     return 'Name should be at least 5 characters';
+  }
+  if (name.length > 20) {
+    return 'Name should not be more than 20 characters';
   } else {
     return '';
   }
@@ -109,6 +112,9 @@ export const validatePassword = (password: string) => {
   }
   if (password.length < 8) {
     return 'Password must be at least 8 characters';
+  }
+  if (password.includes(' ')) {
+    return 'Invalid password';
   } else {
     return '';
   }
@@ -285,33 +291,39 @@ export const handleFacebookLogin = async (
   userType: any,
   dispatch: any,
 ) => {
-  const result = await LoginManager.logInWithPermissions([
-    'public_profile',
-    'email',
-  ]);
-  if (result.isCancelled) {
-    throw 'User cancelled the login process';
-  }
-  const data = await AccessToken.getCurrentAccessToken();
-  if (!data) {
-    throw 'Something went wrong obtaining access token';
-  }
-  QB.auth
-    .loginWithFacebook(data?.accessToken)
-    .then(async function (info) {
+  // Function to handle the user type selection
+  const handleUserTypeSelection = async (selectedUserType: string) => {
+    try {
+      dispatch(setUserType(selectedUserType));
+      setLoading(true);
+      const result = await LoginManager.logInWithPermissions([
+        'public_profile',
+        'email',
+      ]);
+
+      if (result.isCancelled) {
+        throw 'User cancelled the login process';
+      }
+      const data = await AccessToken.getCurrentAccessToken();
+      if (!data) {
+        throw 'Something went wrong obtaining access token';
+      }
+      const info = await QB.auth.loginWithFacebook(data?.accessToken);
       await messaging().registerDeviceForRemoteMessages();
       const token = await messaging().getToken();
       let userData = await firestore()
         .collection('Users')
         .where('email', '==', info.user.email)
         .get();
+
       if (userData.docs.length > 0) {
-        const user: any = {
+        const user = {
           ...info?.user,
           token: info?.session?.token,
           deviceToken: token,
           is_online: true,
         };
+
         firestore()
           .collection('Users')
           .doc(`${user?.id}`)
@@ -321,6 +333,7 @@ export const handleFacebookLogin = async (
               .collection('Users')
               .doc(`${user?.id}`)
               .get();
+
             const updatedUser = documentSnapshotAfter.data();
             dispatch(setUser(updatedUser));
             setLoading(false);
@@ -338,6 +351,7 @@ export const handleFacebookLogin = async (
           socialType: 'facebook',
           is_online: true,
         };
+
         firestore()
           .collection('Users')
           .doc(`${user?.id}`)
@@ -351,10 +365,30 @@ export const handleFacebookLogin = async (
             setLoading(false);
           });
       }
-    })
-    .catch(function (e: any) {
-      console.error('error', e);
-    });
+    } catch (error) {
+      console.error('Error during Facebook login:', error);
+      setLoading(false);
+    }
+  };
+
+  // Alert for user type selection
+  Alert.alert(
+    'Select User Type',
+    '',
+    [
+      {
+        text: 'Cancel',
+        onPress: () => {},
+        style: 'cancel',
+      },
+      {text: 'User', onPress: () => handleUserTypeSelection('user')},
+      {
+        text: 'Consultant',
+        onPress: () => handleUserTypeSelection('consultant'),
+      },
+    ],
+    {cancelable: false},
+  );
 };
 
 export const onLogout = async (user: any, dispatch: any, navigation: any) => {

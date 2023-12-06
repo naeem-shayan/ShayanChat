@@ -60,7 +60,7 @@ const SignupScreen = (props: any) => {
     signup(
       name.trim(),
       email,
-      password.trim(),
+      password,
       setLoading,
       navigation,
       dispatch,
@@ -139,8 +139,9 @@ const SignupScreen = (props: any) => {
           mt={mvs(50)}
           mb={mvs(50)}
           loading={loading}
-          title={'Singnup'}
+          title={'SignUp'}
           onPress={handleSignup}
+          onAuth={true}
         />
       </View>
     </KeyboardAwareScrollView>
