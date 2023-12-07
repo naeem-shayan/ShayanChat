@@ -88,6 +88,7 @@ const LoginScreen = (props: any) => {
           loading={loading}
           title={'Login'}
           onPress={handleLogin}
+          onAuth={true}
         />
       </View>
 
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     marginLeft: 30,
   },
   newAccountText: {
-    marginTop: mvs(20),
+    marginTop: mvs(30),
     color: Colors.textColor,
     alignSelf: 'center',
     fontFamily: 'Poppins-Regular',
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center',
-    marginTop: mvs(60),
+    marginTop: mvs(40),
     //borderWidth:1
   },
   divider: {

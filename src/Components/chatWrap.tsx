@@ -13,6 +13,7 @@ const ChatWrap = ({item, user, ...props}: any) => {
       style={
         item.senderId === user?.id ? styles.userMessage : styles.otherMessage
       }>
+      {props.children}
       <View
         style={{
           ...styles.infoContainer,
@@ -35,7 +36,6 @@ const ChatWrap = ({item, user, ...props}: any) => {
           />
         )}
       </View>
-      {props.children}
     </View>
   );
 };
