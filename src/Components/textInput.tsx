@@ -1,9 +1,15 @@
 //import liraries
 import React, {Component, useState} from 'react';
-import {View, Text, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+} from 'react-native';
 import {Shadow} from 'react-native-neomorph-shadows';
 import {mvs} from '../Config/metrices';
-import {TextInput} from 'react-native';
 import Colors from '../Contants/Colors';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import IconMI from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -21,7 +27,8 @@ const CustomInput = ({
   password = false,
   error,
   multiline = false,
-  keyboradType = "default",
+  keyboradType = 'default',
+  editable = true,
   ...props
 }: any) => {
   const [eye, setEye] = useState(false);
@@ -38,40 +45,41 @@ const CustomInput = ({
         }}>
         {label}
       </Text>
-      <Shadow
+      {/* <Shadow
         inner // <- enable inner shadow
         useArt // <- set this prop to use non-native shadow on ios
         //@ts-ignore
         style={[
           styles?.shadow,
           multiline && {height: mvs(120), borderRadius: 30},
-        ]}>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={[styles.input]}
-            placeholder={placeholder}
-            placeholderTextColor={Colors.placeholderColor}
-            selectionColor={Colors.selectionColor}
-            value={value}
-            onChangeText={onChangeText}
-            secureTextEntry={password && !eye}
-            multiline={multiline}
-            keyboardType={keyboradType}
-          />
-          {password && (
-            <TouchableOpacity
+        ]}> */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={[styles.input]}
+          placeholder={placeholder}
+          placeholderTextColor={Colors.placeholderColor}
+          selectionColor={Colors.selectionColor}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={password && !eye}
+          multiline={multiline}
+          keyboardType={keyboradType}
+          editable={editable}
+        />
+        {password && (
+          <TouchableOpacity
+            onPress={() => setEye(!eye)}
+            style={styles.eyeContainer}>
+            <IconMI
+              name={eye ? 'eye' : 'eye-outline'}
+              size={mvs(22)}
+              color={Colors.placeholderColor}
               onPress={() => setEye(!eye)}
-              style={styles.eyeContainer}>
-              <IconMI
-                name={eye ? 'eye' : 'eye-outline'}
-                size={mvs(22)}
-                color={Colors.placeholderColor}
-                onPress={() => setEye(!eye)}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      </Shadow>
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+      {/* </Shadow> */}
 
       <View style={styles.errorContainer}>
         {error && (
@@ -95,10 +103,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: mvs(14),
     paddingLeft: 20,
-    borderRadius: 16,
+    borderRadius: 10,
     backgroundColor: 'transparent',
     color: Colors.inputTextColor,
     fontFamily: 'Poppins-Regular',
+    borderWidth: 1,
+    borderColor: Colors.firstColor,
   },
   errors: {
     color: Colors.errorColor,
@@ -142,13 +152,15 @@ const styles = StyleSheet.create({
     //borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: mvs(5),
   },
   eyeContainer: {
     //width: mvs(50),
     height: mvs(40),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: mvs(20),
+    right: mvs(20),
+    position: 'absolute',
   },
   multilineTextInput: {
     minHeight: mvs(100),

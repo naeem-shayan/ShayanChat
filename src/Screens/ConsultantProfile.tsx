@@ -222,20 +222,18 @@ const ConsultantProfile = ({navigation}: any) => {
         />
       </View>
       <View style={styles.rootContainer}>
-        <View>
-          <View style={styles.picture}>
-            <Image
-              source={{
-                uri: consultantProfile?.profilePicture,
-              }}
-              style={styles.image}
-            />
-          </View>
+        <View style={styles.picture}>
+          <Image
+            source={{
+              uri: consultantProfile?.profilePicture,
+            }}
+            style={styles.image}
+          />
           <View style={styles.cameraWrapper}>
             <Icons
               name="camera"
-              color={'black'}
-              size={mvs(30)}
+              color={Colors.white}
+              size={mvs(20)}
               onPress={handleImageUpload}
             />
           </View>
@@ -248,9 +246,18 @@ const ConsultantProfile = ({navigation}: any) => {
             <Text style={styles.errors}>{validationErrors?.imageError}</Text>
           )}
         </View>
-        <Text style={styles.username} ellipsizeMode='tail' numberOfLines={1}>{user?.fullName}</Text>
+        {/* <Text style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
+          {user?.fullName}
+        </Text> */}
         <CustomInput
           mt={mvs(10)}
+          editable={false}
+          label="Full Name"
+          placeholder="Full Name"
+          value={user?.fullName}
+        />
+        <CustomInput
+          //mt={mvs(0)}
           label="Age"
           placeholder="Enter your Age in years, e.g 40"
           value={consultantProfile?.age}
@@ -357,7 +364,9 @@ const ConsultantProfile = ({navigation}: any) => {
         />
         <CustomButton
           mt={mvs(20)}
-          title={user?.isProfileComplete ? 'Update Profile' :'Complete Profile'}
+          title={
+            user?.isProfileComplete ? 'Update Profile' : 'Complete Profile'
+          }
           onPress={handleUpdate}
           loading={loading}
         />
@@ -370,7 +379,7 @@ const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
     backgroundColor: Colors.white,
-    alignItems: 'center',
+    //alignItems: 'center',
     padding: mvs(30),
   },
   username: {
@@ -387,18 +396,37 @@ const styles = StyleSheet.create({
     borderRadius: mvs(50),
     position: 'relative',
     borderColor: Colors.firstColor,
-    borderWidth: mvs(1.5),
+    //borderWidth: mvs(1.5),
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+
+    elevation: 8,
   },
   cameraWrapper: {
-    height: mvs(45),
-    width: mvs(45),
+    height: mvs(35),
+    width: mvs(35),
     backgroundColor: Colors.firstColor,
     position: 'absolute',
     bottom: 0,
-    left: mvs(60),
+    right: 0,
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+
+    elevation: 8,
   },
   image: {
     width: '100%',
@@ -415,12 +443,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  genderTitle:{
-    alignSelf:"flex-start",
-    marginLeft:mvs(10),
-    color:Colors.textColor,
-    fontSize:mvs(15),
-    marginBottom:mvs(20),
+  genderTitle: {
+    alignSelf: 'flex-start',
+    marginLeft: mvs(10),
+    color: Colors.textColor,
+    fontSize: mvs(15),
+    marginBottom: mvs(20),
     fontFamily: 'Poppins-Regular',
   },
   genderText: {
