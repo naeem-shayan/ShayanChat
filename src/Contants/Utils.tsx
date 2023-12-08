@@ -51,24 +51,12 @@ export const isValidNumber = (age: any, name: string) => {
   return '';
 };
 
-export const isValidAge = (dateOfBirth: any, enteredAge: any) => {
-  const ageNumber: number = parseInt(enteredAge, 10);
-  const dob = new Date(dateOfBirth);
-  const currentDate = new Date();
-  const age = currentDate.getFullYear() - dob.getFullYear();
-  if (ageNumber === age) {
-    return '';
-  } else {
-    return 'Invalid age for the given date of birth.';
-  }
-};
-
 export const isValidDateOfBirth = (dateOfBirth: any) => {
   if (
     moment(dateOfBirth).format('YYYY-MM-DD') ===
     moment(new Date()).format('YYYY-MM-DD')
   ) {
-    return 'Enter valid date of birth';
+    return 'Enter date of birth';
   }
   return '';
 };
@@ -79,7 +67,7 @@ export const isValidExperience = (dateOfBirth: any, experience: any) => {
   const age = currentDate.getFullYear() - birthDate.getFullYear();
 
   if (age < experience) {
-    return 'Experience cannot be greater than age.';
+    return 'Invalid Experience';
   }
 
   return '';

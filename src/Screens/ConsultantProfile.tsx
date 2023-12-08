@@ -26,7 +26,6 @@ import CustomInput from '../Components/textInput';
 import { mvs } from '../Config/metrices';
 import Colors from '../Contants/Colors';
 import {
-  isValidAge,
   isValidCNIC,
   isValidDateOfBirth,
   isValidDescription,
@@ -60,7 +59,6 @@ const ConsultantProfile = ({navigation}: any) => {
   const [validationErrors, setValidationErrors] = useState({
     dateOfBirthError:'',
     cnicError: '',
-    ageError: '',
     rateError: '',
     experienceError: '',
     descriptionError: '',
@@ -128,7 +126,6 @@ const ConsultantProfile = ({navigation}: any) => {
 
   const checkValidationsErrors = () => {
     const dateOfBirthError=isValidDateOfBirth(consultantProfile?.dateOfBirth);
-    const ageError=isValidAge(consultantProfile?.dateOfBirth, consultantProfile?.age)
     const rateError = isValidNumber(consultantProfile?.rate, 'rate');
     const experienceError = isValidExperience(
       consultantProfile?.dateOfBirth,
@@ -151,7 +148,6 @@ const ConsultantProfile = ({navigation}: any) => {
     if (
       dateOfBirthError||
       cnicError ||
-      ageError ||
       rateError ||
       experienceError ||
       categoryError ||
@@ -161,7 +157,6 @@ const ConsultantProfile = ({navigation}: any) => {
       setValidationErrors({
         dateOfBirthError,
         cnicError,
-        ageError,
         rateError,
         experienceError,
         descriptionError,
@@ -179,7 +174,6 @@ const ConsultantProfile = ({navigation}: any) => {
     setValidationErrors({
       dateOfBirthError:'',
       cnicError: '',
-      ageError: '',
       rateError: '',
       experienceError: '',
       descriptionError: '',
@@ -330,14 +324,6 @@ const ConsultantProfile = ({navigation}: any) => {
             <Text style={styles.errors}>{validationErrors?.dateOfBirthError}</Text>
           )}
         </View>
-        <CustomInput
-          label="Age"
-          placeholder="Enter your Age in years, e.g 40"
-          value={consultantProfile?.age}
-          error={validationErrors?.ageError}
-          keyboradType="numeric"
-          onChangeText={(age: any) => handleInputChange('age', age)}
-        />
         <CustomInput
           label="Experience"
           placeholder="Enter your experience in years, e.g 5"
