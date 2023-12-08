@@ -104,19 +104,19 @@ const LoginScreen = (props: any) => {
         <View style={styles.divider} />
       </View>
       <View style={styles.socialButtons}>
-        {/* <FacebookLoginButton
+        <FacebookLoginButton
           onPress={() =>
             handleFacebookLogin(setLoading, navigation, userType, dispatch)
           }
-        /> */}
-        <IconButton
+        />
+        {/* <IconButton
           icon="facebook"
           size={33}
           iconColor="#4267B2"
           onPress={() =>
             handleFacebookLogin(setLoading, navigation, userType, dispatch)
           }
-        />
+        /> */}
       </View>
     </KeyboardAwareScrollView>
   );

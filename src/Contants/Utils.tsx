@@ -51,6 +51,41 @@ export const isValidNumber = (age: any, name: string) => {
   return '';
 };
 
+export const isValidDateOfBirth = (dateOfBirth: any) => {
+  if (
+    moment(dateOfBirth).format('YYYY-MM-DD') ===
+    moment(new Date()).format('YYYY-MM-DD')
+  ) {
+    return 'Enter date of birth';
+  }
+  return '';
+};
+
+export const isValidExperience = (dateOfBirth: any, experience: any) => {
+  const currentDate = new Date();
+  const birthDate = new Date(dateOfBirth);
+  const age = currentDate.getFullYear() - birthDate.getFullYear();
+
+  if (age < experience) {
+    return 'Invalid Experience';
+  }
+
+  return '';
+};
+
+export const isValidCNIC = (cnic: any) => {
+  if (!cnic) {
+    return 'Enter CNIC';
+  }
+  if (cnic.includes(' ')) {
+    return 'Invalid CNIC';
+  }
+  if (!/^\d{13}$/.test(cnic)) {
+    return 'CNIC must be 13 digits';
+  }
+  return '';
+};
+
 export const isValidDescription = (description: string) => {
   const words = description.split(/\s+/);
   if (words.length < 10) {

@@ -1,30 +1,39 @@
-import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  Dimensions,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import CustomInput from '../Components/textInput';
-import Colors from '../Contants/Colors';
-import {mvs} from '../Config/metrices';
-import CustomButton from '../Components/button';
-import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {launchImageLibrary} from 'react-native-image-picker';
-import categoriesList from '../Contants/catergoriesJSON';
-import {RadioButton} from 'react-native-paper';
-import {Dropdown} from 'react-native-element-dropdown';
-import {useDispatch, useSelector} from 'react-redux';
-import {isValidDescription, isValidNumber, onLogout} from '../Contants/Utils';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import firestore from '@react-native-firebase/firestore';
-import {setUser} from '../Actions/userAction';
 import storage from '@react-native-firebase/storage';
-import {IconButton} from 'react-native-paper';
-import {useIsFocused} from '@react-navigation/native';
+import { useIsFocused } from '@react-navigation/native';
+import moment from 'moment';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  Dimensions,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import DatePicker from 'react-native-date-picker';
+import { Dropdown } from 'react-native-element-dropdown';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { IconButton, RadioButton } from 'react-native-paper';
+import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser } from '../Actions/userAction';
+import CustomButton from '../Components/button';
+import CustomInput from '../Components/textInput';
+import { mvs } from '../Config/metrices';
+import Colors from '../Contants/Colors';
+import {
+  isValidCNIC,
+  isValidDateOfBirth,
+  isValidDescription,
+  isValidExperience,
+  isValidNumber,
+  onLogout
+} from '../Contants/Utils';
+import categoriesList from '../Contants/catergoriesJSON';
 import countries from '../Contants/countriesJSON';
 import defaultProfilePicture from '../Contants/defaultPicture';
 
@@ -36,17 +45,20 @@ const ConsultantProfile = ({navigation}: any) => {
   const isFoucs = useIsFocused();
 
   const [consultantProfile, setConsultantProfile] = useState({
-    age: null,
+    dateOfBirth: user?.dateOfBirth || new Date(),
+    cnic: user?.cnic || null,
+    age: user?.age || null,
     gender: 'male',
     country: user?.country || '',
     category: user?.category || '',
-    experience: null,
+    experience: user?.experience ||  null,
     profilePicture: user?.profilePicture || defaultProfilePicture,
-    rate: null,
+    rate: user?.rate || null,
     description: user?.description || '',
   });
   const [validationErrors, setValidationErrors] = useState({
-    ageError: '',
+    dateOfBirthError:'',
+    cnicError: '',
     rateError: '',
     experienceError: '',
     descriptionError: '',
@@ -55,10 +67,13 @@ const ConsultantProfile = ({navigation}: any) => {
     imageError: '',
   });
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (user && isFoucs) {
       setConsultantProfile({
+        dateOfBirth: user?.dateOfBirth || new Date(),
+        cnic: user?.cnic || 0,
         age: user?.age || 0,
         gender: user?.gender || 'male',
         country: user?.country || '',
@@ -101,17 +116,23 @@ const ConsultantProfile = ({navigation}: any) => {
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
   const handleInputChange = (field: string, value: any) => {
-    setConsultantProfile({...consultantProfile, [field]: value});
+    if (field === 'dateOfBirth') {
+      const formattedDate = moment(value).format('YYYY-MM-DD');
+      setConsultantProfile({ ...consultantProfile, [field]: formattedDate });
+    } else {
+      setConsultantProfile({ ...consultantProfile, [field]: value });
+    }
   };
 
   const checkValidationsErrors = () => {
-    const ageError = isValidNumber(consultantProfile.age, 'age');
-    const rateError = isValidNumber(consultantProfile.rate, 'rate');
-    const experienceError = isValidNumber(
-      consultantProfile.experience,
-      'experience',
+    const dateOfBirthError=isValidDateOfBirth(consultantProfile?.dateOfBirth);
+    const rateError = isValidNumber(consultantProfile?.rate, 'rate');
+    const experienceError = isValidExperience(
+      consultantProfile?.dateOfBirth,
+      consultantProfile?.experience
     );
-    const descriptionError = isValidDescription(consultantProfile.description);
+    const descriptionError = isValidDescription(consultantProfile?.description);
+    const cnicError = isValidCNIC(consultantProfile?.cnic);
     let categoryError = '';
     let countryError = '';
     let imageError = '';
@@ -125,7 +146,8 @@ const ConsultantProfile = ({navigation}: any) => {
       imageError = 'Profile Pic is required';
     }
     if (
-      ageError ||
+      dateOfBirthError||
+      cnicError ||
       rateError ||
       experienceError ||
       categoryError ||
@@ -133,7 +155,8 @@ const ConsultantProfile = ({navigation}: any) => {
       descriptionError
     ) {
       setValidationErrors({
-        ageError,
+        dateOfBirthError,
+        cnicError,
         rateError,
         experienceError,
         descriptionError,
@@ -149,7 +172,8 @@ const ConsultantProfile = ({navigation}: any) => {
   const clearErrors = () => {
     setLoading(true);
     setValidationErrors({
-      ageError: '',
+      dateOfBirthError:'',
+      cnicError: '',
       rateError: '',
       experienceError: '',
       descriptionError: '',
@@ -165,6 +189,7 @@ const ConsultantProfile = ({navigation}: any) => {
       const updatedConsultantProfile = {
         ...user,
         ...consultantProfile,
+        rate:`$${consultantProfile?.rate}`,
         isProfileComplete: true,
       };
       firestore()
@@ -246,9 +271,6 @@ const ConsultantProfile = ({navigation}: any) => {
             <Text style={styles.errors}>{validationErrors?.imageError}</Text>
           )}
         </View>
-        {/* <Text style={styles.username} ellipsizeMode="tail" numberOfLines={1}>
-          {user?.fullName}
-        </Text> */}
         <CustomInput
           mt={mvs(10)}
           editable={false}
@@ -257,14 +279,51 @@ const ConsultantProfile = ({navigation}: any) => {
           value={user?.fullName}
         />
         <CustomInput
-          //mt={mvs(0)}
-          label="Age"
-          placeholder="Enter your Age in years, e.g 40"
-          value={consultantProfile?.age}
-          error={validationErrors?.ageError}
+          label="CNIC"
+          placeholder="Enter your CNIC, e.g 4467134567657"
+          value={consultantProfile?.cnic}
+          onChangeText={(cnic: any) => handleInputChange('cnic', cnic)}
+          error={validationErrors?.cnicError}
           keyboradType="numeric"
-          onChangeText={(age: any) => handleInputChange('age', age)}
+          editable={!user?.isProfileComplete}
         />
+        <Text style={styles.label}>Date of birth</Text>
+        <Pressable style={styles.input} onPress={() => setOpen(!open)}>
+          <Text style={[styles.datePlaceholder, {
+            color: moment(consultantProfile?.dateOfBirth).format('YYYY-MM-DD') === moment(new Date()).format('YYYY-MM-DD')
+            ? Colors?.placeholderColor
+            : Colors?.textColor
+          }]}>
+            {
+              moment(consultantProfile?.dateOfBirth).format('YYYY-MM-DD') === moment(new Date()).format('YYYY-MM-DD')
+              ? 'Enter your date of birth'
+              : moment(consultantProfile?.dateOfBirth).format('YYYY-MM-DD')
+            
+            }
+          </Text>
+        </Pressable>
+        <DatePicker
+          modal
+          open={open}
+          date={new Date()}
+          maximumDate={new Date()}
+          mode="date"
+          onConfirm={date => {
+            handleInputChange('dateOfBirth', date)
+            setOpen(false);
+          }}
+          onCancel={() => {
+            setOpen(false);
+          }}
+        />
+        <View style={styles.errorContainer}>
+          {validationErrors?.dateOfBirthError && (
+            <Icon name="error" size={mvs(16)} color={Colors.errorColor} />
+          )}
+          {validationErrors?.dateOfBirthError && (
+            <Text style={styles.errors}>{validationErrors?.dateOfBirthError}</Text>
+          )}
+        </View>
         <CustomInput
           label="Experience"
           placeholder="Enter your experience in years, e.g 5"
@@ -277,7 +336,7 @@ const ConsultantProfile = ({navigation}: any) => {
         />
         <CustomInput
           label="Rate"
-          placeholder="Enter your rate per hour, e.g 500"
+          placeholder="Enter your rate per hour in dollars, e.g 500"
           value={consultantProfile?.rate}
           error={validationErrors?.rateError}
           keyboradType="numeric"
@@ -285,16 +344,19 @@ const ConsultantProfile = ({navigation}: any) => {
         />
 
         <View style={styles.dropdownContainer}>
+          <Text style={[styles.title, {marginBottom: mvs(5)}]}>Category</Text>
           <Dropdown
             data={categoryOptions}
             mode="modal"
             labelField="label"
             valueField="value"
             placeholder="Select category"
+            selectedTextStyle={styles.selectValueStyle}
             value={consultantProfile?.category}
             onChange={(item: any) => handleInputChange('category', item.value)}
             style={styles.dropdownValue}
             containerStyle={styles.dropdownMenu}
+            disable={user?.isProfileComplete}
           />
         </View>
         <View style={styles.errorContainer}>
@@ -306,6 +368,7 @@ const ConsultantProfile = ({navigation}: any) => {
           )}
         </View>
         <View style={styles.dropdownContainer}>
+          <Text style={styles.title}>Country</Text>
           <Dropdown
             data={countries}
             mode="modal"
@@ -313,9 +376,11 @@ const ConsultantProfile = ({navigation}: any) => {
             valueField="value"
             placeholder="Select country"
             value={consultantProfile?.country}
+            selectedTextStyle={styles.selectValueStyle}
             onChange={(item: any) => handleInputChange('country', item.value)}
             style={styles.dropdownValue}
             containerStyle={styles.dropdownMenu}
+            disable={user?.isProfileComplete}
           />
         </View>
         <View style={styles.errorContainer}>
@@ -451,6 +516,13 @@ const styles = StyleSheet.create({
     marginBottom: mvs(20),
     fontFamily: 'Poppins-Regular',
   },
+  title: {
+    color: Colors.textColor,
+    fontSize: mvs(15),
+    fontFamily: 'Poppins-Regular',
+    marginLeft: mvs(20),
+    marginBottom: mvs(5),
+  },
   genderText: {
     color: Colors.textColor,
     fontSize: mvs(15),
@@ -462,11 +534,19 @@ const styles = StyleSheet.create({
     marginVertical: mvs(10),
   },
   dropdownValue: {
-    borderColor: '#AAAACC80',
     borderWidth: 1,
-    borderRadius: mvs(15),
-    height: mvs(50),
+    borderRadius: 10,
+    height: mvs(55),
     paddingHorizontal: mvs(15),
+    color: Colors.inputTextColor,
+    fontFamily: 'Poppins-Regular',
+    borderColor: Colors.firstColor,
+    paddingLeft: 20,
+  },
+  selectValueStyle:{
+    color:Colors.textColor,
+    fontFamily: 'Poppins-Regular',
+    fontSize:mvs(13)
   },
   errorContainer: {
     flexDirection: 'row',
@@ -492,6 +572,31 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     marginRight: mvs(30),
     marginTop: mvs(5),
+  },
+  input: {
+    flex: 1,
+    justifyContent: 'center',
+    fontSize: mvs(14),
+    paddingLeft: 20,
+    borderRadius: 10,
+    backgroundColor: 'transparent',
+    color: Colors.inputTextColor,
+    fontFamily: 'Poppins-Regular',
+    borderWidth: 1,
+    borderColor: Colors.firstColor,
+    height: mvs(55),
+    marginTop: mvs(5),
+    marginBottom: mvs(2),
+  },
+  label: {
+    color: Colors.textLabel,
+    fontSize: mvs(15),
+    fontFamily: 'Poppins-Regular',
+    marginLeft: mvs(20),
+  },
+  datePlaceholder: {
+    fontSize: mvs(15),
+    fontFamily: 'Poppins-Regular',
   },
 });
 
