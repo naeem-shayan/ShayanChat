@@ -1,18 +1,17 @@
 //import liraries
-import React, {Component, useState} from 'react';
+import React, { useState } from 'react';
 import {
-  View,
+  Dimensions,
+  StyleSheet,
   Text,
   TextInput,
-  StyleSheet,
-  Dimensions,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import {Shadow} from 'react-native-neomorph-shadows';
-import {mvs} from '../Config/metrices';
-import Colors from '../Contants/Colors';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import IconMI from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { mvs } from '../Config/metrices';
+import Colors from '../Contants/Colors';
 
 const width = Math.round(Dimensions.get('window').width);
 

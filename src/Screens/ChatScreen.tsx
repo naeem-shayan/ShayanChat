@@ -3,6 +3,7 @@ import {useIsFocused} from '@react-navigation/native';
 import QB from 'quickblox-react-native-sdk';
 import React, {useEffect, useRef, useState} from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   LogBox,
@@ -60,6 +61,8 @@ export default function ChatScreen({route, navigation}: any) {
   const [video, setVideo] = useState('');
   const [videoLoading, setVideoLoading] = useState(false);
   const [start, setStart] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
   //@ts-ignore
   const emitter = new NativeEventEmitter(QB.chat);
@@ -78,7 +81,7 @@ export default function ChatScreen({route, navigation}: any) {
 
   useEffect(() => {
     fetchChat();
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     if (isFocused) {
@@ -254,18 +257,27 @@ export default function ChatScreen({route, navigation}: any) {
   };
 
   const fetchChat = () => {
+    if (currentPage > 1) {
+      setLoadingMessages(true);
+    }
     const getDialogMessagesParams: any = {
       dialogId: dialog?.id,
       sort: {
         ascending: false,
         field: QB.chat.MESSAGES_SORT.FIELD.DATE_SENT,
       },
+      limit: 10,
+      skip: (currentPage - 1) * 10,
       markAsRead: true,
     };
     QB.chat
       .getDialogMessages(getDialogMessagesParams)
       .then(async result => {
-        setMessages(result?.messages);
+        // setMessages(result?.messages);
+        setMessages((prevMessages: any) => {
+          const updatedMessages = [...prevMessages, ...result.messages];
+          return updatedMessages;
+        });
         result?.messages?.forEach((element: any) => {
           if (element?.readIds?.length < 2) {
             const markMessageReadParams: any = {
@@ -279,6 +291,7 @@ export default function ChatScreen({route, navigation}: any) {
           }
         });
         setLoading(false);
+        setLoadingMessages(false);
       })
       .catch(function (e) {
         // handle error
@@ -341,6 +354,10 @@ export default function ChatScreen({route, navigation}: any) {
     });
   };
 
+  const loadMoreChat = () => {
+    setCurrentPage(previousPage => previousPage + 1);
+  };
+
   if (loading) {
     return <Loading />;
   }
@@ -371,6 +388,9 @@ export default function ChatScreen({route, navigation}: any) {
           inverted
           renderItem={renderItem}
           keyExtractor={item => item.id}
+          onEndReached={loadMoreChat}
+          onEndReachedThreshold={5}
+          ListFooterComponent={loadingMessages ? <ActivityIndicator /> : null}
           style={styles.messageList}
         />
         <View style={styles.inputContainer}>
