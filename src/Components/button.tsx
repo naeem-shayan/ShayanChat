@@ -27,7 +27,7 @@ const CustomButton = ({
       style={[
         styles.container,
         {marginTop: mt, marginBottom: mb},
-        onAuth && {width: '40%', alignSelf: 'center'},
+        //onAuth && {width: '40%', alignSelf: 'center'},
       ]}>
       {loading ? (
         <ActivityIndicator size={'small'} color={Colors.buttonText} />

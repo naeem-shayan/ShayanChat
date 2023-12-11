@@ -167,7 +167,8 @@ export const validateConfirmPassword = (
 };
 
 const handleLogin = async (user: any, dispatch: any) => {
-  firestore()
+  let userData: any = {}
+  await firestore()
     .collection('Users')
     .doc(`${user?.id}`)
     .update(user)
@@ -178,17 +179,20 @@ const handleLogin = async (user: any, dispatch: any) => {
         .get();
       const currentUserDataAfter = documentSnapshotAfter.data();
       dispatch(setUser(currentUserDataAfter));
+      userData = currentUserDataAfter;
       return true;
     })
     .catch(error => {
       return false;
     });
+    return userData
 };
 
 const handleSignup = async (user: any, dispatch: any) => {
   const updatedUser = {
     ...user,
     isProfileComplete: false,
+    is_verified: false,
   };
   firestore()
     .collection('Users')
@@ -235,7 +239,7 @@ export const signin = (
         handleSignup(user, dispatch)
           .then(() => {
             setLoading(false);
-            navigation.replace('Connect');
+            navigation.replace('VerifyEmail');
           })
           .catch(error => {
             console.error(error);
@@ -243,9 +247,9 @@ export const signin = (
         setLoading(false);
       } else {
         handleLogin(user, dispatch)
-          .then(() => {
+          .then((res: any) => {
             setLoading(false);
-            navigation.replace('Connect');
+            navigation.replace(res?.is_verified ? 'Connect' : 'VerifyEmail');
           })
           .catch(error => {
             console.log(error);
@@ -445,10 +449,6 @@ export const onLogout = async (user: any, dispatch: any, navigation: any) => {
               is_online: false,
               deviceToken: '',
             })
-            .then(async () => {
-              navigation.replace('Login');
-            })
-            .catch(error => {});
         })
         .catch(e => {
           console.log('error', e);

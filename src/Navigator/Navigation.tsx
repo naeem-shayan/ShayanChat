@@ -1,10 +1,10 @@
 import firestore from '@react-native-firebase/firestore';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
 import QB from 'quickblox-react-native-sdk';
-import React, { useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
-import { useSelector } from 'react-redux';
+import React, {useEffect, useRef, useState} from 'react';
+import {AppState} from 'react-native';
+import {useSelector} from 'react-redux';
 import Loading from '../Components/loading';
 import ServerConnection from '../Contants/ServerConnection';
 import CallScreen from '../Screens/CallScreen';
@@ -15,6 +15,7 @@ import OnboardingScreen from '../Screens/OnboardingScreen';
 import SignupScreen from '../Screens/SignupScreen';
 import WelcomeScreen from '../Screens/WelcomeScreen';
 import BottomTab from './bottomTab';
+import VerifyEmail from '../Screens/VerifyEmail';
 
 const Stack = createStackNavigator();
 
@@ -33,6 +34,7 @@ const Navigation = () => {
   const [appStateVisible, setAppStateVisible] = useState(appState.current);
   const [deviceState, setDeviceState] = useState('');
   const callSession = useSelector((state: any) => state.callSession);
+  const user = useSelector((state: any) => state.user);
 
   useEffect(() => {
     QB.settings
@@ -96,7 +98,13 @@ const Navigation = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={session?.applicationId ? 'Connect' : 'Onboarding'}
+        initialRouteName={
+          session?.applicationId
+            ? user?.is_verified
+              ? 'Connect'
+              : 'VerifyEmail'
+            : 'Onboarding'
+        }
         screenOptions={{
           headerShown: false,
         }}>
@@ -104,6 +112,7 @@ const Navigation = () => {
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
+        <Stack.Screen name="VerifyEmail" component={VerifyEmail} />
         <Stack.Screen
           name="CreateChannelScreen"
           component={CreateChannelScreen}
