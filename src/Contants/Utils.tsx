@@ -62,6 +62,9 @@ export const isValidDateOfBirth = (dateOfBirth: any) => {
 };
 
 export const isValidExperience = (dateOfBirth: any, experience: any) => {
+  if (!experience) {
+    return 'Enter Experience';
+  }
   const currentDate = new Date();
   const birthDate = new Date(dateOfBirth);
   const age = currentDate.getFullYear() - birthDate.getFullYear();
@@ -167,7 +170,7 @@ export const validateConfirmPassword = (
 };
 
 const handleLogin = async (user: any, dispatch: any) => {
-  let userData: any = {}
+  let userData: any = {};
   await firestore()
     .collection('Users')
     .doc(`${user?.id}`)
@@ -185,7 +188,7 @@ const handleLogin = async (user: any, dispatch: any) => {
     .catch(error => {
       return false;
     });
-    return userData
+  return userData;
 };
 
 const handleSignup = async (user: any, dispatch: any) => {
@@ -442,13 +445,10 @@ export const onLogout = async (user: any, dispatch: any, navigation: any) => {
         .then(() => {
           dispatch(clearUser());
           dispatch(clearUserType());
-          firestore()
-            .collection('Users')
-            .doc(`${user?.id}`)
-            .update({
-              is_online: false,
-              deviceToken: '',
-            })
+          firestore().collection('Users').doc(`${user?.id}`).update({
+            is_online: false,
+            deviceToken: '',
+          });
         })
         .catch(e => {
           console.log('error', e);
@@ -475,7 +475,7 @@ export const sendMessage = async ({
   user,
   messages,
   setMessages,
-  dialog,
+  dialogId,
   setNewMessage,
   friend,
   setSending,
@@ -496,7 +496,7 @@ export const sendMessage = async ({
     };
     setMessages((prevMessages: any) => [emptyMessage, ...prevMessages]);
     const message = {
-      dialogId: dialog?.id,
+      dialogId,
       body: '',
       properties: {
         type: 'date',
@@ -528,7 +528,7 @@ export const sendMessage = async ({
     // Handle different message types
     if (messageType === 'text') {
       const message = {
-        dialogId: dialog?.id,
+        dialogId,
         body: content,
         properties: {
           type: 'text',
@@ -564,7 +564,7 @@ export const sendMessage = async ({
       const url = await QB.content.getPrivateURL(contentGetFileUrlParams);
 
       const message = {
-        dialogId: dialog?.id,
+        dialogId,
         body: 'Attachment',
         saveToHistory: true,
         properties: {
@@ -588,4 +588,27 @@ export const sendMessage = async ({
     console.error('Error in sendMessage:', error);
     setSending(false);
   }
+};
+
+export const updateFirestoreUser = async (
+  userId: any,
+  updatedData: any,
+  dispatch: any,
+) => {
+  firestore()
+    .collection('Users')
+    .doc(`${userId}`)
+    .update(updatedData)
+    .then(async () => {
+      const documentSnapshotAfter = await firestore()
+        .collection('Users')
+        .doc(`${userId}`)
+        .get();
+      const currentUserDataAfter = documentSnapshotAfter.data();
+      dispatch(setUser(currentUserDataAfter));
+      return true;
+    })
+    .catch(error => {
+      return false;
+    });
 };

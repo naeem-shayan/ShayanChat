@@ -130,9 +130,12 @@ export default function HomeScreen({navigation}: any) {
                 name={item?.name}
                 onPress={() => {
                   navigation.navigate('Chat', {
-                    user,
+                    dialogId: item?.id,
+                    receipentId:
+                      item?.occupantsIds[0] === user?.id
+                        ? item?.occupantsIds[1]
+                        : item?.occupantsIds[0],
                     name: item?.name,
-                    dialog: item,
                   });
                 }}
               />

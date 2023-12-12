@@ -19,11 +19,11 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { IconButton, RadioButton } from 'react-native-paper';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useDispatch, useSelector } from 'react-redux';
-import { setUser } from '../Actions/userAction';
+import {useDispatch, useSelector} from 'react-redux';
+import {setUser} from '../Actions/userAction';
 import CustomButton from '../Components/button';
 import CustomInput from '../Components/textInput';
-import { mvs } from '../Config/metrices';
+import {mvs} from '../Config/metrices';
 import Colors from '../Contants/Colors';
 import {
   isValidCNIC,
@@ -31,7 +31,8 @@ import {
   isValidDescription,
   isValidExperience,
   isValidNumber,
-  onLogout
+  onLogout,
+  updateFirestoreUser,
 } from '../Contants/Utils';
 import categoriesList from '../Contants/catergoriesJSON';
 import countries from '../Contants/countriesJSON';
@@ -125,11 +126,11 @@ const ConsultantProfile = ({navigation}: any) => {
   };
 
   const checkValidationsErrors = () => {
-    const dateOfBirthError=isValidDateOfBirth(consultantProfile?.dateOfBirth);
+    const dateOfBirthError = isValidDateOfBirth(consultantProfile?.dateOfBirth);
     const rateError = isValidNumber(consultantProfile?.rate, 'rate');
     const experienceError = isValidExperience(
       consultantProfile?.dateOfBirth,
-      consultantProfile?.experience
+      consultantProfile?.experience,
     );
     const descriptionError = isValidDescription(consultantProfile?.description);
     const cnicError = isValidCNIC(consultantProfile?.cnic);
@@ -146,7 +147,7 @@ const ConsultantProfile = ({navigation}: any) => {
       imageError = 'Profile Pic is required';
     }
     if (
-      dateOfBirthError||
+      dateOfBirthError ||
       cnicError ||
       rateError ||
       experienceError ||
@@ -170,7 +171,6 @@ const ConsultantProfile = ({navigation}: any) => {
   };
 
   const clearErrors = () => {
-    setLoading(true);
     setValidationErrors({
       dateOfBirthError:'',
       cnicError: '',
@@ -186,23 +186,14 @@ const ConsultantProfile = ({navigation}: any) => {
   const handleUpdate = () => {
     if (checkValidationsErrors()) {
       clearErrors();
+      setLoading(true);
       const updatedConsultantProfile = {
         ...user,
         ...consultantProfile,
-        rate:`$${consultantProfile?.rate}`,
         isProfileComplete: true,
       };
-      firestore()
-        .collection('Users')
-        .doc(`${user?.id}`)
-        .update(updatedConsultantProfile)
-        .then(async () => {
-          const documentSnapshotAfter = await firestore()
-            .collection('Users')
-            .doc(`${user?.id}`)
-            .get();
-          const currentUserDataAfter = documentSnapshotAfter.data();
-          dispatch(setUser(currentUserDataAfter));
+      updateFirestoreUser(user?.id, updatedConsultantProfile, dispatch)
+        .then(() => {
           setLoading(false);
           Alert.alert(
             user?.isProfileComplete
@@ -210,8 +201,9 @@ const ConsultantProfile = ({navigation}: any) => {
               : 'Your profile has been completed successfully',
           );
         })
-        .catch(error => {
-          console.error(error);
+        .catch(() => {
+          setLoading(false);
+          console.error('error in updating user');
         });
     }
   };
@@ -289,17 +281,22 @@ const ConsultantProfile = ({navigation}: any) => {
         />
         <Text style={styles.label}>Date of birth</Text>
         <Pressable style={styles.input} onPress={() => setOpen(!open)}>
-          <Text style={[styles.datePlaceholder, {
-            color: moment(consultantProfile?.dateOfBirth).format('YYYY-MM-DD') === moment(new Date()).format('YYYY-MM-DD')
-            ? Colors?.placeholderColor
-            : Colors?.textColor
-          }]}>
-            {
-              moment(consultantProfile?.dateOfBirth).format('YYYY-MM-DD') === moment(new Date()).format('YYYY-MM-DD')
+          <Text
+            style={[
+              styles.datePlaceholder,
+              {
+                color:
+                  moment(consultantProfile?.dateOfBirth).format(
+                    'YYYY-MM-DD',
+                  ) === moment(new Date()).format('YYYY-MM-DD')
+                    ? Colors?.placeholderColor
+                    : Colors?.textColor,
+              },
+            ]}>
+            {moment(consultantProfile?.dateOfBirth).format('YYYY-MM-DD') ===
+            moment(new Date()).format('YYYY-MM-DD')
               ? 'Enter your date of birth'
-              : moment(consultantProfile?.dateOfBirth).format('YYYY-MM-DD')
-            
-            }
+              : moment(consultantProfile?.dateOfBirth).format('YYYY-MM-DD')}
           </Text>
         </Pressable>
         <DatePicker
@@ -309,7 +306,7 @@ const ConsultantProfile = ({navigation}: any) => {
           maximumDate={new Date()}
           mode="date"
           onConfirm={date => {
-            handleInputChange('dateOfBirth', date)
+            handleInputChange('dateOfBirth', date);
             setOpen(false);
           }}
           onCancel={() => {
@@ -321,7 +318,9 @@ const ConsultantProfile = ({navigation}: any) => {
             <Icon name="error" size={mvs(16)} color={Colors.errorColor} />
           )}
           {validationErrors?.dateOfBirthError && (
-            <Text style={styles.errors}>{validationErrors?.dateOfBirthError}</Text>
+            <Text style={styles.errors}>
+              {validationErrors?.dateOfBirthError}
+            </Text>
           )}
         </View>
         <CustomInput
@@ -543,10 +542,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.firstColor,
     paddingLeft: 20,
   },
-  selectValueStyle:{
-    color:Colors.textColor,
+  selectValueStyle: {
+    color: Colors.textColor,
     fontFamily: 'Poppins-Regular',
-    fontSize:mvs(13)
+    fontSize: mvs(13),
   },
   errorContainer: {
     flexDirection: 'row',

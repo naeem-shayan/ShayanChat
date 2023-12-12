@@ -1,4 +1,5 @@
 //import liraries
+import QB from 'quickblox-react-native-sdk';
 import React, {useState} from 'react';
 import {
   Alert,
@@ -11,8 +12,6 @@ import {
 import {Button} from 'react-native-paper';
 import CustomHeader from '../Components/header';
 import Colors from '../Contants/Colors';
-import QB from 'quickblox-react-native-sdk';
-import firestore from '@react-native-firebase/firestore';
 
 //@ts-ignore
 import UserAvatar from 'react-native-user-avatar';
@@ -21,8 +20,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import CustomButton from '../Components/button';
 import CustomInput from '../Components/textInput';
 import {mvs} from '../Config/metrices';
-import {onLogout} from '../Contants/Utils';
-import {setUser} from '../Actions/userAction';
+import {onLogout, updateFirestoreUser} from '../Contants/Utils';
 
 // create a component
 const Profile = ({navigation}: any) => {
@@ -30,7 +28,6 @@ const Profile = ({navigation}: any) => {
 
   const dispatch = useDispatch();
 
-  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [visible, setVisible] = useState(false);
@@ -39,7 +36,6 @@ const Profile = ({navigation}: any) => {
   const [passwordLoader, setPassowordLoader] = useState(false);
 
   const handleChangePassword = async () => {
-    setPassowordLoader(true);
     if (!password) {
       setPassordError('Enter old password');
       return;
@@ -54,6 +50,7 @@ const Profile = ({navigation}: any) => {
       return;
     }
 
+    setPassowordLoader(true);
     setPassordError('');
     setNewPassordError('');
 
@@ -66,7 +63,7 @@ const Profile = ({navigation}: any) => {
       .update(updateUserParams)
       .then(function (updatedUser) {
         setVisible(false);
-        Alert.alert('password changed');
+        Alert.alert('password has been updated');
 
         const updatedConsultantProfile = {
           password: newPassword,
@@ -74,21 +71,13 @@ const Profile = ({navigation}: any) => {
 
         setPassword('');
         setNewPassword('');
-        firestore()
-          .collection('Users')
-          .doc(`${user?.id}`)
-          .update(updatedConsultantProfile)
-          .then(async () => {
-            const documentSnapshotAfter = await firestore()
-              .collection('Users')
-              .doc(`${user?.id}`)
-              .get();
-            const currentUserDataAfter = documentSnapshotAfter.data();
-            dispatch(setUser(currentUserDataAfter));
+        updateFirestoreUser(user?.id, updatedConsultantProfile, dispatch)
+          .then(() => {
             setPassowordLoader(false);
           })
-          .catch(error => {
-            console.error(error);
+          .catch(() => {
+            setPassowordLoader(false);
+            console.log('error in updating user');
           });
       })
       .catch(function (e) {
@@ -167,7 +156,7 @@ const Profile = ({navigation}: any) => {
 
         {!visible && (
           <Text
-            style={{margin: 40, color: Colors.firstColor}} // Added color styling
+            style={{margin: 40, color: Colors.firstColor}}
             onPress={() => setVisible(true)}>
             Change Password
           </Text>
@@ -177,7 +166,6 @@ const Profile = ({navigation}: any) => {
           icon="logout"
           mode="contained"
           buttonColor={Colors.firstColor}
-          loading={loading}
           onPress={handleLogoutPress}>
           Logout
         </Button>

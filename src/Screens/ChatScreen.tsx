@@ -1,5 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import {useIsFocused} from '@react-navigation/native';
+import moment from 'moment';
 import QB from 'quickblox-react-native-sdk';
 import React, {useEffect, useRef, useState} from 'react';
 import {
@@ -22,6 +23,7 @@ import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import TrackPlayer from 'react-native-track-player';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useSelector} from 'react-redux';
 import SheetData from '../Components/bottomSheet';
 import ChatImage from '../Components/chatImage';
 import ChatText from '../Components/chatText';
@@ -40,13 +42,14 @@ import {
   sendMessage,
   updateObjectById,
 } from '../Contants/Utils';
-import moment from 'moment';
 
 const audioRecorderPlayer = new AudioRecorderPlayer();
 audioRecorderPlayer.setSubscriptionDuration(0.1);
 
 export default function ChatScreen({route, navigation}: any) {
-  const {dialog, user, name} = route.params;
+  const {dialogId, receipentId, name} = route.params;
+  const user = useSelector((state: any) => state.user);
+
   const player = useRef(null);
   const refRBSheet = useRef<RBSheet>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -125,11 +128,13 @@ export default function ChatScreen({route, navigation}: any) {
 
   useEffect(() => {
     if (user) {
-      let id =
-        dialog?.occupantsIds[0] === user.id
-          ? dialog?.occupantsIds[1]
-          : dialog?.occupantsIds[0];
-      const collectionRef = firestore().collection('Users').doc(`${id}`);
+      // let id =
+      //   dialog?.occupantsIds[0] === user.id
+      //     ? dialog?.occupantsIds[1]
+      //     : dialog?.occupantsIds[0];
+      const collectionRef = firestore()
+        .collection('Users')
+        .doc(`${receipentId}`);
       const unsubscribe = collectionRef.onSnapshot(querySnapshot => {
         setFriend(querySnapshot.data());
         setLoading(false);
@@ -185,7 +190,7 @@ export default function ChatScreen({route, navigation}: any) {
           user,
           messages,
           setMessages,
-          dialog,
+          dialogId,
           setNewMessage,
           friend,
           setSending,
@@ -261,7 +266,7 @@ export default function ChatScreen({route, navigation}: any) {
       setLoadingMessages(true);
     }
     const getDialogMessagesParams: any = {
-      dialogId: dialog?.id,
+      dialogId,
       sort: {
         ascending: false,
         field: QB.chat.MESSAGES_SORT.FIELD.DATE_SENT,
@@ -345,7 +350,7 @@ export default function ChatScreen({route, navigation}: any) {
       user,
       messages,
       setMessages,
-      dialog,
+      dialogId,
       setNewMessage,
       friend,
       setSending,
@@ -358,14 +363,14 @@ export default function ChatScreen({route, navigation}: any) {
     setCurrentPage(previousPage => previousPage + 1);
   };
 
-  if (loading) {
-    return <Loading />;
-  }
+  // if (loading) {
+  //   return <Loading />;
+  // }
   return (
     <SafeAreaView
       style={{flex: 1, backgroundColor: Colors.white}}
       edges={{bottom: 'maximum'}}>
-      {loading && <LoadingOver />}
+      {/* {loading && <LoadingOver />} */}
       <CustomHeader
         title={friend?.fullName}
         displayActions
