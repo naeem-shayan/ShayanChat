@@ -106,12 +106,15 @@ export default function CreateChannelScreen(props: any) {
   };
 
   function handleButtonPress(item: any) {
-    setOverLoader(true);
     let data: any = isDialogExisting(item?.id);
     if (data) {
       setOverLoader(false);
-      props.navigation.navigate('Chat', {dialog: data?.dialog, user});
+      props.navigation.navigate('Chat', {
+        dialogId: data?.dialogId,
+        receipentId: data?.receipentId,
+      });
     } else {
+      setOverLoader(true);
       const createDialogParam: any = {
         type: QB.chat.DIALOG_TYPE.CHAT,
         occupantsIds: [item?.id],
@@ -127,7 +130,7 @@ export default function CreateChannelScreen(props: any) {
               dialog?.occupantsIds[0] === user?.id
                 ? dialog?.occupantsIds[1]
                 : dialog?.occupantsIds[0],
-            dialog,
+            dialogId: dialog?.id,
           };
 
           firestore()
@@ -143,11 +146,14 @@ export default function CreateChannelScreen(props: any) {
                 .get();
               const currentUserDataAfter = documentSnapshotAfter.data();
               dispatch(setUser(currentUserDataAfter));
+              props.navigation.navigate('Chat', {
+                dialogId: data?.dialogId,
+                receipentId: receipent?.receipentId,
+              });
             })
             .catch(error => {
               console.error(error);
             });
-          props.navigation.navigate('Chat', {dialog, user});
         })
         .catch(function (e) {
           console.error('error in updating');
